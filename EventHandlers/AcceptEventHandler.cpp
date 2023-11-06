@@ -4,7 +4,6 @@ AcceptEventHandler::AcceptEventHandler()
 {
 }
 
-void AcceptEventHandler::Accept()
+HttpEventHandler *AcceptEventHandler::Accept()
 {
-
 }

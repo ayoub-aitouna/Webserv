@@ -24,7 +24,7 @@ void Reactor::UnRegisterSocket(int SocketFd)
     }
 }
 
-struct pollfd *Reactor::IOMultiplexing()
+void Reactor::HandleEvents()
 {
     struct pollfd *fds = (struct pollfd *)malloc(this->clients.size() * sizeof(struct pollfd));
     std::vector<std::pair<int, EventHandler *>>::iterator it;
@@ -35,44 +35,40 @@ struct pollfd *Reactor::IOMultiplexing()
         fds[i].events = POLLIN | POLLOUT;
         i++;
     }
-    if (poll(fds, i, 3000) < 0)
+    if (poll(fds, i, ) >= 0)
+        Dispatch(fds);
+    else
         throw std::runtime_error("poll() failled");
-    return fds;
 }
 
-void Reactor::Dispatch()
+void Reactor::Dispatch(struct pollfd *fds)
 {
+    int i = 0;
+    for (std::vector<std::pair<int, EventHandler *>>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+    {
+        if (fds[i].events & (POLLERR | POLLRDNORM))
+        {
+            AcceptEventHandler *server;
+            HttpEventHandler *client;
+
+            if ((server = dynamic_cast<AcceptEventHandler *>(it->second)) != NULL)
+                server->Accept();
+            else if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
+                client->Read();
+        }
+        if (fds[i].events & (POLLERR | POLLWRNORM))
+        {
+            if (dynamic_cast<HttpEventHandler *>(it->second)->Write() == 0)
+                UnRegisterSocket(it->first);
+        }
+        i++;
+    }
 }
 
 void Reactor::EventLoop()
 {
     while (true)
     {
-        struct pollfd *fds = IOMultiplexing();
-        for (std::vector<std::pair<int, EventHandler *>>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
-        {
-            if (it->first & POLLIN)
-            {
-                try
-                {
-                    dynamic_cast<HttpEventHandler *>(it->second)->Read();
-                }
-                catch (const std::exception &e)
-                {
-                }
-                try
-                {
-                    dynamic_cast<AcceptEventHandler *>(it->second)->Read();
-                }
-                catch (const std::exception &e)
-                {
-                }
-            }
-            if (it->first & POLLOUT)
-            {
-                dynamic_cast<HttpEventHandler *>(it->second)->Write();
-                UnRegisterSocket(it->first);
-            }
-        }
+        HandleEvents();
     }
 }

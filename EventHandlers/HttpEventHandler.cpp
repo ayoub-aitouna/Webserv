@@ -1,4 +1,5 @@
 #include "HttpEventHandler.hpp"
+#include <assert.h>
 
 HttpEventHandler::HttpEventHandler()
 {
@@ -10,6 +11,7 @@ void HttpEventHandler::Read()
 {
 }
 
-void HttpEventHandler::Write()
+int HttpEventHandler::Write()
 {
+
 }

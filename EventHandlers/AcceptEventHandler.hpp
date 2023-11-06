@@ -9,7 +9,7 @@ public:
     AcceptEventHandler();
 
 public:
-    void Accept();
+    HttpEventHandler *Accept();
 };
 
 #endif

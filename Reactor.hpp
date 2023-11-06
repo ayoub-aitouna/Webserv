@@ -8,6 +8,7 @@
 #include "EventHandlers/AcceptEventHandler.hpp"
 #include <unistd.h>
 #include <poll.h>
+#include <exception>
 
 class Reactor
 {
@@ -20,8 +21,8 @@ private:
 public:
     void RegisterSocket(int SocketFd, EventHandler *);
     void UnRegisterSocket(int SocketFd);
-    struct pollfd *IOMultiplexing();
-    void Dispatch();
+    void HandleEvents();
+    void Dispatch(struct pollfd *fds);
     void EventLoop();
 };
 
