@@ -2,7 +2,8 @@
 #define ACCEPTEVENTHANDLER_HPP
 #include <vector>
 #include <map>
-class AcceptEventHandler
+#include "EventHandler.hpp"
+class AcceptEventHandler : public EventHandler
 {
 public:
     AcceptEventHandler();

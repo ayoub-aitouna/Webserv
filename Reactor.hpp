@@ -5,6 +5,7 @@
 #include <map>
 #include "EventHandlers/EventHandler.hpp"
 #include "EventHandlers/HttpEventHandler.hpp"
+#include "EventHandlers/AcceptEventHandler.hpp"
 #include <unistd.h>
 #include <poll.h>
 

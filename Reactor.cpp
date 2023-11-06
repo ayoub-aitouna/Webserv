@@ -40,6 +40,10 @@ struct pollfd *Reactor::IOMultiplexing()
     return fds;
 }
 
+void Reactor::Dispatch()
+{
+}
+
 void Reactor::EventLoop()
 {
     while (true)
@@ -48,7 +52,27 @@ void Reactor::EventLoop()
         for (std::vector<std::pair<int, EventHandler *>>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
         {
             if (it->first & POLLIN)
-                Dispatch();
+            {
+                try
+                {
+                    dynamic_cast<HttpEventHandler *>(it->second)->Read();
+                }
+                catch (const std::exception &e)
+                {
+                }
+                try
+                {
+                    dynamic_cast<AcceptEventHandler *>(it->second)->Read();
+                }
+                catch (const std::exception &e)
+                {
+                }
+            }
+            if (it->first & POLLOUT)
+            {
+                dynamic_cast<HttpEventHandler *>(it->second)->Write();
+                UnRegisterSocket(it->first);
+            }
         }
     }
 }
