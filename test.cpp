@@ -65,6 +65,7 @@ private:
     map<int, EventHandler *> handlers_;
 };
 
+
 class HttpEventHandler : public EventHandler
 {
 public:
@@ -113,7 +114,6 @@ public:
 private:
     int socket_fd_;
 };
-
 
 
 int main()
