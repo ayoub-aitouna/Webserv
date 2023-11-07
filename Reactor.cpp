@@ -6,9 +6,11 @@ Reactor::Reactor()
 
 void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
 {
+
     if (eventHandler == NULL)
         return;
-    std::cout << "Regester New Client : " << socketFd << std::endl;
+    std::cout << "Regester New " << (dynamic_cast<AcceptEventHandler *>(eventHandler) != NULL ? "Server " : "Client ")
+              << socketFd << std::endl;
     this->clients.push_back(std::make_pair(socketFd, eventHandler));
 }
 
@@ -39,7 +41,7 @@ void Reactor::HandleEvents()
     for (it = this->clients.begin(); it != this->clients.end(); it++)
     {
         fds[i].fd = it->first;
-        fds[i].events = POLLIN | POLLOUT;
+        fds[i].events = POLLWRNORM | POLLRDNORM;
         i++;
     }
     if (poll(fds, i, -1) >= 0)
@@ -57,7 +59,7 @@ void Reactor::Dispatch(struct pollfd *fds)
     i = 0;
     for (iterator it = this->clients.begin(); it != this->clients.end(); it++)
     {
-        if (fds[i].events & (POLLIN | POLLERR))
+        if (fds[i].revents & POLLRDNORM)
         {
             if ((server = dynamic_cast<AcceptEventHandler *>(it->second)) != NULL)
             {
@@ -68,12 +70,12 @@ void Reactor::Dispatch(struct pollfd *fds)
             else if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
                 client->Read();
         }
-        if (fds[i].events & (POLLOUT | POLLERR))
+        if (fds[i].revents & POLLWRNORM)
         {
             if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
             {
                 if (client->Write() == 0)
-                    UnRegisterSocket(it->first);
+                    return UnRegisterSocket(it->first);
             }
         }
         i++;

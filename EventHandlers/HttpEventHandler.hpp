@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <string>
+#include <cstring>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "EventHandler.hpp"
@@ -21,6 +22,9 @@ public:
     int Write();
     EventHandler *Accept();
     const int &GetSocketFd() const;
+    void SetSocketFd(const int &SocketFd);
+    struct sockaddr_storage &GetClientAddr();
+    socklen_t &GetClientAddrLen();
 
 private:
     std::string request;

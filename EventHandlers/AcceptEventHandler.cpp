@@ -16,5 +16,13 @@ int AcceptEventHandler::Write()
 
 EventHandler *AcceptEventHandler::Accept(void)
 {
-    return NULL;
+    struct sockaddr_storage addr;
+    socklen_t addrlen;
+    int socket;
+
+    addrlen = sizeof(addrlen);
+    socket = accept(this->SocketFd, (struct sockaddr *)&addr, &addrlen);
+    if (socket < 0)
+        throw std::runtime_error("accept() failed");
+    return (new HttpEventHandler(socket, addr, addrlen));
 }
