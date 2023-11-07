@@ -3,13 +3,18 @@
 #include <vector>
 #include <map>
 #include "EventHandler.hpp"
+#include "../Reactor.hpp"
+
 class AcceptEventHandler : public EventHandler
 {
-public:
-    AcceptEventHandler();
 
 public:
-    HttpEventHandler *Accept();
+    AcceptEventHandler(int SocketFd);
+
+public:
+    int Read();
+    int Write();
+    EventHandler *Accept();
 };
 
 #endif

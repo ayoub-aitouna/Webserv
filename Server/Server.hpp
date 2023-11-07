@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <exception>
 #include "../Reactor.hpp"
+#include <netdb.h>
 
 class Server
 {
@@ -19,6 +20,7 @@ public:
 
 public:
     void CreatSocket();
+    // char *getAddreass();
     void Run();
 
 private:
@@ -26,24 +28,5 @@ private:
     std::string servce;
     int socket_fd;
 };
-
-struct addrinfo
-{
-    int ai_flags;
-    int ai_family;
-    int ai_socktype;
-    int ai_protocol;
-    size_t ai_addrlen;
-    struct sockaddr *ai_addr;
-    char *ai_canonname;       /* canonical name */
-    struct addrinfo *ai_next; /* this struct can form a linked list */
-};
-
-int getaddrinfo(const char *node,
-                const char *service,
-                const struct addrinfo *hints,
-                struct addrinfo **res);
-
-void freeaddrinfo(struct addrinfo *res);
 
 #endif

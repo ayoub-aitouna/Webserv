@@ -12,14 +12,17 @@
 class HttpEventHandler : public EventHandler
 {
 public:
+    HttpEventHandler(int SocketFd, struct sockaddr_storage address, socklen_t address_len);
     HttpEventHandler();
+    virtual ~HttpEventHandler();
 
 public:
     int Read();
     int Write();
+    EventHandler *Accept();
+    const int &GetSocketFd() const;
 
 private:
-    int socket_fd;
     std::string request;
     struct sockaddr_storage address;
     socklen_t address_len;

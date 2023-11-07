@@ -1,9 +1,21 @@
 #include "AcceptEventHandler.hpp"
 
-AcceptEventHandler::AcceptEventHandler()
+AcceptEventHandler::AcceptEventHandler(int SocketFd) : EventHandler(SocketFd)
 {
 }
 
-HttpEventHandler *AcceptEventHandler::Accept()
+int AcceptEventHandler::Read()
 {
+    return -1;
+}
+
+int AcceptEventHandler::Write()
+{
+    return -1;
+}
+
+EventHandler *AcceptEventHandler::Accept(void)
+{
+    std::cout << "New Client" << std::endl;
+    return new HttpEventHandler();
 }

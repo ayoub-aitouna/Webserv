@@ -11,7 +11,7 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
 
 void Reactor::UnRegisterSocket(int SocketFd)
 {
-    std::vector<std::pair<int, EventHandler *>>::iterator it;
+    iterator it;
     for (it = this->clients.begin(); it != this->clients.end(); it++)
     {
         if (it->first == SocketFd)
@@ -26,8 +26,8 @@ void Reactor::UnRegisterSocket(int SocketFd)
 
 void Reactor::HandleEvents()
 {
-    struct pollfd *fds = (struct pollfd *)malloc(this->clients.size() * sizeof(struct pollfd));
-    std::vector<std::pair<int, EventHandler *>>::iterator it;
+    struct pollfd *fds = new struct pollfd[this->clients.size() * sizeof(struct pollfd)];
+    iterator it;
     int i = 0;
     for (it = this->clients.begin(); it != this->clients.end(); it++)
     {
@@ -35,7 +35,7 @@ void Reactor::HandleEvents()
         fds[i].events = POLLIN | POLLOUT;
         i++;
     }
-    if (poll(fds, i, ) >= 0)
+    if (poll(fds, i, 3000) >= 0)
         Dispatch(fds);
     else
         throw std::runtime_error("poll() failled");
@@ -43,23 +43,31 @@ void Reactor::HandleEvents()
 
 void Reactor::Dispatch(struct pollfd *fds)
 {
-    int i = 0;
-    for (std::vector<std::pair<int, EventHandler *>>::iterator it = this->clients.begin(); it != this->clients.end(); it++)
+    int i;
+    AcceptEventHandler *server;
+    HttpEventHandler *client;
+
+    i = 0;
+    for (iterator it = this->clients.begin(); it != this->clients.end(); it++)
     {
-        if (fds[i].events & (POLLERR | POLLRDNORM))
+        if (fds[i].events & (POLLIN))
         {
-            AcceptEventHandler *server;
-            HttpEventHandler *client;
 
             if ((server = dynamic_cast<AcceptEventHandler *>(it->second)) != NULL)
-                server->Accept();
+            {
+                client = dynamic_cast<HttpEventHandler *>(server->Accept());
+                RegisterSocket(client->GetSocketFd(), client);
+            }
             else if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
                 client->Read();
         }
         if (fds[i].events & (POLLERR | POLLWRNORM))
         {
-            if (dynamic_cast<HttpEventHandler *>(it->second)->Write() == 0)
-                UnRegisterSocket(it->first);
+            if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
+            {
+                if (client->Write() == 0)
+                    UnRegisterSocket(it->first);
+            }
         }
         i++;
     }
