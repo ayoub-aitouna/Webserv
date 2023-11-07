@@ -16,6 +16,5 @@ int AcceptEventHandler::Write()
 
 EventHandler *AcceptEventHandler::Accept(void)
 {
-    std::cout << "New Client" << std::endl;
-    return new HttpEventHandler();
+    return NULL;
 }

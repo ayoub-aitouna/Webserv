@@ -11,17 +11,17 @@ HttpEventHandler::HttpEventHandler() : EventHandler(-1)
 
 int HttpEventHandler::Read()
 {
-    return -1;
+    return (-1);
 }
 
 int HttpEventHandler::Write()
 {
-    return -1;
+    return (-1);
 }
 
 EventHandler *HttpEventHandler::Accept(void)
 {
-    return NULL;
+    return (NULL);
 }
 
 const int &HttpEventHandler::GetSocketFd() const

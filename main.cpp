@@ -1,5 +1,6 @@
 #include "Server/Server.hpp"
-
+#include <vector>
+#include "EventHandlers/HttpEventHandler.hpp"
 int main()
 {
     Server server("127.0.0.1", "8080");
@@ -12,4 +13,5 @@ int main()
     {
         std::cerr << e.what() << '\n';
     }
+
 }

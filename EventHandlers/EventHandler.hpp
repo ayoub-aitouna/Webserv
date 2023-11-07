@@ -12,6 +12,7 @@ public:
     virtual int Write() = 0;
     virtual EventHandler *Accept() = 0;
     virtual ~EventHandler();
+    const int& GetSocketFd() const;
 
 private:
     EventHandler();
