@@ -18,8 +18,6 @@ std::vector<std::string> Lstring::Split(std::string line, std::string delimiter)
     return (list);
 }
 
-
-
 std::string Lstring::Colored(std::string str, Colors color)
 {
     std::ostringstream stream;

@@ -5,7 +5,6 @@
 #include <map>
 #include <vector>
 #include <sstream>
-
 #include "../Lib/Lstring.hpp"
 
 class Request
@@ -16,11 +15,12 @@ public:
     void Parse(std::string line);
 
 private:
-    std::map<std::string, std::string> RequestHeaders;
     std::string Method;
     std::string Url;
     std::string Httpv;
+private:
     std::string body;
+    std::map<std::string, std::string> RequestHeaders;
 
 public:
     const std::string &GetMethod() const;

@@ -4,6 +4,7 @@
 #include <map>
 #include "EventHandler.hpp"
 #include "../Reactor.hpp"
+#include <fcntl.h>
 
 class AcceptEventHandler : public EventHandler
 {
