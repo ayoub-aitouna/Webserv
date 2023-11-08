@@ -9,8 +9,7 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
 
     if (eventHandler == NULL)
         return;
-    std::cout << "\033[0;32m" << "Regester New " << (dynamic_cast<AcceptEventHandler *>(eventHandler) != NULL ? "Server " : "Client ")
-              << socketFd << "\033[0m" << std::endl;
+    std::cout << Lstring::Colored(std::string("Regester New ") + (dynamic_cast<AcceptEventHandler *>(eventHandler) != NULL ? "Server " : "Client ") + "Socket " + std::to_string(socketFd), Blue) << std::endl;
     this->clients.push_back(std::make_pair(socketFd, eventHandler));
 }
 
@@ -22,8 +21,7 @@ void Reactor::UnRegisterSocket(int SocketFd)
     {
         if (it->first == SocketFd)
         {
-            std::cout << "\033[0;31m" << "UnRegister  " << (dynamic_cast<AcceptEventHandler *>(it->second) != NULL ? "Server " : "Client ")
-                      << "Socket " << SocketFd << "\033[0m" << std::endl;
+            std::cout << Lstring::Colored(std::string("UnRegister ") + (dynamic_cast<AcceptEventHandler *>(it->second) != NULL ? "Server " : "Client ") + "Socket " + std::to_string(SocketFd), Red) << std::endl;
             close(it->first);
             delete it->second;
             this->clients.erase(it);

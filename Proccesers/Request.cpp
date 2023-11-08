@@ -32,3 +32,13 @@ const std::string &Request::GetHttpv() const
 {
     return (this->Httpv);
 }
+
+std::map<std::string, std::string> &Request::GetRequestHeaders()
+{
+    return (this->RequestHeaders);
+}
+
+std::string &Request::GetBody()
+{
+    return (this->body);
+}

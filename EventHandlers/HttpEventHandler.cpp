@@ -21,7 +21,7 @@ int HttpEventHandler::Read()
         return (0);
     std::cout << "read " << read_bytes << std::endl;
     this->request.append(buffer);
-    this->Deserializer.Deserialize(this->request);
+    this->Serializer.Deserialize(this->request);
     return (read_bytes);
 }
 
@@ -33,11 +33,11 @@ int HttpEventHandler::Write()
                            "Connection: Closed \r\n\r\n"
                            "Not Found";
 
-    if (this->Deserializer.Done)
+    if (this->Serializer.DoneDeserializing)
     {
         std::cout << "Wrinting" << std::endl;
         send(this->SocketFd, responce.c_str(), responce.size(), 0);
-        std::cout << "Done" << std::endl;
+        std::cout << "DoneDeserializing" << std::endl;
         return (0);
     }
     return (-1);

@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include <cstring>
+#include "../Lib/Lstring.hpp"
 
 Server::Server() : node(""), servce("")
 {
@@ -23,9 +24,7 @@ void Server::CreatSocket()
     hint.ai_socktype = SOCK_STREAM;
     hint.ai_flags = AI_PASSIVE;
 
-    std::cout << "\033[0;31m"
-              << "Creating Socket"
-              << "\033[0m" << std::endl;
+    std::cout << Lstring::Colored("Creating Socket", White) << std::endl;
     getaddrinfo(node, servce, &hint, &addr);
     this->socket_fd = socket(addr->ai_family, addr->ai_socktype, 0);
     if (this->socket_fd < 0)
@@ -37,9 +36,8 @@ void Server::CreatSocket()
     resure_flag = 1;
     if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &resure_flag, sizeof(resure_flag)) < 0)
         throw std::runtime_error("setsockopt() failed");
-    std::cout << "\033[0;33m"
-              << "Binding Socket"
-              << "\033[0m" << std::endl;
+    std::cout << Lstring::Colored("Binding Socket", Yellow) << std::endl;
+
     if (bind(this->socket_fd, addr->ai_addr, addr->ai_addrlen) < 0)
         throw std::runtime_error("bind() failed");
     freeaddrinfo(addr);
@@ -51,9 +49,7 @@ void Server::Run()
 
     if (listen(this->socket_fd, 10) < 0)
         throw std::runtime_error("listen() failed");
-    std::cout << "\033[0;32m"
-              << "Server in Listen Mode"
-              << "\033[0m" << std::endl;
+    std::cout << Lstring::Colored("Server in Listen Mode", Green) << std::endl;
     reactor.RegisterSocket(this->socket_fd, new AcceptEventHandler(this->socket_fd));
     reactor.EventLoop();
 }

@@ -10,6 +10,7 @@
 #include <poll.h>
 #include <exception>
 #include <stdexcept>
+#include "Lib/Lstring.hpp"
 
 class Reactor
 {
@@ -17,7 +18,7 @@ public:
     Reactor();
 
 private:
-    std::vector<std::pair<int, EventHandler *> > clients;
+    std::vector<std::pair<int, EventHandler *>> clients;
 
 public:
     void RegisterSocket(int SocketFd, EventHandler *);
@@ -26,6 +27,6 @@ public:
     void Dispatch(struct pollfd *fds);
     void EventLoop();
 };
-typedef std::vector<std::pair<int, EventHandler *> >::iterator iterator;
+typedef std::vector<std::pair<int, EventHandler *>>::iterator iterator;
 
 #endif

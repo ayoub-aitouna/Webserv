@@ -1,5 +1,5 @@
-#ifndef HTTPDESERIALIZER_HPP
-#define HTTPDESERIALIZER_HPP
+#ifndef HTTPSERIALIZER_HPP
+#define HTTPSERIALIZER_HPP
 #include <string>
 #include <map>
 #include <vector>
@@ -7,21 +7,20 @@
 #include "Request.hpp"
 #include <iostream>
 
-class HttpDeserializer
+class HttpSerializer
 {
 private:
-    // std::map<std::string, std::string> headers;
-    std::string body;
     Request requestLine;
 
 public:
-    bool Done;
+    bool DoneDeserializing;
 
 public:
-    HttpDeserializer(/* args */);
+    HttpSerializer(/* args */);
     void Deserialize(std::string request);
+    std::string Serialize();
     void ParseHeaders(std::string headers_string);
-    ~HttpDeserializer();
+    ~HttpSerializer();
 };
 
 #endif
