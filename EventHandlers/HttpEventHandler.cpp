@@ -1,4 +1,5 @@
 #include "HttpEventHandler.hpp"
+
 #include <assert.h>
 
 HttpEventHandler::HttpEventHandler(int SocketFd, struct sockaddr_storage address, socklen_t address_len) : EventHandler(SocketFd), request(""), address(address), address_len(address_len)
@@ -12,10 +13,16 @@ HttpEventHandler::HttpEventHandler() : EventHandler(-1), address_len(sizeof(addr
 int HttpEventHandler::Read()
 {
     char buffer[1024];
-    std::cout << "recving Data " << std::endl;
-    int readed_bytes = recv(this->SocketFd, buffer, sizeof(buffer), 0);
+
+    int read_bytes;
+    std::cout << "Readinig " << std::endl;
+    read_bytes = recv(this->SocketFd, buffer, sizeof(buffer), 0);
+    if (read_bytes <= 0)
+        return (0);
+    std::cout << "read " << read_bytes << std::endl;
     this->request.append(buffer);
-    return (readed_bytes);
+    this->Deserializer.Deserialize(this->request);
+    return (read_bytes);
 }
 
 int HttpEventHandler::Write()
@@ -25,9 +32,15 @@ int HttpEventHandler::Write()
                            "Content-Type: text/html \r\n"
                            "Connection: Closed \r\n\r\n"
                            "Not Found";
-    std::cout << "sending Data " << std::endl;
-    send(this->SocketFd, responce.c_str(), responce.size(), 0);
-    return (0);
+
+    if (this->Deserializer.Done)
+    {
+        std::cout << "Wrinting" << std::endl;
+        send(this->SocketFd, responce.c_str(), responce.size(), 0);
+        std::cout << "Done" << std::endl;
+        return (0);
+    }
+    return (-1);
 }
 
 EventHandler *HttpEventHandler::Accept(void)

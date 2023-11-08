@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "EventHandler.hpp"
+#include "../Proccesers/HttpDeserializer.hpp"
 
 class HttpEventHandler : public EventHandler
 {
@@ -30,6 +31,7 @@ private:
     std::string request;
     struct sockaddr_storage address;
     socklen_t address_len;
+    HttpDeserializer Deserializer;
 };
 
 #endif
