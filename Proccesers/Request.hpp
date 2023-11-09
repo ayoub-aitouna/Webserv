@@ -26,7 +26,6 @@ public:
     const std::string &GetMethod() const;
     const std::string &GetUrl() const;
     const std::string &GetHttpv() const;
-
     std::map<std::string, std::string> &GetRequestHeaders();
     std::string &GetBody();
 };

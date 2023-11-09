@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include "EventHandler.hpp"
 #include "../Proccesers/HttpSerializer.hpp"
+#include <sstream>
 
 class HttpEventHandler : public EventHandler
 {

@@ -5,22 +5,28 @@
 #include <vector>
 #include <sstream>
 #include "Request.hpp"
+#include "Response.hpp"
 #include <iostream>
+#include <sys/socket.h>
 
 class HttpSerializer
 {
 private:
-    Request requestLine;
+    Request request;
+    Response *response;
+    std::string Buffer;
 
 public:
-    bool DoneDeserializing;
-
 public:
     HttpSerializer(/* args */);
     void Deserialize(std::string request);
+    ~HttpSerializer();
+
+public:
     std::string Serialize();
     void ParseHeaders(std::string headers_string);
-    ~HttpSerializer();
+    Request &GetRequest();
+    Response *GetResponse();
 };
 
 #endif

@@ -1,5 +1,7 @@
 #include "Request.hpp"
-Request::Request() : Method(""), Url(""), Httpv("")
+#include <iostream>
+
+Request::Request()
 {
 }
 
@@ -10,12 +12,9 @@ Request::Request(std::string line)
 
 void Request::Parse(std::string line)
 {
-    std::vector<std::string> request_list = Lstring::Split(line, " ");
-    if (request_list.size() != 3)
-        throw std::runtime_error("Request Line Invalide");
-    this->Method = request_list.at(0);
-    this->Url = request_list.at(1);
-    this->Httpv = request_list.at(2);
+    std::istringstream stream;
+    stream.str(line);
+    stream >> this->Method >> this->Url >> this->Httpv;
 }
 
 const std::string &Request::GetMethod() const
