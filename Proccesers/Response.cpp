@@ -4,8 +4,15 @@ Response::Response(Request request) : Buffer(""), bufferState(Uncomplete), respo
 {
     Content_Types = MimeTypes::GetContenTypes();
     GetFilePath();
+    FillHeaders(200);
+}
+
+void Response::FillHeaders(int StatusCode)
+{
+
     Buffer = "HTTP/1.1 200 OK \r\n";
     Buffer += ("Content-Type: " + this->FileType + " \r\n");
+    Buffer += "Connection: closed\r\n";
     Buffer += "Transfer-Encoding: chunked\r\n\r\n";
     this->bufferState = Ready;
 }
@@ -38,21 +45,25 @@ int Response::FlushBuffer(int SocketFd)
 
 void Response::FillBuffer()
 {
-    char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
+    std::cout << Lstring::Colored("FillBuffer called ", Magenta) << std::endl;
 
-    int i = read(this->File, buffer, sizeof(buffer));
-    if (i < 0)
-        throw std::runtime_error("error reading file");
-    else if (i == 0)
-    {
+    char buffer[1025];
+    memset(buffer, 0, sizeof(buffer));
+    std::stringstream ss;
+    int BytesCount;
+
+    BytesCount = read(this->File, buffer, KB);
+    std::cout << Lstring::Colored(" BytesCount is : ", Magenta) << BytesCount << std::endl;
+
+    if (BytesCount < 0)
+        throw std::runtime_error("Error Reading File");
+    else if (BytesCount == 0)
         this->Buffer.append(std::to_string(0) + "\r\n\r\n");
-    }
     else
     {
-        std::stringstream ss;
-        ss << std::hex << i << "\r\n"
-           << buffer << "\r\n";
+        ss << std::hex << BytesCount << "\r\n";
+        ss.write(buffer, BytesCount);
+        ss << "\r\n";
         this->Buffer = ss.str();
     }
     this->bufferState = Ready;

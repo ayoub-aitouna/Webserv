@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <algorithm>
 #include <iostream>
 
 enum BufferState
@@ -25,6 +26,8 @@ enum ResposeState
     Headers,
     Body
 };
+
+#define KB 1024
 
 class Response
 {
@@ -44,8 +47,9 @@ private:
 
 public:
     void FillBuffer();
+    void GetFilePath();
+    void FillHeaders(int StatusCode);
     BufferState GetBufferState();
     int FlushBuffer(int SocketFd);
-    void GetFilePath();
 };
 #endif
