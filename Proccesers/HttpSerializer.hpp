@@ -14,7 +14,6 @@ class HttpSerializer
 private:
     Request request;
     Response *response;
-    std::string Buffer;
 
 public:
 public:
