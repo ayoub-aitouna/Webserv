@@ -5,11 +5,6 @@ Request::Request()
 {
 }
 
-Request::Request(std::string line)
-{
-    Parse(line);
-}
-
 std::string UriDecode(std::string Uri)
 {
     std::string DecodedUrl;
@@ -32,8 +27,8 @@ void Request::Parse(std::string line)
 {
     std::istringstream stream;
     stream.str(line);
-    stream >> this->Method >> this->Url >> this->Httpv;
-    this->Url = UriDecode(std::string(this->Url));
+    stream >> this->Method >> this->Url;
+    // this->Url = UriDecode(std::string(this->Url));
 }
 
 const std::string &Request::GetMethod() const
@@ -44,16 +39,6 @@ const std::string &Request::GetMethod() const
 const std::string &Request::GetUrl() const
 {
     return (this->Url);
-}
-
-const std::string &Request::GetHttpv() const
-{
-    return (this->Httpv);
-}
-
-std::map<std::string, std::string> &Request::GetRequestHeaders()
-{
-    return (this->RequestHeaders);
 }
 
 std::string &Request::GetBody()

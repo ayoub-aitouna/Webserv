@@ -15,18 +15,6 @@
 #include <algorithm>
 #include <iostream>
 
-enum BufferState
-{
-    Ready,
-    Uncomplete
-};
-
-enum ResposeState
-{
-    Headers,
-    Body
-};
-
 #define KB 1024
 
 class Response
@@ -37,8 +25,7 @@ public:
 
 private:
     std::string Buffer;
-    BufferState bufferState;
-    ResposeState resposeState;
+
     Request request;
 
     std::map<std::string, std::string> Content_Types;
@@ -49,7 +36,6 @@ public:
     void FillBuffer();
     void GetFilePath();
     void FillHeaders(int StatusCode);
-    BufferState GetBufferState();
     int FlushBuffer(int SocketFd);
 };
 #endif

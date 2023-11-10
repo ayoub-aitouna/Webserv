@@ -1,6 +1,6 @@
 #include "Response.hpp"
 
-Response::Response(Request request) : Buffer(""), bufferState(Uncomplete), resposeState(Headers), request(request)
+Response::Response(Request request) : Buffer(""), request(request)
 {
     Content_Types = MimeTypes::GetContenTypes();
     GetFilePath();
@@ -14,47 +14,30 @@ void Response::FillHeaders(int StatusCode)
     Buffer += ("Content-Type: " + this->FileType + " \r\n");
     Buffer += "Connection: closed\r\n";
     Buffer += "Transfer-Encoding: chunked\r\n\r\n";
-    this->bufferState = Ready;
 }
 
 Response::~Response()
 {
 }
 
-BufferState Response::GetBufferState()
-{
-    return (this->bufferState);
-}
-
 int Response::FlushBuffer(int SocketFd)
 {
-    int s = 1;
-    if (this->bufferState == Ready)
-    {
-        std::cout << Lstring::Colored(this->Buffer, Yellow) << std::endl;
-        send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0);
-        if (this->Buffer == "0\r\n\r\n")
-            s = 0;
-        this->Buffer.clear();
-        if (this->resposeState == Headers)
-            this->resposeState = Body;
-        bufferState = Uncomplete;
-    }
-    return s;
+    // std::cout << Lstring::Colored(this->Buffer, Yellow) << std::endl;
+    if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n")
+        return (0);
+    this->Buffer.clear();
+    this->FillBuffer();
+    return (1);
 }
 
 void Response::FillBuffer()
 {
-    std::cout << Lstring::Colored("FillBuffer called ", Magenta) << std::endl;
-
     char buffer[1025];
     memset(buffer, 0, sizeof(buffer));
     std::stringstream ss;
     int BytesCount;
 
     BytesCount = read(this->File, buffer, KB);
-    std::cout << Lstring::Colored(" BytesCount is : ", Magenta) << BytesCount << std::endl;
-
     if (BytesCount < 0)
         throw std::runtime_error("Error Reading File");
     else if (BytesCount == 0)
@@ -66,7 +49,8 @@ void Response::FillBuffer()
         ss << "\r\n";
         this->Buffer = ss.str();
     }
-    this->bufferState = Ready;
+    if (BytesCount < 1)
+        close(this->File);
 }
 
 void Response::GetFilePath()

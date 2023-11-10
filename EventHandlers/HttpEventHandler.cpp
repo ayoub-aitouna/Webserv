@@ -41,7 +41,6 @@ int HttpEventHandler::Write()
     {
         if (this->Serializer.GetResponse()->FlushBuffer(this->SocketFd) == 0)
             return (0);
-        this->Serializer.GetResponse()->FillBuffer();
     }
     return (-1);
 }
