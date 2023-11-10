@@ -1,7 +1,5 @@
 #include "HttpEventHandler.hpp"
 
-#include <assert.h>
-
 HttpEventHandler::HttpEventHandler(int SocketFd, struct sockaddr_storage address, socklen_t address_len) : EventHandler(SocketFd)
 {
     this->address = address;
