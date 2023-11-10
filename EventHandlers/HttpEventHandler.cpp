@@ -2,12 +2,14 @@
 
 HttpEventHandler::HttpEventHandler(int SocketFd, struct sockaddr_storage address, socklen_t address_len) : EventHandler(SocketFd)
 {
-    this->address = address;
-    this->address_len = address_len;
+    this->client.address = address;
+    this->client.address_len = address_len;
+    this->response = NULL;
 }
 
-HttpEventHandler::HttpEventHandler() : EventHandler(-1), address_len(sizeof(address))
+HttpEventHandler::HttpEventHandler() : EventHandler(-1)
 {
+    this->client.address_len = sizeof(client.address);
 }
 
 int HttpEventHandler::Read()
@@ -19,10 +21,15 @@ int HttpEventHandler::Read()
     if (read_bytes <= 0)
         return (0);
     std::cout << "read " << read_bytes << std::endl;
-    this->request.append(buffer);
+    this->client.data.append(buffer);
     try
     {
-        this->Serializer.Deserialize(this->request);
+        ResourceFile file = this->request.Parse(this->client.data);
+        if (file.Fd != -1)
+        {
+            std::cout << "Created New Respoce Obj" << std::endl;
+            this->response = new Response(file);
+        }
     }
     catch (const std::exception &e)
     {
@@ -35,9 +42,9 @@ int HttpEventHandler::Read()
 
 int HttpEventHandler::Write()
 {
-    if (this->Serializer.GetResponse() != NULL)
+    if (this->response != NULL)
     {
-        if (this->Serializer.GetResponse()->FlushBuffer(this->SocketFd) == 0)
+        if (this->response->FlushBuffer(this->SocketFd) == 0)
             return (0);
     }
     return (-1);
@@ -51,21 +58,6 @@ EventHandler *HttpEventHandler::Accept(void)
 const int &HttpEventHandler::GetSocketFd() const
 {
     return this->SocketFd;
-}
-
-void HttpEventHandler::SetSocketFd(const int &SocketFd)
-{
-    this->SocketFd = SocketFd;
-}
-
-struct sockaddr_storage &HttpEventHandler::GetClientAddr()
-{
-    return this->address;
-}
-
-socklen_t &HttpEventHandler::GetClientAddrLen()
-{
-    return this->address_len;
 }
 
 HttpEventHandler::~HttpEventHandler()

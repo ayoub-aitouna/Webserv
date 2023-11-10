@@ -9,8 +9,17 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "EventHandler.hpp"
-#include "../Proccesers/HttpSerializer.hpp"
+#include "../Proccesers/Response.hpp"
+#include "../Proccesers/Request.hpp"
 #include <sstream>
+
+class Client
+{
+public:
+    std::string data;
+    struct sockaddr_storage address;
+    socklen_t address_len;
+};
 
 class HttpEventHandler : public EventHandler
 {
@@ -24,15 +33,11 @@ public:
     int Write();
     EventHandler *Accept();
     const int &GetSocketFd() const;
-    void SetSocketFd(const int &SocketFd);
-    struct sockaddr_storage &GetClientAddr();
-    socklen_t &GetClientAddrLen();
 
 private:
-    std::string request;
-    struct sockaddr_storage address;
-    socklen_t address_len;
-    HttpSerializer Serializer;
+    Client client;
+    Request request;
+    Response *response;
 };
 
 #endif

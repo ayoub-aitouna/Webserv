@@ -20,21 +20,15 @@
 class Response
 {
 public:
-    Response(Request request);
+    Response(ResourceFile file);
     ~Response();
 
 private:
     std::string Buffer;
-
-    Request request;
-
-    std::map<std::string, std::string> Content_Types;
-    int File;
-    std::string FileType;
+    ResourceFile file;
 
 public:
     void FillBuffer();
-    void GetFilePath();
     void FillHeaders(int StatusCode);
     int FlushBuffer(int SocketFd);
 };
