@@ -24,3 +24,11 @@ std::string Lstring::Colored(std::string str, Colors color)
     stream << "\033[1;" << color << "m" << str << "\033[0m";
     return stream.str();
 }
+
+void Lstring::tolower(std::string str)
+{
+    for (std::string::iterator it = str.begin(); it != str.end(); it++)
+    {
+        *it = std::tolower(*it);
+    }
+}

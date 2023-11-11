@@ -27,6 +27,7 @@ private:
 public:
     static std::string Colored(std::string str, t_colors color);
     static std::vector<std::string> Split(std::string line, std::string delimiter);
+    static void tolower(std::string str);
 };
 
 #endif

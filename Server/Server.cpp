@@ -1,6 +1,4 @@
 #include "Server.hpp"
-#include <cstring>
-#include "../Lib/Lstring.hpp"
 
 Server::Server() : node(""), servce("")
 {

@@ -11,6 +11,10 @@
 #include <exception>
 #include "../Reactor.hpp"
 #include <netdb.h>
+#include <errno.h>
+#include "../Lib/Lstring.hpp"
+#include <cstring>
+#include <stdio.h>
 
 class Server
 {

@@ -9,8 +9,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "EventHandler.hpp"
-#include "../Proccesers/Response.hpp"
-#include "../Proccesers/Request.hpp"
+#include "../Proccesers/ResponseBuilder.hpp"
+#include "../Proccesers/RequestParser.hpp"
+#include "../Proccesers/Medium/Medium.hpp"
 #include <sstream>
 
 class Client
@@ -36,8 +37,8 @@ public:
 
 private:
     Client client;
-    Request request;
-    Response *response;
+    RequestParser request;
+    ResponseBuilder *response;
 };
 
 #endif

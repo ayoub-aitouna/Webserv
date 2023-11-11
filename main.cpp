@@ -3,16 +3,17 @@
 #include "EventHandlers/HttpEventHandler.hpp"
 #include <signal.h>
 
-void HandleSigPip(int sinal)
+void HandleSigPip(int signal)
 {
-    char *msg = (char *)"SigPip\n";
-    write(1, msg, strlen(msg));
+
+    std::string msg = "SigPip " + SSTR(signal) + "\n";
+    write(1, msg.c_str(), msg.size());
 }
 
 int main()
 {
     signal(SIGPIPE, HandleSigPip);
-    Server server("127.0.0.1", "8080");
+    Server server("", "8080");
     try
     {
         server.CreatSocket();

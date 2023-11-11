@@ -11,8 +11,8 @@ public:
     virtual int Read() = 0;
     virtual int Write() = 0;
     virtual EventHandler *Accept() = 0;
+    const int &GetSocketFd() const;
     virtual ~EventHandler();
-    const int& GetSocketFd() const;
 
 private:
     EventHandler();

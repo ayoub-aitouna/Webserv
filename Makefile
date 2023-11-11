@@ -1,6 +1,6 @@
 OBJ_DIR			:= .compiled
 
-SRC				:= $(wildcard *.cpp)  $(wildcard **/*.cpp)
+SRC				:= $(wildcard *.cpp)  $(wildcard **/*.cpp) $(wildcard **/**/*.cpp)
 
 OBJ				:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SRC))
 
@@ -8,8 +8,8 @@ NAME = WebServ
 
 CC = g++
 
-# CPPFLAGS = -Wall -Wextra -Werror -std=c++98 
-Sanitize		:= -g -fsanitize=address
+CPPFLAGS = -Wall -Wextra -Werror -std=c++98 
+# Sanitize		:= -g -fsanitize=address
 
 all : $(NAME)
 
