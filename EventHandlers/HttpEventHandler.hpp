@@ -17,7 +17,6 @@
 class Client
 {
 public:
-    std::string data;
     struct sockaddr_storage address;
     socklen_t address_len;
 };

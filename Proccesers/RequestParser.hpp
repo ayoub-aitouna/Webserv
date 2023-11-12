@@ -23,7 +23,7 @@ enum
     Get,
     Post,
     Delete,
-    NON
+    OTHER
 };
 
 class RequestParser
@@ -33,23 +33,25 @@ class RequestParser
 public:
     RequestParser();
     Medium *Parse(std::string data);
-    Medium *ParseBody(std::string data);
     void ParseHeaders(std::string data);
+    int FillBody(std::string &data);
+    void ParseBody();
     void GetResourceFilePath();
+    std::string GetHeaderAttr(std::string);
+    void PrintfFullRequest();
 
 private:
     std::map<std::string, std::string> Headers;
     std::map<std::string, std::string> Content_Types;
+    std::string buffer;
     ResourceFile File;
     std::string Url;
     std::string body;
-    std::string tmp;
+
+    bool BodyReady;
     int Method;
     int Remaining;
     int Encoding;
-
-public:
-    std::string GetHeaderAttr(std::string);
 
 public:
     class HTTPError : public std::exception

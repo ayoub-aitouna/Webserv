@@ -14,18 +14,18 @@ HttpEventHandler::HttpEventHandler() : EventHandler(-1)
 
 int HttpEventHandler::Read()
 {
-    char buffer[1024];
+    char buffer[1025];
     Medium *medium;
 
     int read_bytes;
-    read_bytes = recv(this->SocketFd, buffer, sizeof(buffer), 0);
+    read_bytes = recv(this->SocketFd, buffer, KB, 0);
+    buffer[read_bytes] = 0;
     if (read_bytes <= 0)
         return (0);
     std::cout << "read " << read_bytes << std::endl;
-    this->client.data.append(buffer);
     try
     {
-        medium = this->request.Parse(this->client.data);
+        medium = this->request.Parse(buffer);
         if (medium != NULL)
             this->response = new ResponseBuilder(*medium);
     }

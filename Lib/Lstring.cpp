@@ -25,10 +25,9 @@ std::string Lstring::Colored(std::string str, Colors color)
     return stream.str();
 }
 
-void Lstring::tolower(std::string str)
+void Lstring::tolower(std::string &str)
 {
     for (std::string::iterator it = str.begin(); it != str.end(); it++)
-    {
         *it = std::tolower(*it);
-    }
+    
 }

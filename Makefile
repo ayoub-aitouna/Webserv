@@ -9,7 +9,7 @@ NAME = WebServ
 CC = g++
 
 CPPFLAGS = -Wall -Wextra -Werror -std=c++98 
-# Sanitize		:= -g -fsanitize=address
+Sanitize		:= -g -fsanitize=address
 
 all : $(NAME)
 
@@ -19,6 +19,9 @@ $(OBJ_DIR)/%.o : %.cpp
 
 $(NAME) : $(OBJ)
 	$(CC) $(CPPFLAGS) $(Sanitize) $(OBJ) -o $(NAME)
+
+Start: $(NAME)
+	clear && ./$(NAME)
 
 clean :
 	rm $(OBJ)
