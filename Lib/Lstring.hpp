@@ -19,6 +19,28 @@ typedef enum Colors
     Reset = 0,
 } t_colors;
 
+#define COLORED(str, color) "\033[1;" << color << "m" << str << "\033[0m"
+
+/**
+ * 1-                   activate for all
+ * 2-                   activate/deactivated by setting active
+ * <any other number>-  deactivated
+ */
+#ifndef DEBUGE
+#define DEBUGE 2
+#endif
+
+#if DEBUGE == 1
+#define DEBUGOUT(active, x) \
+    std::cout << x << std::endl
+#elif DEBUGE == 2
+#define DEBUGOUT(active, x) \
+    if (active)             \
+    std::cout << x << std::endl
+#else
+#define DEBUGOUT(active, x)
+#endif
+
 class Lstring
 {
 private:
@@ -26,7 +48,6 @@ private:
     Lstring &operator=(Lstring &copy);
 
 public:
-    static std::string Colored(std::string str, t_colors color);
     static std::vector<std::string> Split(std::string line, std::string delimiter);
     static void tolower(std::string &str);
 };

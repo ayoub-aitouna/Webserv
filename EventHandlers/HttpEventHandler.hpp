@@ -14,6 +14,14 @@
 #include "../Proccesers/Medium/Medium.hpp"
 #include <sstream>
 
+/**
+ * copies binary data from a buffer into a std::string object
+ */
+#define CBFTSTR(buffer, bytes_number)                   \
+    static_cast<std::ostringstream &>(                  \
+        std::ostringstream().write(buffer, read_bytes)) \
+        .str()
+
 class Client
 {
 public:

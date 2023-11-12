@@ -22,7 +22,7 @@ void Server::CreatSocket()
     hint.ai_socktype = SOCK_STREAM;
     hint.ai_flags = AI_PASSIVE;
 
-    std::cout << Lstring::Colored("Creating Socket", White) << std::endl;
+    DEBUGOUT(1, COLORED("Creating Socket", White));
     getaddrinfo(node, servce, &hint, &addr);
     this->socket_fd = socket(addr->ai_family, addr->ai_socktype, 0);
     if (this->socket_fd < 0)
@@ -34,8 +34,7 @@ void Server::CreatSocket()
     resure_flag = 1;
     if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &resure_flag, sizeof(resure_flag)) < 0)
         throw std::runtime_error("setsockopt() failed");
-    std::cout << Lstring::Colored("Binding Socket", Yellow) << std::endl;
-
+    DEBUGOUT(1, COLORED("Binding Socket", Yellow));
     if (bind(this->socket_fd, addr->ai_addr, addr->ai_addrlen) < 0)
         throw std::runtime_error("bind() failed");
     freeaddrinfo(addr);
@@ -47,7 +46,7 @@ void Server::Run()
 
     if (listen(this->socket_fd, 10) < 0)
         throw std::runtime_error("listen() failed");
-    std::cout << Lstring::Colored("Server in Listen Mode", Green) << std::endl;
+    DEBUGOUT(1, COLORED("Server in Listen Mode", Green));
     reactor.RegisterSocket(this->socket_fd, new AcceptEventHandler(this->socket_fd));
     reactor.EventLoop();
 }

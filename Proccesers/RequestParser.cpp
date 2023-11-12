@@ -1,5 +1,4 @@
 #include "RequestParser.hpp"
-
 RequestParser::RequestParser()
 {
     Content_Types = MimeTypes::GetContenTypes();
@@ -44,7 +43,7 @@ void RequestParser::ParseHeaders(std::string data)
     else if (strMethod == "delete")
         Method = Delete;
 
-    std::cout << "Method is " << strMethod << std::endl;
+    DEBUGOUT(0, "Method is " << strMethod);
 
     for (std::vector<std::string>::iterator it = List.begin() + 1; it != List.end(); it++)
     {
@@ -55,7 +54,7 @@ void RequestParser::ParseHeaders(std::string data)
     std::string TransferEncoding = GetHeaderAttr("Transfer-Encoding");
     std::string ContentLength = GetHeaderAttr("Content-Length");
 
-    if (ContentLength.empty() && TransferEncoding.empty())
+    if (ContentLength.empty() && TransferEncoding.empty() && Method == Post)
         throw HTTPError(501);
 
     if (!TransferEncoding.empty() && TransferEncoding != "chunked")
@@ -83,8 +82,8 @@ void RequestParser::ParseHeaders(std::string data)
             // if (Remaining > 1024)
             //     throw HTTPError(413);
         }
-        std::cout << "Remaining >> " << atoi(ContentLength.c_str()) << " ContentLength  >> "
-                  << ContentLength << "  Encoding " << (Encoding == 0 ? "Lenght" : "OTHER") << std::endl;
+        DEBUGOUT(0, "Remaining >> " << atoi(ContentLength.c_str()) << " ContentLength  >> "
+                                    << ContentLength << "  Encoding " << (Encoding == 0 ? "Lenght" : "OTHER"));
     }
     /**
      *  TODO: if => location have redirection like:  return 301 /home/index.html
@@ -95,11 +94,10 @@ Medium *RequestParser::Parse(std::string data)
 {
     size_t index = 0;
     this->buffer.append(data);
-    std::cout << "START PARSING .." << std::endl;
-
+    DEBUGOUT(0, "START PARSING ..  " << data.size());
     if ((index = buffer.find("\r\n\r\n")) != std::string::npos && Headers.empty())
     {
-        std::cout << "START PARSING HEADERS.." << std::endl;
+        DEBUGOUT(0, "START PARSING HEADERS..");
         ParseHeaders(buffer.substr(0, index));
         buffer = buffer.substr(index + 4);
     }
@@ -112,6 +110,7 @@ Medium *RequestParser::Parse(std::string data)
     else if (Method == Post && !BodyReady)
     {
         this->BodyReady = FillBody(buffer);
+        // std::cout <<
         if (this->BodyReady)
         {
             ParseBody();
@@ -130,27 +129,48 @@ Medium *RequestParser::Parse(std::string data)
 
 void RequestParser::ParseBody()
 {
+    DEBUGOUT(1, std::endl
+                    << COLORED("PARSING BODY", Magenta));
+
     std::string ContentType = GetHeaderAttr("Content-Type");
-    
+
     size_t index;
     if (ContentType.empty())
         return;
-    if (ContentType == "multipart/form-data" && (index = ContentType.find("boundary=")) != std::string::npos)
+    if ((index = ContentType.find("boundary=")) != std::string::npos)
     {
-        
+        std::string boundary = ContentType.substr(index + 9);
+        DEBUGOUT(1, "boundary=" << COLORED(boundary, Magenta));
+        std::vector<std::string> Parts = Lstring::Split(this->body, boundary);
+        for (std::vector<std::string>::iterator it = Parts.begin(); it != Parts.end(); it++)
+            DEBUGOUT(1, COLORED(*it, Yellow));
+
+        /**
+         * TODO: parse multipart/form-data body
+         */
     }
+    /**
+     * TODO: handle other types of the body
+     */
 }
 
 int RequestParser::FillBody(std::string &data)
 {
+
     if (Encoding == Lenght)
     {
+        DEBUGOUT(0, std::endl
+                        << COLORED("FILLING BODY FROM data ... REMAINING :: ", Magenta) << Remaining);
         if (Remaining != 0)
         {
             size_t PartSize = data.size() > (size_t)Remaining ? Remaining : data.size();
-            std::cout << Lstring::Colored(data.substr(0, PartSize), Red) << std::endl;
+            DEBUGOUT(0, COLORED(data.substr(0, PartSize), Red));
             this->body.append(data.substr(0, PartSize));
             Remaining -= PartSize;
+            DEBUGOUT(0, std::endl
+                            << COLORED("New ... REMAINING :: ", Magenta)
+                            << Remaining << COLORED("PartSize :: ", Magenta)
+                            << PartSize);
             data = data.substr(PartSize);
         }
         if (Remaining == 0)
@@ -169,7 +189,7 @@ int RequestParser::FillBody(std::string &data)
                 return (true);
             Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
             body.append(data.substr(index + 2, Part));
-            std::cout << Lstring::Colored(data.substr(index + 2, Part), Red) << std::endl;
+            DEBUGOUT(0, COLORED(data.substr(index + 2, Part), Red));
             if ((index + Remaining + 4) > data.size())
                 data.clear();
             else
@@ -181,6 +201,7 @@ int RequestParser::FillBody(std::string &data)
                 throw HTTPError(413);
         }
     }
+
     if (Encoding == NON)
         this->BodyReady = true;
 
@@ -190,13 +211,11 @@ int RequestParser::FillBody(std::string &data)
 void RequestParser::PrintfFullRequest()
 {
     for (HeadersIterator i = Headers.begin(); i != Headers.end(); i++)
-        std::cout << Lstring::Colored(i->first, Magenta) << " : " << Lstring::Colored(i->second, Green) << std::endl;
-    std::cout << std::endl
-              << std::endl;
-    std::cout << Lstring::Colored(SSTR(body.size()), Green) << std::endl;
-    std::cout << std::endl
-              << std::endl;
-    std::cout << Lstring::Colored(this->body, Magenta) << std::endl;
+        DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
+    DEBUGOUT(1, std::endl);
+    DEBUGOUT(1, COLORED(SSTR(body.size()), Green));
+    DEBUGOUT(1, std::endl);
+    DEBUGOUT(1, COLORED(this->body, Magenta));
 }
 
 std::string RequestParser::GetHeaderAttr(std::string name)
@@ -219,7 +238,7 @@ void RequestParser::GetResourceFilePath()
     ResourceFilePath = "public" + Url;
     if (Url == "/" || *(Url.end() - 1) == '/')
         ResourceFilePath += "index.html";
-    std::cout << Lstring::Colored("ResourceFile Path ", Cyan) + Lstring::Colored(ResourceFilePath, Green) << std::endl;
+    DEBUGOUT(0, COLORED("ResourceFile Path ", Cyan) << COLORED(ResourceFilePath, Green));
     if ((LastDotPos = ResourceFilePath.find_last_of(".")) == std::string::npos)
         throw HTTPError(404);
     this->File.ResourceFileType = this->Content_Types[ResourceFilePath.substr(LastDotPos)];

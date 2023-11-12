@@ -22,10 +22,10 @@ int HttpEventHandler::Read()
     buffer[read_bytes] = 0;
     if (read_bytes <= 0)
         return (0);
-    std::cout << "read " << read_bytes << std::endl;
+    DEBUGOUT(0, "read " << read_bytes);
     try
     {
-        medium = this->request.Parse(buffer);
+        medium = this->request.Parse(CBFTSTR(buffer, read_bytes));
         if (medium != NULL)
             this->response = new ResponseBuilder(*medium);
     }

@@ -71,7 +71,7 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
 {
     if (this->Buffer.empty())
         return (1);
-    std::cout << Lstring::Colored(this->Buffer, Yellow) << std::endl;
+    DEBUGOUT(0, COLORED(this->Buffer, Yellow));
     if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n" || this->medium.ResponseBuilderStatus != 200)
         return (0);
     this->Buffer.clear();

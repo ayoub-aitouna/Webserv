@@ -18,7 +18,7 @@ $(OBJ_DIR)/%.o : %.cpp
 	$(CC) $(CPPFLAGS) $(Sanitize) -c $< -o $@
 
 $(NAME) : $(OBJ)
-	$(CC) $(CPPFLAGS) $(Sanitize) $(OBJ) -o $(NAME)
+	$(CC) $(CPPFLAGS) $(Sanitize) $(OBJ) -o $(NAME) 
 
 Start: $(NAME)
 	clear && ./$(NAME)
