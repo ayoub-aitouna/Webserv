@@ -31,7 +31,9 @@ int HttpEventHandler::Read()
     }
     catch (const RequestParser::HTTPError &e)
     {
-        this->response = new ResponseBuilder(Medium(e.statusCode));
+
+        Medium *medium = new Medium(e.statusCode);
+        this->response = new ResponseBuilder(*medium);
     }
     catch (const std::exception &e)
     {

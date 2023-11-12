@@ -27,7 +27,7 @@ typedef enum Colors
  * <any other number>-  deactivated
  */
 #ifndef DEBUGE
-#define DEBUGE 2
+#define DEBUGE 1
 #endif
 
 #if DEBUGE == 1

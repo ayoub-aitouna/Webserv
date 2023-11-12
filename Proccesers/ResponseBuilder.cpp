@@ -49,17 +49,17 @@ ResponseBuilder::ResponseBuilder(Medium medium)
 {
     this->medium = medium;
     InitStatusCode();
-    if (medium.File.Fd != -2)
-        FillHeaders(medium.ResponseBuilderStatus);
+    if (medium.GetFile().Fd != -2)
+        FillHeaders(medium.GetResponseStatus());
 }
 
 void ResponseBuilder::FillHeaders(int StatusCode)
 {
     Buffer = ("HTTP/1.1 " + SSTR(StatusCode) + " " + StatusCodes[StatusCode] + "  \r\n");
-    if (medium.File.Fd != -1)
-        Buffer += "Content-Type: " + this->medium.File.ResourceFileType + "  \r\n";
+    if (medium.GetFile().Fd != -1)
+        Buffer += "Content-Type: " + this->medium.GetFile().ResourceFileType + "  \r\n";
     Buffer += "Connection: closed\r\n";
-    if (medium.File.Fd != -1)
+    if (medium.GetFile().Fd != -1)
         Buffer += "Transfer-Encoding: chunked\r\n\r\n";
 }
 
@@ -72,7 +72,7 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
     if (this->Buffer.empty())
         return (1);
     DEBUGOUT(0, COLORED(this->Buffer, Yellow));
-    if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n" || this->medium.ResponseBuilderStatus != 200)
+    if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n" || this->medium.GetResponseStatus() != 200)
         return (0);
     this->Buffer.clear();
     this->FillBuffer();
@@ -86,7 +86,7 @@ void ResponseBuilder::FillBuffer()
     std::stringstream ss;
     int BytesCount;
 
-    BytesCount = read(medium.File.Fd, buffer, KB);
+    BytesCount = read(medium.GetFile().Fd, buffer, KB);
     if (BytesCount < 0)
         throw std::runtime_error("Error Reading ResourceFile");
     else if (BytesCount == 0)
@@ -99,5 +99,5 @@ void ResponseBuilder::FillBuffer()
         this->Buffer = ss.str();
     }
     if (BytesCount < 1)
-        close(medium.File.Fd);
+        close(medium.GetFile().Fd);
 }

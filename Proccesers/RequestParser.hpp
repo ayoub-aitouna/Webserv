@@ -18,17 +18,8 @@ enum
     NON
 };
 
-enum
-{
-    Get,
-    Post,
-    Delete,
-    OTHER
-};
-
 class RequestParser
 {
-    typedef std::map<std::string, std::string>::iterator HeadersIterator;
 
 public:
     RequestParser();
@@ -37,19 +28,13 @@ public:
     int FillBody(std::string &data);
     void ParseBody();
     void GetResourceFilePath();
-    std::string GetHeaderAttr(std::string);
     void PrintfFullRequest();
 
 private:
-    std::map<std::string, std::string> Headers;
     std::map<std::string, std::string> Content_Types;
+    Medium medium;
     std::string buffer;
-    ResourceFile File;
-    std::string Url;
-    std::string body;
-
     bool BodyReady;
-    int Method;
     int Remaining;
     int Encoding;
 
