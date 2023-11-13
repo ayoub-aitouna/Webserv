@@ -15,9 +15,8 @@ HttpEventHandler::HttpEventHandler() : EventHandler(-1)
 int HttpEventHandler::Read()
 {
     char buffer[1025];
-    Medium *medium;
-
     int read_bytes;
+    bool Parsed;
     read_bytes = recv(this->SocketFd, buffer, KB, 0);
     buffer[read_bytes] = 0;
     if (read_bytes <= 0)
@@ -25,15 +24,14 @@ int HttpEventHandler::Read()
     DEBUGOUT(0, "read " << read_bytes);
     try
     {
-        medium = this->request.Parse(CBFTSTR(buffer, read_bytes));
-        if (medium != NULL)
-            this->response = new ResponseBuilder(*medium);
+        Parsed = this->request.Parse(CBFTSTR(buffer, read_bytes));
+        if (Parsed)
+            this->response = new ResponseBuilder(this->request.dataPool);
     }
     catch (const RequestParser::HTTPError &e)
     {
-
-        Medium *medium = new Medium(e.statusCode);
-        this->response = new ResponseBuilder(*medium);
+        this->request.dataPool.ResponseStatus = e.statusCode;
+        this->response = new ResponseBuilder(this->request.dataPool);
     }
     catch (const std::exception &e)
     {

@@ -45,21 +45,21 @@ void ResponseBuilder::InitStatusCode()
     StatusCodes[505] = "HTTP Version Not Supported";
 }
 
-ResponseBuilder::ResponseBuilder(Medium medium)
+ResponseBuilder::ResponseBuilder(DataPool dataPool)
 {
-    this->medium = medium;
+    this->dataPool = dataPool;
     InitStatusCode();
-    if (medium.GetFile().Fd != -2)
-        FillHeaders(medium.GetResponseStatus());
+    if (dataPool.File.Fd != -2)
+        FillHeaders(dataPool.ResponseStatus);
 }
 
 void ResponseBuilder::FillHeaders(int StatusCode)
 {
     Buffer = ("HTTP/1.1 " + SSTR(StatusCode) + " " + StatusCodes[StatusCode] + "  \r\n");
-    if (medium.GetFile().Fd != -1)
-        Buffer += "Content-Type: " + this->medium.GetFile().ResourceFileType + "  \r\n";
+    if (dataPool.File.Fd != -1)
+        Buffer += "Content-Type: " + this->dataPool.File.ResourceFileType + "  \r\n";
     Buffer += "Connection: closed\r\n";
-    if (medium.GetFile().Fd != -1)
+    if (dataPool.File.Fd != -1)
         Buffer += "Transfer-Encoding: chunked\r\n\r\n";
 }
 
@@ -72,7 +72,7 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
     if (this->Buffer.empty())
         return (1);
     DEBUGOUT(0, COLORED(this->Buffer, Yellow));
-    if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n" || this->medium.GetResponseStatus() != 200)
+    if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n" || this->dataPool.ResponseStatus != 200)
         return (0);
     this->Buffer.clear();
     this->FillBuffer();
@@ -86,7 +86,7 @@ void ResponseBuilder::FillBuffer()
     std::stringstream ss;
     int BytesCount;
 
-    BytesCount = read(medium.GetFile().Fd, buffer, KB);
+    BytesCount = read(dataPool.File.Fd, buffer, KB);
     if (BytesCount < 0)
         throw std::runtime_error("Error Reading ResourceFile");
     else if (BytesCount == 0)
@@ -99,5 +99,5 @@ void ResponseBuilder::FillBuffer()
         this->Buffer = ss.str();
     }
     if (BytesCount < 1)
-        close(medium.GetFile().Fd);
+        close(dataPool.File.Fd);
 }

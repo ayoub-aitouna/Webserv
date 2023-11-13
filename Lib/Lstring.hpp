@@ -27,7 +27,7 @@ typedef enum Colors
  * <any other number>-  deactivated
  */
 #ifndef DEBUGE
-#define DEBUGE 1
+#define DEBUGE 2
 #endif
 
 #if DEBUGE == 1
@@ -49,6 +49,7 @@ private:
 
 public:
     static std::vector<std::string> Split(std::string line, std::string delimiter);
+    static std::string ExtractFromString(std::string data, std::string start, std::string end);
     static void tolower(std::string &str);
 };
 

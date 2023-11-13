@@ -12,6 +12,7 @@ private:
 
 public:
     static std::map<std::string, std::string> GetContenTypes(void);
+    static std::map<std::string, std::string> GetReverseContenTypes(std::map<std::string, std::string> m);
 };
 
 #endif

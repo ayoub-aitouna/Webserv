@@ -11,7 +11,6 @@
 #include "EventHandler.hpp"
 #include "../Proccesers/ResponseBuilder.hpp"
 #include "../Proccesers/RequestParser.hpp"
-#include "../Proccesers/Medium/Medium.hpp"
 #include <sstream>
 
 /**

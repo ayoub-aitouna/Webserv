@@ -23,3 +23,15 @@ void Lstring::tolower(std::string &str)
     for (std::string::iterator it = str.begin(); it != str.end(); it++)
         *it = std::tolower(*it);
 }
+std::string Lstring::ExtractFromString(std::string data, std::string start, std::string end)
+{
+    size_t start_index, end_index;
+    std::string Value = "";
+    if ((start_index = data.find(start)) != std::string::npos)
+    {
+        Value = data.substr(start_index + start.size());
+        if ((end_index = Value.find(end)) != std::string::npos)
+            return (Value.substr(0, end_index));
+    }
+    return ("");
+}
