@@ -37,36 +37,31 @@ std::string Lstring::ExtractFromString(std::string data, std::string start, std:
     return ("");
 }
 
-std::string Lstring::RandomStr(int len)
+std::string Lstring::RandomStr(size_t len)
 {
     std::string str;
     char buff;
     int fd;
     int i;
-    int index;
 
-    fd = open("/dev/random", O_RDONLY);
+    fd = IO::OpenFile("/dev/random", "w+");
     i = 0;
-    index = 0;
-    while (i < 100 && index <= len)
+    while (i < 100 && str.length() <= len)
     {
         if (read(fd, &buff, 1) == -1)
             break;
         if (isalnum(buff))
-        {
             str += buff;
-            index++;
-        }
         i++;
     }
-    str[index] = 0;
+    close(fd);
     return (str);
 }
 
 void Lstring::LogAsBinary(std::string &str, bool to_file)
 {
 
-    int fd = to_file ? open("info_log.log", O_CREAT | O_TRUNC | O_RDWR, 0664) : 1;
+    int fd = to_file ? IO::OpenFile("info_log.log", "a+") : 1;
     int i = 0;
     for (std::string::iterator it = str.begin(); it < str.end(); it++)
     {
@@ -79,5 +74,6 @@ void Lstring::LogAsBinary(std::string &str, bool to_file)
         else
             i++;
     }
+    close(fd);
     dprintf(fd, "\n");
 }

@@ -32,7 +32,7 @@ int HttpEventHandler::Read()
     {
         this->request.dataPool.ResponseStatus = e.statusCode;
         this->response = new ResponseBuilder(this->request.dataPool);
-        DEBUGOUT(1, COLORED(this->response->StatusCodes[e.statusCode], Red));
+        DEBUGOUT(1, "HTTPError " << COLORED(this->response->StatusCodes[e.statusCode], Red));
     }
     catch (const std::exception &e)
     {

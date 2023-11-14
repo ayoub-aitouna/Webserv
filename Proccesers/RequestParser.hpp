@@ -10,10 +10,12 @@ public:
     RequestParser();
     bool Parse(std::string data);
     void ParseHeaders(std::string data);
-    int FillBody(std::string &data);
+    void ParseUrl(std::string &Url);
     void ParseBody();
     void GetResourceFilePath();
     void PrintfFullRequest();
+    int FillBody(std::string &data);
+    void AutoIndex(std::string &dirPath);
     std::string GetHeaderAttr(std::string name);
     WBSRVFILE SaveMultiPartFile(std::string &part);
     WBSRVFILE SaveBodyAsFile();

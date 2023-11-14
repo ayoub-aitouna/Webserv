@@ -20,6 +20,7 @@ public:
     void FillBuffer();
     void FillHeaders(int StatusCode);
     int FlushBuffer(int SocketFd);
+    void CreateStatusFile();
     void InitStatusCode();
 };
 #endif

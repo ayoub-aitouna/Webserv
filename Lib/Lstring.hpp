@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "IO.hpp"
 
 typedef enum Colors
 {
@@ -56,7 +57,7 @@ public:
     static std::string ExtractFromString(std::string data, std::string start, std::string end);
     static void tolower(std::string &str);
     static void LogAsBinary(std::string &str, bool to_file);
-    static std::string RandomStr(int len);
+    static std::string RandomStr(size_t len);
 };
 
 #endif

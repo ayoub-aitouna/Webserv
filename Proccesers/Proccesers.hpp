@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include "../Lib/Lstring.hpp"
+#include "../Lib/IO.hpp"
 #include "../Lib/MimeTypes.hpp"
 #include <sys/socket.h>
 #include <fcntl.h>
@@ -15,9 +16,18 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #define KB 1024
 #define SSTR(x) static_cast<std::ostringstream &>(std::ostringstream() << std::dec << x).str()
+
+enum
+{
+    NOBODY = -1,
+    ERROR = -2,
+};
 
 enum
 {
@@ -34,6 +44,12 @@ enum
     DELETE,
     OTHER
 };
+enum
+{
+    WB_FILE,
+    WB_DIRECTORY,
+    WB_NEITHER
+};
 
 typedef struct S_File
 {
@@ -48,7 +64,9 @@ typedef struct S_DataPool
     std::string Url;
     std::string Query;
     std::string body;
+    std::string Location;
     int ResponseStatus;
+    int ResourceType;
     int Method;
 } DataPool;
 

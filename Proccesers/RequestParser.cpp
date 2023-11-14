@@ -8,24 +8,45 @@ RequestParser::RequestParser()
     this->Remaining = 0;
     this->BodyReady = false;
     this->dataPool.Method = OTHER;
+    dataPool.File.Fd = NOBODY;
 }
 
-std::string UriDecode(std::string Uri)
+/**
+ * TODO: improve URL parsing and extract the query
+ * check if folder/file
+ */
+void RequestParser::ParseUrl(std::string &Url)
 {
     std::string DecodedUrl;
     unsigned int c;
-    while (true)
+    size_t index;
+
+    if (dataPool.Url.find("..") != NOPOS)
+        throw HTTPError(403);
+    if ((index = Url.find("?")) != NOPOS)
     {
-        size_t pos = Uri.find("%");
-        if (pos == NOPOS)
-            break;
-        DecodedUrl.append(Uri.substr(0, pos));
-        std::istringstream hexCode(Uri.substr(pos + 1, 2));
+        this->dataPool.Query = Url.substr(index + 1);
+        this->dataPool.Url = Url.substr(0, index);
+    }
+    while ((index = Url.find("%")) != NOPOS)
+    {
+        DecodedUrl.append(Url.substr(0, index));
+        std::istringstream hexCode(Url.substr(index + 1, 2));
         hexCode >> std::hex >> c;
         DecodedUrl += static_cast<char>(c);
-        Uri = Uri.substr(pos + 3);
+        Url = Url.substr(index + 3);
     }
-    return (DecodedUrl);
+    DecodedUrl.append(Url);
+    Url = DecodedUrl;
+    struct stat ResourceState;
+    if (stat(("public" + DecodedUrl).c_str(), &ResourceState) < 0)
+        throw HTTPError(500);
+    if (S_ISREG(ResourceState.st_mode))
+        this->dataPool.ResourceType = WB_FILE;
+    else if (S_ISDIR(ResourceState.st_mode))
+        this->dataPool.ResourceType = WB_DIRECTORY;
+    else
+        this->dataPool.ResourceType = WB_NEITHER;
 }
 
 void RequestParser::ParseHeaders(std::string data)
@@ -36,12 +57,9 @@ void RequestParser::ParseHeaders(std::string data)
     List = Lstring::Split(data, "\r\n");
     std::istringstream stream(List.at(0));
 
-    /**
-     * TODO: improve URL parsing and extract the query
-     * check if folder/file
-     */
-    std::string Url;
     stream >> strMethod >> this->dataPool.Url;
+    ParseUrl(this->dataPool.Url);
+    DEBUGOUT(1, this->dataPool.Query);
     Lstring::tolower(strMethod);
     this->dataPool.Method = strMethod == "get" ? GET : (strMethod == "post") ? POST
                                                                              : DELETE;
@@ -66,8 +84,7 @@ void RequestParser::ParseHeaders(std::string data)
     /**
      *  TODO: check if URI valide
      */
-
-    if (Url.size() > 2048)
+    if (this->dataPool.Url.size() > 2048)
         throw HTTPError(414);
 
     if (dataPool.Method == POST)
@@ -125,7 +142,7 @@ bool RequestParser::Parse(std::string data)
              * TODO: if is a cgi respounce with output from cgi
              *         else responce with 201
              */
-            return (dataPool.File.Fd = -1, dataPool.ResponseStatus = 201, true);
+            return (dataPool.ResponseStatus = 201, true);
         }
         break;
 
@@ -156,10 +173,7 @@ int RequestParser::FillBody(std::string &data)
             data = data.substr(PartSize);
         }
         if (Remaining == 0)
-        {
-            DEBUGOUT(1, "BODY PARSING ENDED");
             return (true);
-        }
     }
 
     if (Encoding == Chunked)
@@ -250,8 +264,6 @@ void RequestParser::ParseBody()
     std::string ContentType;
     std::vector<std::string> Parts;
 
-    DEBUGOUT(1, std::endl
-                    << COLORED("PARSING BODY", Magenta));
     Boundary = "boundary=";
     ContentType = GetHeaderAttr("Content-Type");
     if (ContentType.empty())
@@ -298,6 +310,60 @@ void RequestParser::PrintfFullRequest()
     // Lstring::LogAsBinary(this->dataPool.body, true);
 }
 
+void RequestParser::AutoIndex(std::string &dirPath)
+{
+    dirent *entry;
+    std::string buffer;
+    DIR *dir;
+    std::string FileName = "/tmp/" + Lstring::RandomStr(16);
+
+    dir = opendir(dirPath.c_str());
+    if (dir == NULL)
+        return;
+    buffer = "<!DOCTYPE html>"
+             "<html lang=\"en\">"
+             "<head>"
+             "<meta charset=\"UTF-8\">"
+             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+             "<title>List Files</title>"
+             "</head>"
+             "<body>"
+             "<ul>";
+    while ((entry = readdir(dir)) != NULL)
+    {
+        std::ostringstream ss;
+        ss << "<li> <a href=\"" << entry->d_name << "\">" << entry->d_name << "</a></li>";
+        buffer.append(ss.str());
+    }
+    buffer.append("</ul></body></html>");
+    this->dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "w+");
+
+    write(this->dataPool.File.Fd, buffer.c_str(), buffer.size());
+    close(this->dataPool.File.Fd);
+    this->dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "r+");
+    this->dataPool.File.ResourceFileType = "text/html";
+    closedir(dir);
+}
+
+std::string GetIndex(std::string &path)
+{
+    dirent *entry;
+    DIR *dir;
+    std::string IndexFileName;
+    dir = opendir(path.c_str());
+    if (dir == NULL)
+        return ("");
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (std::string(entry->d_name).find("index.") != std::string::npos)
+        {
+            IndexFileName = entry->d_name;
+            return (closedir(dir), IndexFileName);
+        }
+    }
+    return (closedir(dir), "");
+}
+
 void RequestParser::GetResourceFilePath()
 {
     /**
@@ -305,18 +371,42 @@ void RequestParser::GetResourceFilePath()
      * list all directory content in html
      */
     std::string ResourceFilePath;
+    std::string IndexFileName;
     size_t LastDotPos;
 
-    if (dataPool.Url.find("..") != NOPOS)
-        throw HTTPError(403);
     ResourceFilePath = "public" + dataPool.Url;
-    if (dataPool.Url == "/" || *(dataPool.Url.end() - 1) == '/')
-        ResourceFilePath += "index.html";
+    if (access(ResourceFilePath.c_str(), F_OK) != 0)
+        throw HTTPError(404);
+
+    if (this->dataPool.ResourceType == WB_DIRECTORY)
+    {
+        if (*(this->dataPool.Url.end() - 1) != '/')
+        {
+            this->dataPool.Location = this->dataPool.Url + "/";
+            throw HTTPError(301);
+        }
+
+        IndexFileName = GetIndex(ResourceFilePath);
+        if (IndexFileName.empty())
+        {
+            /**
+             * TODO: if auto indx on & method = Get
+             * return autoindex of the directory
+             */
+            if (true)
+                AutoIndex(ResourceFilePath);
+            else
+                throw HTTPError(403);
+        }
+        else
+            ResourceFilePath.append(IndexFileName);
+    }
     DEBUGOUT(0, COLORED("ResourceFile Path ", Cyan) << COLORED(ResourceFilePath, Green));
     if ((LastDotPos = ResourceFilePath.find_last_of(".")) == NOPOS)
         throw HTTPError(404);
-    this->dataPool.File.ResourceFileType = this->Content_Types[ResourceFilePath.substr(LastDotPos)];
+
     this->dataPool.File.Fd = open(ResourceFilePath.c_str(), O_RDONLY);
+    this->dataPool.File.ResourceFileType = this->Content_Types[ResourceFilePath.substr(LastDotPos)];
     if (this->dataPool.File.Fd < 0)
         throw HTTPError(404);
 }

@@ -53,18 +53,29 @@ ResponseBuilder::ResponseBuilder(DataPool dataPool)
         FillHeaders(dataPool.ResponseStatus);
 }
 
+void ResponseBuilder::CreateStatusFile()
+{
+    std::string FileName = "/tmp/" + Lstring::RandomStr(16);
+    this->dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "w+");
+
+    write(this->dataPool.File.Fd,
+          StatusCodes[this->dataPool.ResponseStatus].c_str(),
+          StatusCodes[this->dataPool.ResponseStatus].size());
+    close(this->dataPool.File.Fd);
+    this->dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "r+");
+    this->dataPool.File.ResourceFileType = "text/plain";
+}
+
 void ResponseBuilder::FillHeaders(int StatusCode)
 {
     Buffer = ("HTTP/1.1 " + SSTR(StatusCode) + " " + StatusCodes[StatusCode] + "  \r\n");
-    if (dataPool.File.Fd != -1)
-        Buffer += "Content-Type: " + this->dataPool.File.ResourceFileType + " \r\n";
-    else
-        Buffer += "Content-Type: text/plain \r\n";
+    if (dataPool.File.Fd == NOBODY)
+        CreateStatusFile();
+
+    Buffer += this->dataPool.Location.empty() ? "" : "Location: " + this->dataPool.Location + " \r\n";
+    Buffer += "Content-Type: " + this->dataPool.File.ResourceFileType + " \r\n";
     Buffer += "Connection: closed \r\n";
-    if (dataPool.File.Fd != -1)
-        Buffer += "Transfer-Encoding: chunked\r\n\r\n";
-    else
-        Buffer += "Content-Length: " + SSTR(StatusCodes[StatusCode].size() + " \r\n");
+    Buffer += "Transfer-Encoding: chunked\r\n\r\n";
 }
 
 ResponseBuilder::~ResponseBuilder()
@@ -75,14 +86,11 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
 {
     if (this->Buffer.empty())
         return (0);
-    DEBUGOUT(1, COLORED(this->Buffer, Yellow));
-    if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n" || this->dataPool.ResponseStatus != 200)
+    DEBUGOUT(0, COLORED(this->Buffer, Yellow));
+    if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n")
         return (0);
     this->Buffer.clear();
-    if (this->dataPool.File.Fd == -1 || this->dataPool.File.Fd == -2)
-        this->Buffer = StatusCodes[dataPool.ResponseStatus];
-    else
-        this->FillBuffer();
+    this->FillBuffer();
     return (1);
 }
 
