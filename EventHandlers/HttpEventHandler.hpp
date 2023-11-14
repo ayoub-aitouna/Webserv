@@ -18,9 +18,8 @@
  */
 #define CBFTSTR(buffer, bytes_number)                   \
     static_cast<std::ostringstream &>(                  \
-        std::ostringstream().write(buffer, read_bytes)) \
+        std::ostringstream().write(buffer, bytes_number)) \
         .str()
-
 class Client
 {
 public:

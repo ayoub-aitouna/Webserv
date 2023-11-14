@@ -2,11 +2,12 @@
 
 RequestParser::RequestParser()
 {
-    Content_Types = MimeTypes::GetContenTypes();
-    Reverse_Content_Types = MimeTypes::GetReverseContenTypes(Content_Types);
-    Encoding = NON;
-    Remaining = 0;
-    BodyReady = false;
+    this->Content_Types = MimeTypes::GetContenTypes();
+    this->Reverse_Content_Types = MimeTypes::GetReverseContenTypes(Content_Types);
+    this->Encoding = NON;
+    this->Remaining = 0;
+    this->BodyReady = false;
+    this->dataPool.Method = OTHER;
 }
 
 std::string UriDecode(std::string Uri)
@@ -85,8 +86,6 @@ void RequestParser::ParseHeaders(std::string data)
             if (Remaining > 5 * 1024 * KB)
                 throw HTTPError(413);
         }
-        DEBUGOUT(0, "Remaining >> " << atoi(ContentLength.c_str()) << " ContentLength  >> "
-                                    << ContentLength << "  Encoding " << (Encoding == 0 ? "Lenght" : "OTHER"));
     }
     /**
      *  TODO: if => location have redirection like:  return 301 /home/index.html
@@ -95,18 +94,19 @@ void RequestParser::ParseHeaders(std::string data)
 
 bool RequestParser::Parse(std::string data)
 {
+
     size_t index = 0;
     this->buffer.append(data);
-    DEBUGOUT(1, "START PARSING ..  " << data.size());
     if ((index = buffer.find("\r\n\r\n")) != NOPOS && dataPool.Headers.empty())
     {
-        DEBUGOUT(1, "START PARSING HEADERS..");
         ParseHeaders(buffer.substr(0, index));
-        buffer = buffer.substr(index + 4);
+        if (this->dataPool.Method == POST)
+            buffer = buffer.substr(index + 4);
     }
     switch (dataPool.Method)
     {
     case GET:
+        PrintfFullRequest();
         GetResourceFilePath();
         return (dataPool.ResponseStatus = 200, true);
         break;
@@ -116,17 +116,16 @@ bool RequestParser::Parse(std::string data)
             this->BodyReady = FillBody(buffer);
         if (this->BodyReady)
         {
+
             ParseBody();
             /** TODO:: Write Body into file
              * */
-            // PrintfFullRequest();
-
+            PrintfFullRequest();
             /**
-             * TODO: if is a cgi respounce wthi output f cgi
+             * TODO: if is a cgi respounce with output from cgi
              *         else responce with 201
              */
-            GetResourceFilePath();
-            return (dataPool.ResponseStatus = 200, true);
+            return (dataPool.File.Fd = -1, dataPool.ResponseStatus = 201, true);
         }
         break;
 
@@ -139,6 +138,7 @@ bool RequestParser::Parse(std::string data)
         return (dataPool.ResponseStatus = 501, true);
         break;
     }
+
     return (false);
 }
 
@@ -147,8 +147,6 @@ int RequestParser::FillBody(std::string &data)
 
     if (Encoding == Lenght)
     {
-        DEBUGOUT(0, std::endl
-                        << COLORED("FILLING BODY FROM data ... REMAINING :: ", Magenta) << Remaining);
         if (Remaining != 0)
         {
             size_t PartSize = data.size() > (size_t)Remaining ? Remaining : data.size();
@@ -159,7 +157,7 @@ int RequestParser::FillBody(std::string &data)
         }
         if (Remaining == 0)
         {
-            DEBUGOUT(0, "BODY PARSING ENDED");
+            DEBUGOUT(1, "BODY PARSING ENDED");
             return (true);
         }
     }
@@ -184,8 +182,8 @@ int RequestParser::FillBody(std::string &data)
             /**
              *  TODO: if => RequestParser body larger than client max body size in config file
              *        change <1024> with max-body from config file */
-            if (dataPool.body.size() > 1024)
-                throw HTTPError(413);
+            // if (dataPool.body.size() > 1024)
+            //     throw HTTPError(413);
         }
     }
 
@@ -195,20 +193,46 @@ int RequestParser::FillBody(std::string &data)
     return (false);
 }
 
-WBSRVFILE RequestParser::SaveAsFile(std::string &part)
+WBSRVFILE RequestParser::SaveBodyAsFile()
+{
+    std::string extention;
+    HeadersIterator it;
+    std::string FileName;
+    WBSRVFILE File;
+
+    it = Reverse_Content_Types.find(this->GetHeaderAttr("Content-Type"));
+    if (it != Reverse_Content_Types.end())
+        extention = it->second;
+    FileName = "public/" + Lstring::RandomStr(10) + extention;
+    std::ofstream OutputFile(FileName.c_str(), std::ios::binary);
+    if (!OutputFile)
+    {
+        DEBUGOUT(1, "Couldn't Open File : " << FileName);
+        throw HTTPError(500);
+    }
+    OutputFile << this->dataPool.body;
+    return (File);
+}
+
+WBSRVFILE RequestParser::SaveMultiPartFile(std::string &part)
 {
     std::string FileName;
+    std::string tmp;
     std::string Content_Type;
     WBSRVFILE File;
-    FileName = "FILE.txt";
-    FileName = Lstring::ExtractFromString(part, "filename=\"", "\"");
-    if (FileName.empty())
-        FileName = "FILE.txt";
-    Content_Type = Lstring::ExtractFromString(part, "Content-Type: ", "\r\n");
-    part = part.substr(part.find("\r\n\r\n") + 4);
-    part = part.substr(0, part.find("\r\n"));
 
-    std::ofstream outputFile(("public/" + FileName).c_str(), std::ios::out | std::ios::binary);
+    FileName = Lstring::RandomStr(10);
+    tmp = Lstring::ExtractFromString(part, "filename=\"", "\"");
+    if (!tmp.empty())
+        FileName = tmp;
+
+    Content_Type = Lstring::ExtractFromString(part, "Content-Type: ", "\r\n");
+
+    part = part.substr(part.find("\r\n\r\n") + 4);
+    part = part.substr(0, part.size() - 2);
+
+    std::ofstream outputFile(("public/" + FileName).c_str(), std::ios::binary);
+
     if (!outputFile)
     {
         DEBUGOUT(1, "Error While Opening File " << FileName);
@@ -220,7 +244,7 @@ WBSRVFILE RequestParser::SaveAsFile(std::string &part)
 
 void RequestParser::ParseBody()
 {
-    std::string Boundary, Devider, EOB;
+    std::string Boundary;
     size_t index, start, end;
 
     std::string ContentType;
@@ -237,27 +261,24 @@ void RequestParser::ParseBody()
         /**
          * TODO: parse multipart/form-data body
          */
-        Boundary = ContentType.substr(index + Boundary.size());
-        Devider = "--" + Boundary;
-        EOB = Boundary + "--\r\n";
+        Boundary = "--" + ContentType.substr(index + Boundary.size());
 
         for (;;)
         {
-            if ((start = this->dataPool.body.find(Devider)) == NOPOS)
+            if ((start = this->dataPool.body.find(Boundary)) == NOPOS)
                 break;
-            this->dataPool.body = this->dataPool.body.substr(start + Devider.size());
-            if ((end = this->dataPool.body.find(Devider)) == NOPOS)
+            this->dataPool.body = this->dataPool.body.substr(start + Boundary.size());
+            if ((end = this->dataPool.body.find(Boundary)) == NOPOS)
                 break;
-
             Parts.push_back(this->dataPool.body.substr(0, end));
             this->dataPool.body = this->dataPool.body.substr(end - 1);
         }
         this->dataPool.body.clear();
         for (std::vector<std::string>::iterator it = Parts.begin(); it != Parts.end(); it++)
-        {
-            WBSRVFILE File = SaveAsFile(*it);
-        }
+            WBSRVFILE File = SaveMultiPartFile(*it);
+        return;
     }
+    SaveBodyAsFile();
 }
 
 std::string RequestParser::GetHeaderAttr(std::string name)
@@ -274,20 +295,15 @@ void RequestParser::PrintfFullRequest()
 {
     for (HeadersIterator i = dataPool.Headers.begin(); i != dataPool.Headers.end(); i++)
         DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
-    DEBUGOUT(1, std::endl);
-    DEBUGOUT(1, COLORED(SSTR(dataPool.body.size()), Green));
-    DEBUGOUT(1, std::endl);
-    DEBUGOUT(1, COLORED(dataPool.body, Magenta));
+    // Lstring::LogAsBinary(this->dataPool.body, true);
 }
 
 void RequestParser::GetResourceFilePath()
 {
-
     /**
      * TODO: get_auto_index() checks if config-ON
      * list all directory content in html
      */
-
     std::string ResourceFilePath;
     size_t LastDotPos;
 

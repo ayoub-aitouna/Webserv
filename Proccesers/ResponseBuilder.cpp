@@ -57,10 +57,14 @@ void ResponseBuilder::FillHeaders(int StatusCode)
 {
     Buffer = ("HTTP/1.1 " + SSTR(StatusCode) + " " + StatusCodes[StatusCode] + "  \r\n");
     if (dataPool.File.Fd != -1)
-        Buffer += "Content-Type: " + this->dataPool.File.ResourceFileType + "  \r\n";
-    Buffer += "Connection: closed\r\n";
+        Buffer += "Content-Type: " + this->dataPool.File.ResourceFileType + " \r\n";
+    else
+        Buffer += "Content-Type: text/plain \r\n";
+    Buffer += "Connection: closed \r\n";
     if (dataPool.File.Fd != -1)
         Buffer += "Transfer-Encoding: chunked\r\n\r\n";
+    else
+        Buffer += "Content-Length: " + SSTR(StatusCodes[StatusCode].size() + " \r\n");
 }
 
 ResponseBuilder::~ResponseBuilder()
@@ -70,12 +74,15 @@ ResponseBuilder::~ResponseBuilder()
 int ResponseBuilder::FlushBuffer(int SocketFd)
 {
     if (this->Buffer.empty())
-        return (1);
-    DEBUGOUT(0, COLORED(this->Buffer, Yellow));
+        return (0);
+    DEBUGOUT(1, COLORED(this->Buffer, Yellow));
     if (send(SocketFd, this->Buffer.c_str(), this->Buffer.size(), 0) < 0 || this->Buffer == "0\r\n\r\n" || this->dataPool.ResponseStatus != 200)
         return (0);
     this->Buffer.clear();
-    this->FillBuffer();
+    if (this->dataPool.File.Fd == -1 || this->dataPool.File.Fd == -2)
+        this->Buffer = StatusCodes[dataPool.ResponseStatus];
+    else
+        this->FillBuffer();
     return (1);
 }
 

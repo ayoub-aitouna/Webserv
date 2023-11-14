@@ -21,7 +21,7 @@ int HttpEventHandler::Read()
     buffer[read_bytes] = 0;
     if (read_bytes <= 0)
         return (0);
-    DEBUGOUT(0, "read " << read_bytes);
+    DEBUGOUT(0, "Read " << read_bytes);
     try
     {
         Parsed = this->request.Parse(CBFTSTR(buffer, read_bytes));
@@ -32,10 +32,11 @@ int HttpEventHandler::Read()
     {
         this->request.dataPool.ResponseStatus = e.statusCode;
         this->response = new ResponseBuilder(this->request.dataPool);
+        DEBUGOUT(1, COLORED(this->response->StatusCodes[e.statusCode], Red));
     }
     catch (const std::exception &e)
     {
-        std::cerr << e.what() << '\n';
+        DEBUGOUT(1, COLORED(e.what(), Red));
         return (0);
     }
     return (read_bytes);

@@ -9,7 +9,7 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
 
     if (eventHandler == NULL)
         return;
-    DEBUGOUT(0, COLORED(std::string("Regester New ")
+    DEBUGOUT(1, COLORED(std::string("Regester New ")
                          << (dynamic_cast<AcceptEventHandler *>(eventHandler) != NULL ? "Server " : "Client ")
                          << "Socket " << SSTR(socketFd),
                      Blue));
@@ -24,7 +24,7 @@ void Reactor::UnRegisterSocket(int SocketFd)
     {
         if (it->first == SocketFd)
         {
-            DEBUGOUT(0, COLORED(std::string("UnRegister ")
+            DEBUGOUT(1, COLORED(std::string("UnRegister ")
                                  << (dynamic_cast<AcceptEventHandler *>(it->second) != NULL ? "Server " : "Client ")
                                  << "Socket "
                                  << SSTR(SocketFd),

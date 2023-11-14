@@ -15,17 +15,18 @@ public:
     void GetResourceFilePath();
     void PrintfFullRequest();
     std::string GetHeaderAttr(std::string name);
-    WBSRVFILE SaveAsFile(std::string &part);
+    WBSRVFILE SaveMultiPartFile(std::string &part);
+    WBSRVFILE SaveBodyAsFile();
 
 private:
     std::map<std::string, std::string> Content_Types;
     std::map<std::string, std::string> Reverse_Content_Types;
-    std::string buffer;
     bool BodyReady;
     int Remaining;
     int Encoding;
 
 public:
+    std::string buffer;
     DataPool dataPool;
 
 public:

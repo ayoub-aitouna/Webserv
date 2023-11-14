@@ -3,7 +3,6 @@
 
 #include "Proccesers.hpp"
 
-
 class ResponseBuilder
 {
 public:
@@ -13,6 +12,8 @@ public:
 private:
     std::string Buffer;
     DataPool dataPool;
+
+public:
     std::map<int, std::string> StatusCodes;
 
 public:
