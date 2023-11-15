@@ -11,7 +11,7 @@ CC = g++
 CPPFLAGS = -Wall -Wextra -Werror -std=c++98 
 Sanitize		:= -g -fsanitize=address
 
-all : $(NAME)
+all : Start
 
 $(OBJ_DIR)/%.o : %.cpp
 	@mkdir -p $(dir $@)

@@ -58,6 +58,9 @@ public:
     static void tolower(std::string &str);
     static void LogAsBinary(std::string &str, bool to_file);
     static std::string RandomStr(size_t len);
+    static long Stol(const std::string &str,
+                     std::size_t *pos = NULL, int base = 10);
+    static std::string base64_encode(const std::string &input);
 };
 
 #endif

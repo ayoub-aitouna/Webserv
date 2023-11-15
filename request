@@ -1,0 +1,10 @@
+POST /example-endpoint HTTP/1.1<BRK>
+Host: example.com<BRK>
+Content-Type: application/octet-stream<BRK>
+Transfer-Encoding: chunked<BRK>
+<BRK>
+1E<BRK>
+This is the first part of the data.<BRK>
+0D<BRK>
+Here comes the second part.<BRK>
+0<BRK>

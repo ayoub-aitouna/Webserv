@@ -51,7 +51,6 @@ void RequestParser::ParseUrl(std::string &Url)
 
 void RequestParser::ParseHeaders(std::string data)
 {
-
     std::vector<std::string> List;
     std::string strMethod;
     List = Lstring::Split(data, "\r\n");
@@ -178,31 +177,48 @@ int RequestParser::FillBody(std::string &data)
 
     if (Encoding == Chunked)
     {
+        DEBUGOUT(1, COLORED(Lstring::base64_encode(data), Magenta));
+        DEBUGOUT(1, "\n\n----------------\n\n");
+
         size_t index;
         size_t Part;
 
-        while ((index = data.find("\r\n")) != NOPOS)
+        while (!data.empty())
         {
-            Remaining = strtol(data.c_str(), 0, 16);
-            if (Remaining == 0)
-                return (true);
-            Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
-            dataPool.body.append(data.substr(index + 2, Part));
-            DEBUGOUT(0, COLORED(data.substr(index + 2, Part), Red));
-            if ((index + Remaining + 4) > data.size())
-                data.clear();
+            DEBUGOUT(1, COLORED("NEW Loop instance  " << Remaining, Magenta));
+            if (Remaining == 0 && (index = data.find("\r\n")) != NOPOS)
+            {
+                Remaining = Lstring::Stol(data, 0, 16);
+                index += 2;
+                if (Remaining == 0)
+                {
+                    DEBUGOUT(1, COLORED("DONE   :   " << Lstring::base64_encode(data), Red));
+                    return (true);
+                }
+            }
             else
-                data = data.substr((index + Remaining + 4));
+                index = 0;
+
+            Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
+
+            std::string RawData = data.substr(index, Part);
+            DEBUGOUT(1, COLORED(Lstring::base64_encode(RawData), Blue));
+
+            dataPool.body.append(RawData);
+
+            Remaining -= Part;
+
+            data = data.erase(0, Part + index + (Remaining == 0 ? 2 : 0));
+
             /**
              *  TODO: if => RequestParser body larger than client max body size in config file
              *        change <1024> with max-body from config file */
-            // if (dataPool.body.size() > 1024)
+            // if (dataPool.body.size() > 90 * 1024 * 1024)
             //     throw HTTPError(413);
         }
     }
-
     if (Encoding == NON)
-        this->BodyReady = true;
+        return (true);
 
     return (false);
 }
@@ -305,6 +321,7 @@ std::string RequestParser::GetHeaderAttr(std::string name)
 
 void RequestParser::PrintfFullRequest()
 {
+    DEBUGOUT(1, "\n\n-------------------------------\n\n");
     for (HeadersIterator i = dataPool.Headers.begin(); i != dataPool.Headers.end(); i++)
         DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
     // Lstring::LogAsBinary(this->dataPool.body, true);

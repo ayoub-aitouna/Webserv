@@ -24,6 +24,8 @@ int HttpEventHandler::Read()
     DEBUGOUT(0, "Read " << read_bytes);
     try
     {
+        if (this->response != NULL)
+            return (read_bytes);
         Parsed = this->request.Parse(CBFTSTR(buffer, read_bytes));
         if (Parsed)
             this->response = new ResponseBuilder(this->request.dataPool);

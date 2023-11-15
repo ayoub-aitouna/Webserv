@@ -13,8 +13,7 @@ void HandleSigPip(int signal)
 int main()
 {
     signal(SIGPIPE, HandleSigPip);
-    std::string str(CBFTSTR("aaa", 3));
-    
+
     Server server("", "8080");
     try
     {

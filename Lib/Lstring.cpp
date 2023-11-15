@@ -77,3 +77,50 @@ void Lstring::LogAsBinary(std::string &str, bool to_file)
     close(fd);
     dprintf(fd, "\n");
 }
+
+long Lstring::Stol(const std::string &str,
+                   std::size_t *pos, int base)
+{
+    char *End;
+    size_t index = 0;
+    long num;
+
+    num = strtol(str.c_str(), &End, base);
+
+    for (std::string::const_iterator it = str.begin(); it != str.end(); it++)
+    {
+        if (&(*it) == End)
+            break;
+        index++;
+    }
+    if (pos != NULL)
+        *pos = (index >= str.length()) ? std::string::npos : index;
+    return (num);
+}
+
+std::string Lstring::base64_encode(const std::string &input)
+{
+
+    std::string output;
+
+    for (std::string::const_iterator it = input.begin(); it != input.end(); it++)
+    {
+        // Check if the character is printable
+        if (isprint(static_cast<unsigned char>(*it)))
+        {
+            output.push_back(*it);
+        }
+        else
+        {
+            if (*it == '\r' && *(it + 1) == '\n')
+            {
+                output.append("<brk>\n");
+                it++;
+            }
+            else
+                output.push_back('*');
+        }
+    }
+
+    return output;
+}
