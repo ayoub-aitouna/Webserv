@@ -2,7 +2,6 @@
 #define RequestParser_HPP
 
 #include "Proccesers.hpp"
-#define NOPOS std::string::npos
 class RequestParser
 {
 
@@ -24,12 +23,14 @@ private:
     std::map<std::string, std::string> Content_Types;
     std::map<std::string, std::string> Reverse_Content_Types;
     bool BodyReady;
-    int Remaining;
+    long Remaining;
     int Encoding;
+    int ChunkState;
 
 public:
     std::string buffer;
     DataPool dataPool;
+    long datasize;
 
 public:
     class HTTPError : public std::exception

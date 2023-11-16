@@ -8,7 +8,9 @@ RequestParser::RequestParser()
     this->Remaining = 0;
     this->BodyReady = false;
     this->dataPool.Method = OTHER;
-    dataPool.File.Fd = NOBODY;
+    this->dataPool.File.Fd = NOBODY;
+    this->datasize = 0;
+    ChunkState = Size;
 }
 
 /**
@@ -21,14 +23,14 @@ void RequestParser::ParseUrl(std::string &Url)
     unsigned int c;
     size_t index;
 
-    if (dataPool.Url.find("..") != NOPOS)
+    if (dataPool.Url.find("..") != std::string::npos)
         throw HTTPError(403);
-    if ((index = Url.find("?")) != NOPOS)
+    if ((index = Url.find("?")) != std::string::npos)
     {
         this->dataPool.Query = Url.substr(index + 1);
         this->dataPool.Url = Url.substr(0, index);
     }
-    while ((index = Url.find("%")) != NOPOS)
+    while ((index = Url.find("%")) != std::string::npos)
     {
         DecodedUrl.append(Url.substr(0, index));
         std::istringstream hexCode(Url.substr(index + 1, 2));
@@ -61,7 +63,8 @@ void RequestParser::ParseHeaders(std::string data)
     DEBUGOUT(1, this->dataPool.Query);
     Lstring::tolower(strMethod);
     this->dataPool.Method = strMethod == "get" ? GET : (strMethod == "post") ? POST
-                                                                             : DELETE;
+                                                   : (strMethod == "delete") ? DELETE
+                                                                             : OTHER;
 
     DEBUGOUT(0, "Method is " << strMethod);
 
@@ -113,7 +116,7 @@ bool RequestParser::Parse(std::string data)
 
     size_t index = 0;
     this->buffer.append(data);
-    if ((index = buffer.find("\r\n\r\n")) != NOPOS && dataPool.Headers.empty())
+    if ((index = buffer.find("\r\n\r\n")) != std::string::npos && dataPool.Headers.empty())
     {
         ParseHeaders(buffer.substr(0, index));
         if (this->dataPool.Method == POST)
@@ -177,39 +180,86 @@ int RequestParser::FillBody(std::string &data)
 
     if (Encoding == Chunked)
     {
-        DEBUGOUT(1, COLORED(Lstring::base64_encode(data), Magenta));
-        DEBUGOUT(1, "\n\n----------------\n\n");
-
         size_t index;
         size_t Part;
+        std::string RawData;
 
         while (!data.empty())
         {
-            DEBUGOUT(1, COLORED("NEW Loop instance  " << Remaining, Magenta));
-            if (Remaining == 0 && (index = data.find("\r\n")) != NOPOS)
+            switch (ChunkState)
             {
-                Remaining = Lstring::Stol(data, 0, 16);
-                index += 2;
+            case Size:
+
+                if ((index = data.find("\r\n")) == std::string::npos)
+                {
+                    if (data.size() < 7)
+                        return false;
+                    DEBUGOUT(0, COLORED("Size Error !!!!!!! ", Red)
+                                    << "\ndata.size  " << data.size()
+                                    << "\n---------------------\n"
+                                    << COLORED(" Data ERROR !!!  " << Lstring::base64_encode(data), Red)
+                                    << COLORED(" Start Data !!!  " << Lstring::base64_encode(this->dataPool.body.substr(0, 10)), Blue)
+                                    << "\n---------------------\n"
+                                    << COLORED(" End Data !!!    " << Lstring::base64_encode(this->dataPool.body.substr(dataPool.body.size() - 10, dataPool.body.size())), Blue));
+
+                    ChunkState = Error;
+                    break;
+                }
+                Remaining = strtol(data.c_str(), 0, 16);
+
+                DEBUGOUT(0, COLORED("Start Of uffer " << Lstring::base64_encode(data.substr(0, 10)), Magenta)
+                                << "Remaining  " << Remaining
+                                << " index  " << index);
+                ChunkState = Remaining != 0 ? Data : End;
+                data = data.erase(0, index + 2);
+                break;
+            case Data:
+                if (Remaining != 0)
+                {
+                    Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
+                    RawData = data.substr(0, Part);
+                    dataPool.body.append(RawData);
+                    Remaining -= Part;
+                    data = data.erase(0, Part);
+                }
+                if (data.size() < 2)
+                    return false;
                 if (Remaining == 0)
                 {
-                    DEBUGOUT(1, COLORED("DONE   :   " << Lstring::base64_encode(data), Red));
-                    return (true);
+                    if ((data.size() > 2) && (data.at(0) != '\r' || data.at(1) != '\n'))
+                    {
+                        DEBUGOUT(0, COLORED("Data Error !!!!!!! ", Red)
+                                        << "  Part  " << Part << "\n"
+                                        << "  Remaining  " << Remaining << "\n"
+                                        << COLORED(" Raw Data !!!  " << Lstring::base64_encode(RawData), Green)
+                                        << "\n---------------------\n"
+                                        << COLORED(" Data ERROR !!!  " << Lstring::base64_encode(data), Red)
+                                        << COLORED(" Start Data !!!  " << Lstring::base64_encode(this->dataPool.body.substr(0, 10)), Blue)
+                                        << "\n---------------------\n"
+                                        << COLORED(" End Data !!!    " << Lstring::base64_encode(this->dataPool.body.substr(dataPool.body.size() - 10, dataPool.body.size())), Blue));
+
+                        ChunkState = Error;
+                    }
+                    else
+                    {
+                        data = data.erase(0, 2);
+                        ChunkState = Size;
+                    }
                 }
+                break;
+            case End:
+                return (true);
+                DEBUGOUT(1, COLORED("END !!!  " << Lstring::base64_encode(data), Green));
+                break;
+
+            default:
+                break;
             }
-            else
-                index = 0;
-
-            Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
-
-            std::string RawData = data.substr(index, Part);
-            DEBUGOUT(1, COLORED(Lstring::base64_encode(RawData), Blue));
-
-            dataPool.body.append(RawData);
-
-            Remaining -= Part;
-
-            data = data.erase(0, Part + index + (Remaining == 0 ? 2 : 0));
-
+            if (ChunkState == Error)
+            {
+                DEBUGOUT(1, COLORED("ERROR !!!", Red));
+                exit(0);
+            }
             /**
              *  TODO: if => RequestParser body larger than client max body size in config file
              *        change <1024> with max-body from config file */
@@ -217,6 +267,7 @@ int RequestParser::FillBody(std::string &data)
             //     throw HTTPError(413);
         }
     }
+
     if (Encoding == NON)
         return (true);
 
@@ -284,7 +335,7 @@ void RequestParser::ParseBody()
     ContentType = GetHeaderAttr("Content-Type");
     if (ContentType.empty())
         return;
-    if ((index = ContentType.find(Boundary)) != NOPOS)
+    if ((index = ContentType.find(Boundary)) != std::string::npos)
     {
         /**
          * TODO: parse multipart/form-data body
@@ -293,10 +344,10 @@ void RequestParser::ParseBody()
 
         for (;;)
         {
-            if ((start = this->dataPool.body.find(Boundary)) == NOPOS)
+            if ((start = this->dataPool.body.find(Boundary)) == std::string::npos)
                 break;
             this->dataPool.body = this->dataPool.body.substr(start + Boundary.size());
-            if ((end = this->dataPool.body.find(Boundary)) == NOPOS)
+            if ((end = this->dataPool.body.find(Boundary)) == std::string::npos)
                 break;
             Parts.push_back(this->dataPool.body.substr(0, end));
             this->dataPool.body = this->dataPool.body.substr(end - 1);
@@ -419,7 +470,7 @@ void RequestParser::GetResourceFilePath()
             ResourceFilePath.append(IndexFileName);
     }
     DEBUGOUT(0, COLORED("ResourceFile Path ", Cyan) << COLORED(ResourceFilePath, Green));
-    if ((LastDotPos = ResourceFilePath.find_last_of(".")) == NOPOS)
+    if ((LastDotPos = ResourceFilePath.find_last_of(".")) == std::string::npos)
         throw HTTPError(404);
 
     this->dataPool.File.Fd = open(ResourceFilePath.c_str(), O_RDONLY);

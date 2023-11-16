@@ -112,9 +112,11 @@ std::string Lstring::base64_encode(const std::string &input)
         }
         else
         {
-            if (*it == '\r' && *(it + 1) == '\n')
+            if (*it == '\n')
+                output.append("<\\n>\n");
+            else if (*it == '\r' && *(it + 1) == '\n')
             {
-                output.append("<brk>\n");
+                output.append("<HttpBeak>\n");
                 it++;
             }
             else

@@ -1,0 +1,43 @@
+
+    if (Encoding ==  Chunked)
+    {
+        size_t index;
+        size_t Part;
+        std::string RawData;
+        while (!data.empty())
+        {
+            if (Remaining == 0 && (index = data.find("\r\n")) != NOPOS)
+            {
+                Remaining = Lstring::Stol(data, 0, 16);
+                this->datasize += Remaining;
+                // DEBUGOUT(1, COLORED("Progress : " << (float)this->datasize / 1048576, Yellow));
+                data = data.erase(0, index + 2);
+
+                if (Remaining == 0)
+                {
+                    DEBUGOUT(1, "End Data Size  " << data.size());
+                    return (true);
+                }
+            }
+
+            Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
+
+            RawData = data.substr(0, Part);
+
+            dataPool.body.append(RawData);
+
+            Remaining -= Part;
+
+            data.erase(0, Part + 1);
+            if (Remaining == 0)
+                data.erase(0, 1);
+
+            /**
+             *  TODO: if => RequestParser body larger than client max body size in config file
+             *        change <1024> with max-body from config file */
+            // if (dataPool.body.size() > 90 * 1024 * 1024)
+            //     throw HTTPError(413);
+        }
+    }
+    
+    

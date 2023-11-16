@@ -44,11 +44,21 @@ enum
     DELETE,
     OTHER
 };
+
 enum
 {
     WB_FILE,
     WB_DIRECTORY,
     WB_NEITHER
+};
+
+enum
+{
+    Size,
+    Data,
+    End,
+    Trailer,
+    Error
 };
 
 typedef struct S_File

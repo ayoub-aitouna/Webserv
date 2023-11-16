@@ -22,7 +22,9 @@ std::map<std::string, std::string> MimeTypes::GetContenTypes(void)
     types[".js"] = "application/javascript";
     types[".json"] = "application/json";
     types[".pdf"] = "application/pdf";
+    //Video
     types[".mp4"] = "video/mp4";
+    types[".ts"] = "video/mp2t";
 
     return (types);
 }

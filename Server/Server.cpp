@@ -36,7 +36,10 @@ void Server::CreatSocket()
         throw std::runtime_error("setsockopt() failed");
     DEBUGOUT(1, COLORED("Binding Socket", Yellow));
     if (bind(this->socket_fd, addr->ai_addr, addr->ai_addrlen) < 0)
+    {
+        perror("bind() ");
         throw std::runtime_error("bind() failed");
+    }
     freeaddrinfo(addr);
 }
 
