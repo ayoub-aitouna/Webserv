@@ -12,6 +12,7 @@
 #include "../Proccesers/ResponseBuilder.hpp"
 #include "../Proccesers/RequestParser.hpp"
 #include <sstream>
+#include "../HTTPError/HTTPError.hpp"
 
 /**
  * copies binary data from a buffer into a std::string object

@@ -33,7 +33,6 @@ enum
 {
     Lenght,
     Chunked,
-    Connection,
     NON
 };
 
@@ -52,15 +51,6 @@ enum
     WB_NEITHER
 };
 
-enum
-{
-    Size,
-    Data,
-    End,
-    Trailer,
-    Error
-};
-
 typedef struct S_File
 {
     int Fd;
@@ -75,11 +65,15 @@ typedef struct S_DataPool
     std::string Query;
     std::string body;
     std::string Location;
+    std::map<std::string, std::string> Content_Types;
+    std::map<std::string, std::string> Reverse_Content_Types;
     int ResponseStatus;
     int ResourceType;
     int Method;
 } DataPool;
 
 typedef std::map<std::string, std::string>::iterator HeadersIterator;
+
+std::string GetHeaderAttr(DataPool &dataPool, std::string name);
 
 #endif

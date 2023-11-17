@@ -30,7 +30,7 @@ int HttpEventHandler::Read()
         if (Parsed)
             this->response = new ResponseBuilder(this->request.dataPool);
     }
-    catch (const RequestParser::HTTPError &e)
+    catch (const HTTPError &e)
     {
         this->request.dataPool.ResponseStatus = e.statusCode;
         this->response = new ResponseBuilder(this->request.dataPool);

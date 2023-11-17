@@ -2,6 +2,13 @@
 #define RequestParser_HPP
 
 #include "Proccesers.hpp"
+#include "AutoIndex.hpp"
+#include "RequestBodyController/BodyController/BodyController.hpp"
+#include "RequestBodyController/LenghtController/LenghtController.hpp"
+#include "RequestBodyController/ChunkController/ChunkController.hpp"
+
+#include "../HTTPError/HTTPError.hpp"
+
 class RequestParser
 {
 
@@ -10,40 +17,17 @@ public:
     bool Parse(std::string data);
     void ParseHeaders(std::string data);
     void ParseUrl(std::string &Url);
-    void ParseBody();
     void GetResourceFilePath();
     void PrintfFullRequest();
-    int FillBody(std::string &data);
-    void AutoIndex(std::string &dirPath);
-    std::string GetHeaderAttr(std::string name);
-    WBSRVFILE SaveMultiPartFile(std::string &part);
-    WBSRVFILE SaveBodyAsFile();
 
 private:
-    std::map<std::string, std::string> Content_Types;
-    std::map<std::string, std::string> Reverse_Content_Types;
-    bool BodyReady;
-    long Remaining;
-    int Encoding;
-    int ChunkState;
-
-public:
+    BodyController *BodyReceiver;
     std::string buffer;
-    DataPool dataPool;
-    long datasize;
+    bool BodyReady;
 
 public:
-    class HTTPError : public std::exception
-    {
-    public:
-        int statusCode;
-        HTTPError(int statusCode) : statusCode(statusCode) {}
-
-    public:
-        const char *what() const throw()
-        {
-            return "HTTPError";
-        }
-    };
+    DataPool dataPool;
 };
+
+std::string CreateRow(int type, std::string Name, u_int64_t size, std::string permissions);
 #endif
