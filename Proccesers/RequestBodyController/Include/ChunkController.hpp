@@ -1,6 +1,6 @@
 #ifndef CHUNKCONTROLLER_HPP
 #define CHUNKCONTROLLER_HPP
-#include "../BodyController/BodyController.hpp"
+#include "BodyController.hpp"
 
 enum
 {

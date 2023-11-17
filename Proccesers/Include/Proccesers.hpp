@@ -5,9 +5,9 @@
 #include <map>
 #include <vector>
 #include <sstream>
-#include "../Lib/Lstring.hpp"
-#include "../Lib/IO.hpp"
-#include "../Lib/MimeTypes.hpp"
+#include "../../Lib/Lstring.hpp"
+#include "../../Lib/IO.hpp"
+#include "../../Lib/MimeTypes.hpp"
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include "../../HTTPError/HTTPError.hpp"
 
 #define KB 1024
 #define SSTR(x) static_cast<std::ostringstream &>(std::ostringstream() << std::dec << x).str()

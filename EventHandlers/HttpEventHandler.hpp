@@ -9,8 +9,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "EventHandler.hpp"
-#include "../Proccesers/ResponseBuilder.hpp"
-#include "../Proccesers/RequestParser.hpp"
+#include "../Proccesers/Include/ResponseBuilder.hpp"
+#include "../Proccesers/Include/RequestParser.hpp"
 #include <sstream>
 #include "../HTTPError/HTTPError.hpp"
 

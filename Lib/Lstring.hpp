@@ -61,6 +61,8 @@ public:
     static long Stol(const std::string &str,
                      std::size_t *pos = NULL, int base = 10);
     static std::string base64_encode(const std::string &input);
+    static bool IsAlNum(const std::string &input, size_t pos, size_t n = std::string::npos);
+    static bool Contains(const std::string &input, std::string &checklist, size_t pos);
 };
 
 #endif

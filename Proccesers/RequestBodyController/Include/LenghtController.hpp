@@ -1,6 +1,6 @@
 #ifndef LENGHTCONTROLLER_HPP
 #define LENGHTCONTROLLER_HPP
-#include "../BodyController/BodyController.hpp"
+#include "BodyController.hpp"
 
 class LenghtController : public BodyController
 {

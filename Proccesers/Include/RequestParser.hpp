@@ -3,11 +3,9 @@
 
 #include "Proccesers.hpp"
 #include "AutoIndex.hpp"
-#include "RequestBodyController/BodyController/BodyController.hpp"
-#include "RequestBodyController/LenghtController/LenghtController.hpp"
-#include "RequestBodyController/ChunkController/ChunkController.hpp"
-
-#include "../HTTPError/HTTPError.hpp"
+#include "../RequestBodyController/Include/BodyController.hpp"
+#include "../RequestBodyController/Include/LenghtController.hpp"
+#include "../RequestBodyController/Include/ChunkController.hpp"
 
 class RequestParser
 {
@@ -22,8 +20,8 @@ public:
 
 private:
     BodyController *BodyReceiver;
-    std::string buffer;
     bool BodyReady;
+    std::string buffer;
 
 public:
     DataPool dataPool;

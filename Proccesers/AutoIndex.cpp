@@ -1,10 +1,10 @@
-#include "AutoIndex.hpp"
+#include "Include/AutoIndex.hpp"
 
 std::string CreateRow(int type, std::string Name, u_int64_t size, std::string permissions)
 {
     std::ostringstream ss;
 
-    ss << "<tr>"
+    ss << "<tr class='Row'>"
        << "<td class=\"" << (type == 1 ? "folder-icon" : type == 2 ? "file-icon"
                                                                    : "")
        << "\"></td>"
@@ -51,6 +51,9 @@ std::string TemplateStart(const std::string &path)
                "        tr:hover {"
                "            background-color: #f5f5f5;"
                "        }"
+               "        .Row > td:first-of-type {"
+               "            width: 40px;"
+               "        }"
                "        .folder-icon::before {"
                "            content: '\\1F4C1';"
                "            font-size: 20px;"
@@ -94,7 +97,7 @@ std::string GetPermission(struct stat fileInfo)
     return (ss.str());
 }
 
-void AutoIndex(DataPool &dataPool,std::string &dirPath)
+void AutoIndex(DataPool &dataPool, std::string &dirPath)
 {
     dirent *entry;
     std::string buffer;

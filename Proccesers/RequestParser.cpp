@@ -1,4 +1,4 @@
-#include "RequestParser.hpp"
+#include "Include/RequestParser.hpp"
 
 RequestParser::RequestParser()
 {
@@ -9,15 +9,14 @@ RequestParser::RequestParser()
     this->dataPool.File.Fd = NOBODY;
 }
 
-/**
- * TODO: improve URL parsing and extract the query
- * check if folder/file
- */
 void RequestParser::ParseUrl(std::string &Url)
 {
     std::string DecodedUrl;
     unsigned int c;
     size_t index;
+  
+    if (this->dataPool.Url.size() > 2048)
+        throw HTTPError(414);
 
     if (dataPool.Url.find("..") != std::string::npos)
         throw HTTPError(403);
@@ -72,14 +71,8 @@ void RequestParser::ParseHeaders(std::string data)
     stream.str((List.at(0)));
     stream >> MethodName >> this->dataPool.Url;
 
-    /**
-     *  TODO: check if URI valide
-     */
     ParseUrl(this->dataPool.Url);
-    DEBUGOUT(1, this->dataPool.Query);
-    if (this->dataPool.Url.size() > 2048)
-        throw HTTPError(414);
-
+  
     this->dataPool.Method = GetMethodId(MethodName);
 
     for (std::vector<std::string>::iterator it = List.begin() + 1; it != List.end(); it++)
@@ -158,26 +151,27 @@ bool RequestParser::Parse(std::string data)
 
 void RequestParser::PrintfFullRequest()
 {
-    DEBUGOUT(1, "\n\n-------------------------------\n\n");
     for (HeadersIterator i = dataPool.Headers.begin(); i != dataPool.Headers.end(); i++)
         DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
-    // Lstring::LogAsBinary(this->dataPool.body, true);
 }
 
 std::string GetIndex(std::string &path)
 {
     dirent *entry;
     DIR *dir;
-    std::string IndexFileName;
+    std::string CurrentName;
+    size_t index;
     dir = opendir(path.c_str());
     if (dir == NULL)
         return ("");
     while ((entry = readdir(dir)) != NULL)
     {
-        if (std::string(entry->d_name).find("index.") != std::string::npos)
+        CurrentName = entry->d_name;
+        if ((index = CurrentName.find("index.", 0, 6)) != std::string::npos)
         {
-            IndexFileName = entry->d_name;
-            return (closedir(dir), IndexFileName);
+            DEBUGOUT(1, COLORED(CurrentName << " " << CurrentName.substr(index + 6), Green));
+            if (Lstring::IsAlNum(CurrentName, index + 6))
+                return (closedir(dir), CurrentName);
         }
     }
     return (closedir(dir), "");
@@ -185,22 +179,29 @@ std::string GetIndex(std::string &path)
 
 void RequestParser::GetResourceFilePath()
 {
-    /**
-     * TODO: get_auto_index() checks if config-ON
-     * list all directory content in html
-     */
     std::string ResourceFilePath;
     std::string IndexFileName;
+    std::string FileExtention;
     size_t LastDotPos;
 
     ResourceFilePath = "public" + dataPool.Url;
     if (access(ResourceFilePath.c_str(), F_OK) != 0)
         throw HTTPError(404);
-
+    /**
+     * TODO:
+     * decouple This part of code
+     * split into 3 simple classes:
+     * - GetResource.cpp
+     * - DeletResource.cpp
+     * - PostResource.cpp
+     */
     if (this->dataPool.ResourceType == WB_DIRECTORY)
     {
         if (*(this->dataPool.Url.end() - 1) != '/')
         {
+            if (this->dataPool.Method == DELETE)
+                throw HTTPError(409);
+
             this->dataPool.Location = this->dataPool.Url + "/";
             throw HTTPError(301);
         }
@@ -208,11 +209,7 @@ void RequestParser::GetResourceFilePath()
         IndexFileName = GetIndex(ResourceFilePath);
         if (IndexFileName.empty())
         {
-            /**
-             * TODO: if auto indx on & method = Get
-             * return autoindex of the directory
-             */
-            if (true)
+            if (true && this->dataPool.Method == GET)
                 AutoIndex(this->dataPool, ResourceFilePath);
             else
                 throw HTTPError(403);
@@ -220,14 +217,52 @@ void RequestParser::GetResourceFilePath()
         else
             ResourceFilePath.append(IndexFileName);
     }
+
     DEBUGOUT(0, COLORED("ResourceFile Path ", Cyan) << COLORED(ResourceFilePath, Green));
+
     if ((LastDotPos = ResourceFilePath.find_last_of(".")) == std::string::npos)
         throw HTTPError(404);
+    FileExtention = ResourceFilePath.substr(LastDotPos);
+    if (FileExtention == ".php" || FileExtention == ".py")
+    {
+        /**
+         * TODO: check if location support php | python Cgi
+         */
+    }
+    else
+    {
+        switch (this->dataPool.Method)
+        {
+        case GET:
+            this->dataPool.File.Fd = open(ResourceFilePath.c_str(), O_RDONLY);
+            this->dataPool.File.ResourceFileType = this->dataPool.Content_Types[FileExtention];
 
-    this->dataPool.File.Fd = open(ResourceFilePath.c_str(), O_RDONLY);
-    this->dataPool.File.ResourceFileType = this->dataPool.Content_Types[ResourceFilePath.substr(LastDotPos)];
-    if (this->dataPool.File.Fd < 0)
-        throw HTTPError(404);
+            if (this->dataPool.File.Fd < 0)
+                throw HTTPError(404);
+            break;
+        case POST:
+            throw HTTPError(403);
+            break;
+        case DELETE:
+            if (this->dataPool.ResourceType == WB_DIRECTORY)
+            {
+                /**
+                 * TODO:
+                 * Recursively Delete All Files And Folders in Requested Directory
+                 */
+            }
+            else if (this->dataPool.ResourceType == WB_FILE)
+            {
+                if (unlink(ResourceFilePath.c_str()) < 0)
+                    throw HTTPError(500);
+                throw HTTPError(204);
+            }
+            break;
+        default:
+            throw HTTPError(403);
+            break;
+        }
+    }
 }
 
 std::string GetHeaderAttr(DataPool &dataPool, std::string name)

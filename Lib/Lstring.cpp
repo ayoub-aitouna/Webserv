@@ -126,3 +126,27 @@ std::string Lstring::base64_encode(const std::string &input)
 
     return output;
 }
+
+bool Lstring::Contains(const std::string &input, std::string &checklist, size_t pos)
+{
+    for (std::string::iterator it = checklist.begin(); it != checklist.end(); it++)
+    {
+        if (input.find((*it), pos) == std::string::npos)
+            return (false);
+    }
+    return (true);
+}
+
+bool Lstring::IsAlNum(const std::string &input, size_t pos, size_t n)
+{
+    size_t index = 0;
+    if (pos >= n)
+        return (false);
+    for (std::string::const_iterator it = input.begin() + pos; it != input.end() && index < n; it++)
+    {
+        if (!isalnum(*it))
+            return (false);
+        index++;
+    }
+    return (true);
+}
