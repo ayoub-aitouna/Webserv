@@ -14,10 +14,11 @@ int main()
 {
     signal(SIGPIPE, HandleSigPip);
 
-    Server server("", "8080");
+    Server server;
     try
     {
-        server.CreatSocket();
+        for (size_t i = 0; i < 10; i++)
+            server.CreatSocket("", "80" + SSTR(80 + i));
         server.Run();
     }
     catch (const std::exception &e)

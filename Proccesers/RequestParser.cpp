@@ -14,7 +14,7 @@ void RequestParser::ParseUrl(std::string &Url)
     std::string DecodedUrl;
     unsigned int c;
     size_t index;
-  
+
     if (this->dataPool.Url.size() > 2048)
         throw HTTPError(414);
 
@@ -72,9 +72,8 @@ void RequestParser::ParseHeaders(std::string data)
     stream >> MethodName >> this->dataPool.Url;
 
     ParseUrl(this->dataPool.Url);
-  
-    this->dataPool.Method = GetMethodId(MethodName);
 
+    this->dataPool.Method = GetMethodId(MethodName);
     for (std::vector<std::string>::iterator it = List.begin() + 1; it != List.end(); it++)
     {
         std::vector<std::string> Attr = Lstring::Split(*it, ": ");
@@ -98,6 +97,7 @@ void RequestParser::ParseHeaders(std::string data)
 
         this->BodyReceiver->SetRemaining(atoi(ContentLength.c_str()));
     }
+
     /**
      *  TODO: if => location have redirection like:  return 301 /home/index.html
      */
@@ -223,12 +223,13 @@ void RequestParser::GetResourceFilePath()
     if ((LastDotPos = ResourceFilePath.find_last_of(".")) == std::string::npos)
         throw HTTPError(404);
     FileExtention = ResourceFilePath.substr(LastDotPos);
+
+    /**
+     * TODO: Files extention From Config File
+     * Config Exutable of Cgi
+     */
     if (FileExtention == ".php" || FileExtention == ".py")
-    {
-        /**
-         * TODO: check if location support php | python Cgi
-         */
-    }
+        RunCgi(ResourceFilePath);
     else
     {
         switch (this->dataPool.Method)
@@ -262,6 +263,44 @@ void RequestParser::GetResourceFilePath()
             throw HTTPError(403);
             break;
         }
+    }
+}
+
+void RequestParser::RunCgi(std::string &ResourceFilePath)
+{ /**
+   * TODO: check if location support php | python Cgi
+   * pass body to cgi as redirection
+   * & requested file as first argument
+   *
+   * example:
+   * export all_varaibles look at 'cgi rfc'
+   *  body_file | ./php-cgi requested_file.php > return_file
+   */
+    std::string Name;
+    pid_t pid;
+    int FileFd;
+    int status_ptr;
+
+    Name = Lstring::RandomStr(10).c_str();
+    pid = fork();
+    if (pid < 0)
+        throw HTTPError(500);
+    if (pid == 0)
+    {
+        FileFd = open(Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        if (pid < 0)
+            throw HTTPError(500);
+        dup2(FileFd, 1);
+        char *arg[] = {(char *)"python3", (char *)ResourceFilePath.c_str(), NULL};
+        if (execve("/usr/bin/python3", arg, NULL) < 0)
+            throw HTTPError(500);
+        close(1);
+    }
+    else
+    {
+        waitpid(pid, &status_ptr, 0);
+        this->dataPool.File.ResourceFileType = this->dataPool.Content_Types["html"];
+        this->dataPool.File.Fd = open(Name.c_str(), O_RDONLY);
     }
 }
 

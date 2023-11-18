@@ -20,17 +20,13 @@ class Server
 {
 public:
     Server();
-    Server(const std::string &node, const std::string &serv);
 
 public:
-    void CreatSocket();
-    // char *getAddreass();
+    void CreatSocket(const std::string &node, const std::string &serv);
     void Run();
 
 private:
-    std::string node;
-    std::string servce;
-    int socket_fd;
+    std::vector<int> VirtualServersFd;
 };
 
 #endif

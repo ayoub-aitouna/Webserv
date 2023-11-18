@@ -16,6 +16,7 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
     this->clients.push_back(std::make_pair(socketFd, eventHandler));
 }
 
+
 void Reactor::UnRegisterSocket(int SocketFd)
 {
     iterator it;
@@ -48,7 +49,7 @@ void Reactor::HandleEvents()
     for (it = this->clients.begin(); it != this->clients.end(); it++)
     {
         fds[i].fd = it->first;
-        fds[i].events = POLLWRNORM | POLLRDNORM;
+        fds[i].events = POLLWRNORM | POLLRDNORM;       
         i++;
     }
     if (poll(fds, i, -1) >= 0)
@@ -56,6 +57,7 @@ void Reactor::HandleEvents()
     else
         throw std::runtime_error("poll() failled");
 }
+
 
 void Reactor::Dispatch(struct pollfd *fds)
 {

@@ -6,6 +6,7 @@
 #include "../RequestBodyController/Include/BodyController.hpp"
 #include "../RequestBodyController/Include/LenghtController.hpp"
 #include "../RequestBodyController/Include/ChunkController.hpp"
+#include <sys/wait.h>
 
 class RequestParser
 {
@@ -16,6 +17,7 @@ public:
     void ParseHeaders(std::string data);
     void ParseUrl(std::string &Url);
     void GetResourceFilePath();
+    void RunCgi(std::string &ResourceFilePath);
     void PrintfFullRequest();
 
 private:
