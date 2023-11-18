@@ -3,10 +3,10 @@
 
 #include "Proccesers.hpp"
 #include "AutoIndex.hpp"
-#include "../RequestBodyController/Include/BodyController.hpp"
-#include "../RequestBodyController/Include/LenghtController.hpp"
-#include "../RequestBodyController/Include/ChunkController.hpp"
-#include <sys/wait.h>
+#include "../RequestHandlers/Include/Request.hpp"
+#include "../RequestHandlers/Include/PostRequest.hpp"
+#include "../RequestHandlers/Include/GetRequest.hpp"
+#include "../RequestHandlers/Include/DeleteRequest.hpp"
 
 class RequestParser
 {
@@ -16,13 +16,10 @@ public:
     bool Parse(std::string data);
     void ParseHeaders(std::string data);
     void ParseUrl(std::string &Url);
-    void GetResourceFilePath();
-    void RunCgi(std::string &ResourceFilePath);
-    void PrintfFullRequest();
+    void RequestHandlersFactory(std::string &Method);
 
 private:
-    BodyController *BodyReceiver;
-    bool BodyReady;
+    Request *RequestHandler;
     std::string buffer;
 
 public:

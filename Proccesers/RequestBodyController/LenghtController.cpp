@@ -4,6 +4,11 @@ LenghtController::LenghtController(DataPool &dataPool) : BodyController(dataPool
 {
 }
 
+LenghtController::LenghtController(DataPool &dataPool, u_int64_t Remaining) : BodyController(dataPool)
+{
+    this->Remaining = Remaining;
+}
+
 int LenghtController::Receiver(std::string &data)
 {
     if (Remaining != 0)
@@ -18,7 +23,6 @@ int LenghtController::Receiver(std::string &data)
         return (true);
     return (false);
 }
-
 
 void LenghtController::SetRemaining(unsigned long Remaining)
 {

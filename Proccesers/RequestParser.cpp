@@ -4,7 +4,6 @@ RequestParser::RequestParser()
 {
     this->dataPool.Content_Types = MimeTypes::GetContenTypes();
     this->dataPool.Reverse_Content_Types = MimeTypes::GetReverseContenTypes(dataPool.Content_Types);
-    this->BodyReady = false;
     this->dataPool.Method = OTHER;
     this->dataPool.File.Fd = NOBODY;
 }
@@ -35,28 +34,30 @@ void RequestParser::ParseUrl(std::string &Url)
     }
     DecodedUrl.append(Url);
     Url = DecodedUrl;
-    struct stat ResourceState;
-    if (stat(("public" + DecodedUrl).c_str(), &ResourceState) < 0)
-        throw HTTPError(500);
-    if (S_ISREG(ResourceState.st_mode))
-        this->dataPool.ResourceType = WB_FILE;
-    else if (S_ISDIR(ResourceState.st_mode))
-        this->dataPool.ResourceType = WB_DIRECTORY;
-    else
-        this->dataPool.ResourceType = WB_NEITHER;
 }
 
-int GetMethodId(std::string &Method)
+void RequestParser::RequestHandlersFactory(std::string &Method)
 {
-    Lstring::tolower(Method);
     if (Method == "get")
-        return (GET);
-    else if ((Method == "post"))
-        return (POST);
-    else if ((Method == "delete"))
-        return (DELETE);
-    else
-        return (OTHER);
+    {
+        this->dataPool.Method = GET;
+        RequestHandler = new GetRequest(this->dataPool);
+        return;
+    }
+    if ((Method == "post"))
+    {
+        this->dataPool.Method = POST;
+        RequestHandler = new PostRequest(this->dataPool);
+        return;
+    }
+    if ((Method == "delete"))
+    {
+        this->dataPool.Method = DELETE;
+        RequestHandler = new DeleteRequest(this->dataPool);
+        return;
+    }
+    RequestHandler = NULL;
+    this->dataPool.Method = OTHER;
 }
 
 void RequestParser::ParseHeaders(std::string data)
@@ -67,13 +68,12 @@ void RequestParser::ParseHeaders(std::string data)
     std::string ContentLength;
     std::istringstream stream;
 
-    List = Lstring::Split(data, "\r\n");
+    List = Lstring::Split(data, CRLF);
     stream.str((List.at(0)));
     stream >> MethodName >> this->dataPool.Url;
 
     ParseUrl(this->dataPool.Url);
 
-    this->dataPool.Method = GetMethodId(MethodName);
     for (std::vector<std::string>::iterator it = List.begin() + 1; it != List.end(); it++)
     {
         std::vector<std::string> Attr = Lstring::Split(*it, ": ");
@@ -88,15 +88,13 @@ void RequestParser::ParseHeaders(std::string data)
 
     if (!TransferEncoding.empty() && TransferEncoding != "chunked")
         throw HTTPError(501);
-    if (dataPool.Method == POST)
-    {
-        if (TransferEncoding == "chunked")
-            this->BodyReceiver = new ChunkController(dataPool);
-        else if (!ContentLength.empty())
-            this->BodyReceiver = new LenghtController(dataPool);
 
-        this->BodyReceiver->SetRemaining(atoi(ContentLength.c_str()));
-    }
+    RequestHandlersFactory(Lstring::tolower(MethodName));
+
+    if (TransferEncoding == "chunked")
+        this->RequestHandler->SetBodyController(Chunked, 0);
+    else if (!ContentLength.empty())
+        this->RequestHandler->SetBodyController(Lenght, atoi(ContentLength.c_str()));
 
     /**
      *  TODO: if => location have redirection like:  return 301 /home/index.html
@@ -105,203 +103,17 @@ void RequestParser::ParseHeaders(std::string data)
 
 bool RequestParser::Parse(std::string data)
 {
-    size_t index = 0;
+    size_t index;
+
     this->buffer.append(data);
-    if ((index = buffer.find("\r\n\r\n")) != std::string::npos && dataPool.Headers.empty())
+    if ((index = buffer.find(DBLCRLF)) != std::string::npos && dataPool.Headers.empty())
     {
         ParseHeaders(buffer.substr(0, index));
-        if (this->dataPool.Method == POST)
-            buffer = buffer.substr(index + 4);
+        buffer = buffer.substr(index + 4);
     }
-    switch (dataPool.Method)
-    {
-    case GET:
-        PrintfFullRequest();
-        GetResourceFilePath();
-        return (dataPool.ResponseStatus = 200, true);
-        break;
-
-    case POST:
-        if (!this->BodyReady)
-            this->BodyReady = BodyReceiver ? BodyReceiver->Receiver(this->buffer) : false;
-        if (this->BodyReady)
-        {
-            this->BodyReceiver->Parser();
-            PrintfFullRequest();
-            /**
-             * TODO: if is a cgi respounce with output from cgi
-             *         else responce with 201
-             */
-            return (dataPool.ResponseStatus = 201, true);
-        }
-        break;
-
-    case DELETE:
-        /**
-         * TODO:
-         *  */
-        break;
-    default:;
-        return (dataPool.ResponseStatus = 501, true);
-        break;
-    }
-
-    return (false);
-}
-
-void RequestParser::PrintfFullRequest()
-{
-    for (HeadersIterator i = dataPool.Headers.begin(); i != dataPool.Headers.end(); i++)
-        DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
-}
-
-std::string GetIndex(std::string &path)
-{
-    dirent *entry;
-    DIR *dir;
-    std::string CurrentName;
-    size_t index;
-    dir = opendir(path.c_str());
-    if (dir == NULL)
-        return ("");
-    while ((entry = readdir(dir)) != NULL)
-    {
-        CurrentName = entry->d_name;
-        if ((index = CurrentName.find("index.", 0, 6)) != std::string::npos)
-        {
-            DEBUGOUT(1, COLORED(CurrentName << " " << CurrentName.substr(index + 6), Green));
-            if (Lstring::IsAlNum(CurrentName, index + 6))
-                return (closedir(dir), CurrentName);
-        }
-    }
-    return (closedir(dir), "");
-}
-
-void RequestParser::GetResourceFilePath()
-{
-    std::string ResourceFilePath;
-    std::string IndexFileName;
-    std::string FileExtention;
-    size_t LastDotPos;
-
-    ResourceFilePath = "public" + dataPool.Url;
-    if (access(ResourceFilePath.c_str(), F_OK) != 0)
-        throw HTTPError(404);
-    /**
-     * TODO:
-     * decouple This part of code
-     * split into 3 simple classes:
-     * - GetResource.cpp
-     * - DeletResource.cpp
-     * - PostResource.cpp
-     */
-    if (this->dataPool.ResourceType == WB_DIRECTORY)
-    {
-        if (*(this->dataPool.Url.end() - 1) != '/')
-        {
-            if (this->dataPool.Method == DELETE)
-                throw HTTPError(409);
-
-            this->dataPool.Location = this->dataPool.Url + "/";
-            throw HTTPError(301);
-        }
-
-        IndexFileName = GetIndex(ResourceFilePath);
-        if (IndexFileName.empty())
-        {
-            if (true && this->dataPool.Method == GET)
-                AutoIndex(this->dataPool, ResourceFilePath);
-            else
-                throw HTTPError(403);
-        }
-        else
-            ResourceFilePath.append(IndexFileName);
-    }
-
-    DEBUGOUT(0, COLORED("ResourceFile Path ", Cyan) << COLORED(ResourceFilePath, Green));
-
-    if ((LastDotPos = ResourceFilePath.find_last_of(".")) == std::string::npos)
-        throw HTTPError(404);
-    FileExtention = ResourceFilePath.substr(LastDotPos);
-
-    /**
-     * TODO: Files extention From Config File
-     * Config Exutable of Cgi
-     */
-    if (FileExtention == ".php" || FileExtention == ".py")
-        RunCgi(ResourceFilePath);
-    else
-    {
-        switch (this->dataPool.Method)
-        {
-        case GET:
-            this->dataPool.File.Fd = open(ResourceFilePath.c_str(), O_RDONLY);
-            this->dataPool.File.ResourceFileType = this->dataPool.Content_Types[FileExtention];
-
-            if (this->dataPool.File.Fd < 0)
-                throw HTTPError(404);
-            break;
-        case POST:
-            throw HTTPError(403);
-            break;
-        case DELETE:
-            if (this->dataPool.ResourceType == WB_DIRECTORY)
-            {
-                /**
-                 * TODO:
-                 * Recursively Delete All Files And Folders in Requested Directory
-                 */
-            }
-            else if (this->dataPool.ResourceType == WB_FILE)
-            {
-                if (unlink(ResourceFilePath.c_str()) < 0)
-                    throw HTTPError(500);
-                throw HTTPError(204);
-            }
-            break;
-        default:
-            throw HTTPError(403);
-            break;
-        }
-    }
-}
-
-void RequestParser::RunCgi(std::string &ResourceFilePath)
-{ /**
-   * TODO: check if location support php | python Cgi
-   * pass body to cgi as redirection
-   * & requested file as first argument
-   *
-   * example:
-   * export all_varaibles look at 'cgi rfc'
-   *  body_file | ./php-cgi requested_file.php > return_file
-   */
-    std::string Name;
-    pid_t pid;
-    int FileFd;
-    int status_ptr;
-
-    Name = Lstring::RandomStr(10).c_str();
-    pid = fork();
-    if (pid < 0)
-        throw HTTPError(500);
-    if (pid == 0)
-    {
-        FileFd = open(Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-        if (pid < 0)
-            throw HTTPError(500);
-        dup2(FileFd, 1);
-        char *arg[] = {(char *)"python3", (char *)ResourceFilePath.c_str(), NULL};
-        if (execve("/usr/bin/python3", arg, NULL) < 0)
-            throw HTTPError(500);
-        close(1);
-    }
-    else
-    {
-        waitpid(pid, &status_ptr, 0);
-        this->dataPool.File.ResourceFileType = this->dataPool.Content_Types["html"];
-        this->dataPool.File.Fd = open(Name.c_str(), O_RDONLY);
-    }
+    if (!this->RequestHandler)
+        return (false);
+    return (this->RequestHandler->HandleRequest(this->buffer));
 }
 
 std::string GetHeaderAttr(DataPool &dataPool, std::string name)

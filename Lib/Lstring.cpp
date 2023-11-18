@@ -18,10 +18,11 @@ std::vector<std::string> Lstring::Split(std::string line, std::string delimiter)
     return (list);
 }
 
-void Lstring::tolower(std::string &str)
+std::string &Lstring::tolower(std::string &str)
 {
     for (std::string::iterator it = str.begin(); it != str.end(); it++)
         *it = std::tolower(*it);
+    return (str);
 }
 
 std::string Lstring::ExtractFromString(std::string data, std::string start, std::string end)

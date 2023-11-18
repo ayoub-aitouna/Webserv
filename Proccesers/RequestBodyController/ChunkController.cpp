@@ -18,7 +18,7 @@ int ChunkController::Receiver(std::string &data)
         switch (this->ChunkState)
         {
         case Size:
-            if ((index = data.find("\r\n")) == std::string::npos)
+            if ((index = data.find(CRLF)) == std::string::npos)
             {
                 if (data.size() < 7)
                     return false;
@@ -42,7 +42,7 @@ int ChunkController::Receiver(std::string &data)
                 return false;
             if (Remaining == 0)
             {
-                if ((data.size() > 2) && (data.at(0) != '\r' || data.at(1) != '\n'))
+                if ((data.size() > 2) && (data.substr(0, 2) != CRLF))
                     this->ChunkState = Error;
                 else
                 {

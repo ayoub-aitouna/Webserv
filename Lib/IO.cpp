@@ -5,6 +5,8 @@ int IO::OpenFile(const char *path, const char *mode)
     int fd;
 
     file = std::fopen(path, mode);
+    if (!file)
+        return (-1);
     fd = file->_fileno;
     if (fd < 0)
         throw std::runtime_error("Error while Opening a file");

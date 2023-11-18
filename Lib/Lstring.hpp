@@ -55,7 +55,7 @@ private:
 public:
     static std::vector<std::string> Split(std::string line, std::string delimiter);
     static std::string ExtractFromString(std::string data, std::string start, std::string end);
-    static void tolower(std::string &str);
+    static std::string &tolower(std::string &str);
     static void LogAsBinary(std::string &str, bool to_file);
     static std::string RandomStr(size_t len);
     static long Stol(const std::string &str,

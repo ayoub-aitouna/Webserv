@@ -56,9 +56,9 @@ WBSRVFILE BodyController::SaveMultiPartFile(std::string &part)
     if (!tmp.empty())
         FileName = tmp;
 
-    Content_Type = Lstring::ExtractFromString(part, "Content-Type: ", "\r\n");
+    Content_Type = Lstring::ExtractFromString(part, "Content-Type: ", CRLF);
 
-    part = part.substr(part.find("\r\n\r\n") + 4);
+    part = part.substr(part.find(DBLCRLF) + 4);
     part = part.substr(0, part.size() - 2);
 
     std::ofstream outputFile(("public/" + FileName).c_str(), std::ios::binary);

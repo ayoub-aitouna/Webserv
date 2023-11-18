@@ -22,6 +22,8 @@
 #include "../../HTTPError/HTTPError.hpp"
 
 #define KB 1024
+#define DBLCRLF "\r\n\r\n"
+#define CRLF "\r\n"
 #define SSTR(x) static_cast<std::ostringstream &>(std::ostringstream() << std::dec << x).str()
 
 enum
