@@ -9,14 +9,19 @@ bool GetRequest::HandleRequest(std::string &data)
     DEBUGOUT(1, "GET - HandleRequest RESOURCES");
 
     (void)data;
-    this->env.push_back("REQUEST_METHOD=GET");
     PrintfFullRequest();
-    this->GetRequestedResource();
+    this->Type = this->GetRequestedResource();
+    if (Type == SCRIPT)
+    {
+        this->isCGIRuning = Request::ExecuteCGI("/usr/bin/php-cgi", "GET");
+        this->dataPool.ResponseStatus = 200;
+        return !this->isCGIRuning;
+    }
     this->dataPool.ResponseStatus = 200;
     return (true);
 }
 
-void GetRequest::GetRequestedResource()
+int GetRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
 
@@ -34,7 +39,10 @@ void GetRequest::GetRequestedResource()
         if (IndexFileName.empty())
         {
             if (true)
-                return AutoIndex(this->dataPool, ResourceFilePath);
+            {
+                AutoIndex(this->dataPool, ResourceFilePath);
+                return NRMLFILE;
+            }
             throw HTTPError(403);
         }
         else
@@ -50,14 +58,13 @@ void GetRequest::GetRequestedResource()
      * Config Exutable of Cgi
      */
     if (FileExtention == ".php")
-        return Request::ExecuteCGI("/usr/bin/php-cgi");
-    else if (FileExtention == ".py")
-        return Request::ExecuteCGI("/usr/bin/python3");
+        return SCRIPT;
 
     this->dataPool.File.Fd = IO::OpenFile(ResourceFilePath.c_str(), "r");
     this->dataPool.File.ResourceFileType = this->dataPool.Content_Types[FileExtention];
     if (this->dataPool.File.Fd < 0)
         throw HTTPError(404);
+    return NRMLFILE;
 }
 
 GetRequest::~GetRequest()

@@ -29,7 +29,7 @@ void RequestParser::ParseUrl(std::string &Url)
     }
     DecodedUrl.append(Url);
     Url = DecodedUrl;
-    
+
     if ((index = Url.find("?")) != std::string::npos)
     {
         this->dataPool.Query = Url.substr(index + 1);
@@ -109,7 +109,7 @@ void RequestParser::ParseHeaders(std::string data)
 bool RequestParser::Parse(std::string data)
 {
     size_t index;
-
+    DEBUGOUT(1, "HERE");
     this->buffer.append(data);
     if ((index = buffer.find(DBLCRLF)) != std::string::npos && dataPool.Headers.empty())
     {

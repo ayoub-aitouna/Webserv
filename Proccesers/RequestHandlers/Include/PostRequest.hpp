@@ -9,7 +9,7 @@ private:
 public:
     PostRequest(DataPool &dataPool);
     virtual bool HandleRequest(std::string &data);
-    virtual void GetRequestedResource();
+    virtual int GetRequestedResource();
     ~PostRequest();
 };
 

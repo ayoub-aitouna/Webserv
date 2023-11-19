@@ -10,7 +10,7 @@ bool DeleteRequest::HandleRequest(std::string &data)
     return false;
 }
 
-void DeleteRequest::GetRequestedResource()
+int DeleteRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
 
@@ -36,8 +36,25 @@ void DeleteRequest::GetRequestedResource()
      */
     if (FileExtention == ".php" || FileExtention == ".py")
     {
-        return;
+        return SCRIPT;
     }
+
+    if (this->dataPool.ResourceType == WB_DIRECTORY)
+    {
+        /**
+         * TODO:
+         * Recursively Delete All Files And Folders in Requested Directory
+         */
+    }
+    else if (this->dataPool.ResourceType == WB_FILE)
+    {
+        if (unlink(ResourceFilePath.c_str()) < 0)
+        {
+            throw HTTPError(500);
+        }
+        throw HTTPError(204);
+    }
+    return (NONFILE);
 }
 
 DeleteRequest::~DeleteRequest()

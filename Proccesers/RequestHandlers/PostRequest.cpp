@@ -10,9 +10,11 @@ bool PostRequest::HandleRequest(std::string &data)
         this->BodyReady = BodyReceiver ? BodyReceiver->Receiver(data) : false;
     if (this->BodyReady)
     {
+
+        Type = GetRequestedResource();
         this->BodyReceiver->Parser();
         PrintfFullRequest();
-        GetRequestedResource();
+
         /**
          * TODO: if is a cgi respounce with output from cgi
          *         else responce with 201
@@ -22,7 +24,7 @@ bool PostRequest::HandleRequest(std::string &data)
     return false;
 }
 
-void PostRequest::GetRequestedResource()
+int PostRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
 
@@ -36,9 +38,9 @@ void PostRequest::GetRequestedResource()
             this->dataPool.Location = this->dataPool.Url + "/";
             throw HTTPError(301);
         }
-        if (!(IndexFileName = GetIndex(ResourceFilePath)).empty())
-            ResourceFilePath.append(IndexFileName);
-        throw HTTPError(403);
+        if ((IndexFileName = GetIndex(ResourceFilePath)).empty())
+            throw HTTPError(403);
+        ResourceFilePath.append(IndexFileName);
     }
 
     DEBUGOUT(0, COLORED("POST - ResourceFile Path ", Blue) << COLORED(ResourceFilePath, Green));
@@ -49,24 +51,10 @@ void PostRequest::GetRequestedResource()
      * TODO: Files extention From Config File
      * Config Exutable of Cgi
      */
-    if (FileExtention == ".php" || FileExtention == ".py")
-    {
-        //   RunCgi(ResourceFilePath);
-        return;
-    }
-    if (this->dataPool.ResourceType == WB_DIRECTORY)
-    {
-        /**
-         * TODO:
-         * Recursively Delete All Files And Folders in Requested Directory
-         */
-    }
-    else if (this->dataPool.ResourceType == WB_FILE)
-    {
-        if (unlink(ResourceFilePath.c_str()) < 0)
-            throw HTTPError(500);
-        throw HTTPError(204);
-    }
+    if (FileExtention == ".php")
+        return SCRIPT;
+    throw HTTPError(403);
+    return NONFILE;
 }
 
 PostRequest::~PostRequest()
