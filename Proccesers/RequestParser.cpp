@@ -19,11 +19,6 @@ void RequestParser::ParseUrl(std::string &Url)
 
     if (dataPool.Url.find("..") != std::string::npos)
         throw HTTPError(403);
-    if ((index = Url.find("?")) != std::string::npos)
-    {
-        this->dataPool.Query = Url.substr(index + 1);
-        this->dataPool.Url = Url.substr(0, index);
-    }
     while ((index = Url.find("%")) != std::string::npos)
     {
         DecodedUrl.append(Url.substr(0, index));
@@ -34,6 +29,13 @@ void RequestParser::ParseUrl(std::string &Url)
     }
     DecodedUrl.append(Url);
     Url = DecodedUrl;
+    
+    if ((index = Url.find("?")) != std::string::npos)
+    {
+        this->dataPool.Query = Url.substr(index + 1);
+        DEBUGOUT(1, COLORED(this->dataPool.Query, Yellow));
+        this->dataPool.Url = Url.substr(0, index);
+    }
 }
 
 void RequestParser::RequestHandlersFactory(std::string &Method)
@@ -91,10 +93,13 @@ void RequestParser::ParseHeaders(std::string data)
 
     RequestHandlersFactory(Lstring::tolower(MethodName));
 
-    if (TransferEncoding == "chunked")
-        this->RequestHandler->SetBodyController(Chunked, 0);
-    else if (!ContentLength.empty())
-        this->RequestHandler->SetBodyController(Lenght, atoi(ContentLength.c_str()));
+    this->RequestHandler->SetBodyController(
+        TransferEncoding == "chunked"
+            ? Chunked
+        : (!ContentLength.empty())
+            ? Lenght
+            : NON,
+        0);
 
     /**
      *  TODO: if => location have redirection like:  return 301 /home/index.html

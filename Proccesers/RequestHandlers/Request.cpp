@@ -4,6 +4,7 @@ Request::Request(DataPool &dataPool) : dataPool(dataPool)
 {
     this->BodyReady = false;
     this->BodyReceiver = NULL;
+    env.push_back("REDIRECT_STATUS=1");
 }
 
 void Request::GetRequestedResource()
@@ -50,7 +51,7 @@ std::string Request::GetIndex(std::string &path)
 void Request::PrintfFullRequest()
 {
     for (HeadersIterator i = dataPool.Headers.begin(); i != dataPool.Headers.end(); i++)
-        DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
+        DEBUGOUT(0, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
 }
 
 std::string Request::GetFileExtention(std::string &FilePath)
@@ -78,38 +79,64 @@ void Request::SetBodyController(int Type, u_int64_t Remaining)
  * export all_varaibles look at 'cgi rfc'
  *  body_file | ./php-cgi requested_file.php > return_file
  */
-/**
-void RequestParser::RunCgi(std::string &ResourceFilePath)
+
+char **FromVectorToArray(std::vector<std::string> vec)
 {
-    std::string Name;
+    char **Array = new char *[vec.size() + 1];
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        Array[i] = new char[vec.at(i).size() + 1];
+        std::strcpy(Array[i], vec.at(i).c_str());
+    }
+    Array[vec.size()] = NULL;
+    return (Array);
+}
+
+void Request::ExecuteCGI(std::string CGIName)
+{
+    std::string TmpFileName;
     pid_t pid;
     int FileFd;
     int status_ptr;
+    std::string responseBuffer;
+    std::string line;
+    TmpFileName = "/tmp/" + Lstring::RandomStr(10);
+    av.push_back(CGIName);
 
-    Name = Lstring::RandomStr(10).c_str();
+    env.push_back("SCRIPT_FILENAME=" + this->ResourceFilePath);
+    env.push_back("QUERY_STRING=" + this->dataPool.Query);
+
     pid = fork();
+
     if (pid < 0)
         throw HTTPError(500);
     if (pid == 0)
     {
-        FileFd = open(Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
         if (pid < 0)
             throw HTTPError(500);
-        dup2(FileFd, 1);
-        char *arg[] = {(char *)"python3", (char *)ResourceFilePath.c_str(), NULL};
-        if (execve("/usr/bin/python3", arg, NULL) < 0)
+
+        dup2(IO::OpenFile(TmpFileName.c_str(), "w+"), 1);
+        if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
             throw HTTPError(500);
         close(1);
     }
-    else
-    {
-        waitpid(pid, &status_ptr, 0);
-        this->dataPool.File.ResourceFileType = this->dataPool.Content_Types["html"];
-        this->dataPool.File.Fd = open(Name.c_str(), O_RDONLY);
-    }
-}
 
-*/
+    waitpid(pid, &status_ptr, 0);
+    std::ifstream responseFile(TmpFileName.c_str());
+    while (getline(responseFile, line))
+    {
+        if (line.find("Content-type") != std::string::npos)
+            this->dataPool.File.ResourceFileType = Lstring::ExtractFromString(line, "Content-type: ", "; ");
+        else
+            responseBuffer.append(line);
+    }
+
+    unlink(TmpFileName.c_str());
+    FileFd = IO::OpenFile(TmpFileName.c_str(), "w+");
+    write(FileFd, responseBuffer.c_str(), responseBuffer.size());
+    close(FileFd);
+    this->dataPool.File.Fd = IO::OpenFile(TmpFileName.c_str(), "r+");
+}
 
 Request::~Request()
 {

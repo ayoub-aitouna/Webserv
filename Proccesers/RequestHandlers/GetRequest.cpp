@@ -9,6 +9,7 @@ bool GetRequest::HandleRequest(std::string &data)
     DEBUGOUT(1, "GET - HandleRequest RESOURCES");
 
     (void)data;
+    this->env.push_back("REQUEST_METHOD=GET");
     PrintfFullRequest();
     this->GetRequestedResource();
     this->dataPool.ResponseStatus = 200;
@@ -48,11 +49,10 @@ void GetRequest::GetRequestedResource()
      * TODO: Files extention From Config File
      * Config Exutable of Cgi
      */
-    if (FileExtention == ".php" || FileExtention == ".py")
-    {
-        //   RunCgi(ResourceFilePath);
-        return;
-    }
+    if (FileExtention == ".php")
+        return Request::ExecuteCGI("/usr/bin/php-cgi");
+    else if (FileExtention == ".py")
+        return Request::ExecuteCGI("/usr/bin/python3");
 
     this->dataPool.File.Fd = IO::OpenFile(ResourceFilePath.c_str(), "r");
     this->dataPool.File.ResourceFileType = this->dataPool.Content_Types[FileExtention];

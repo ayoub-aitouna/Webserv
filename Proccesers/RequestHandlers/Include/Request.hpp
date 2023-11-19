@@ -5,6 +5,8 @@
 #include "../../RequestBodyController/Include/LenghtController.hpp"
 #include "../../RequestBodyController/Include/ChunkController.hpp"
 #include "../../Include/AutoIndex.hpp"
+#include "../../../Lib/Lstring.hpp"
+#include <sys/wait.h>
 
 enum
 {
@@ -21,6 +23,8 @@ public:
     BodyController *BodyReceiver;
     std::string ResourceFilePath;
     bool BodyReady;
+    std::vector<std::string> env;
+    std::vector<std::string> av;
 
 public:
     Request(DataPool &dataPool);
@@ -30,6 +34,7 @@ public:
     std::string GetIndex(std::string &path);
     std::string GetFileExtention(std::string &FilePath);
     void SetBodyController(int Type, u_int64_t Remaining);
+    void ExecuteCGI(std::string CGIName);
     ~Request();
 };
 
