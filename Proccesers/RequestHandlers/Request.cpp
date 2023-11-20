@@ -7,7 +7,7 @@ Request::Request(DataPool &dataPool) : dataPool(dataPool)
     this->CGIProcessId = 0;
 }
 
-void Request::GetRequestedResource()
+int Request::GetRequestedResource()
 {
     struct stat ResourceState;
     ResourceFilePath = "public" + dataPool.Url;
@@ -24,6 +24,7 @@ void Request::GetRequestedResource()
         this->dataPool.ResourceType = WB_DIRECTORY;
     else
         this->dataPool.ResourceType = WB_NEITHER;
+    return true;
 }
 
 std::string Request::GetIndex(std::string &path)
@@ -167,6 +168,7 @@ bool Request::ParseCGIOutput()
     write(FileFd, responseBuffer.c_str(), responseBuffer.size());
     close(FileFd);
     this->dataPool.File.Fd = IO::OpenFile(CGIFileName.c_str(), "r+");
+    this->dataPool.ResponseStatus = OK;
     return true;
 }
 

@@ -10,7 +10,7 @@ bool DeleteRequest::HandleRequest(std::string &data)
     return false;
 }
 
-void DeleteRequest::GetRequestedResource()
+int DeleteRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
 
@@ -36,7 +36,7 @@ void DeleteRequest::GetRequestedResource()
      */
     if (FileExtention == ".php" || FileExtention == ".py")
     {
-        return;
+        return false;
     }
 
     if (this->dataPool.ResourceType == WB_DIRECTORY)
@@ -54,6 +54,7 @@ void DeleteRequest::GetRequestedResource()
         }
         throw HTTPError(204);
     }
+    return true;
 }
 
 DeleteRequest::~DeleteRequest()

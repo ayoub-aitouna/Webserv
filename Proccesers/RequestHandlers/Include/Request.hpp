@@ -38,7 +38,7 @@ public:
 public:
     Request(DataPool &dataPool);
     virtual bool HandleRequest(std::string &data) = 0;
-    virtual void GetRequestedResource();
+    virtual int GetRequestedResource();
     void PrintfFullRequest();
     std::string GetIndex(std::string &path);
     std::string GetFileExtention(std::string &FilePath);

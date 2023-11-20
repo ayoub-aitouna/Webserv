@@ -80,18 +80,20 @@ WBSRVFILE BodyController::SaveBodyAsFile()
     HeadersIterator it;
     std::string FileName;
     WBSRVFILE File;
+    int fd;
 
     it = dataPool.Reverse_Content_Types.find(GetHeaderAttr(this->dataPool, "Content-Type"));
     if (it != dataPool.Reverse_Content_Types.end())
         extention = it->second;
     FileName = "public/" + Lstring::RandomStr(10) + extention;
-    std::ofstream OutputFile(FileName.c_str(), std::ios::binary);
-    if (!OutputFile)
+    fd = IO::OpenFile(FileName.c_str(), "w+");
+    if (fd < 0)
     {
         DEBUGOUT(1, "Couldn't Open File : " << FileName);
         throw HTTPError(500);
     }
-    OutputFile << this->dataPool.body;
+    if (write(fd, this->dataPool.body.c_str(), this->dataPool.body.length()) < 0)
+        throw HTTPError(500);
     return (File);
 }
 

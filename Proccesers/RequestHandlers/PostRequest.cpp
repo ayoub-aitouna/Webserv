@@ -24,7 +24,7 @@ bool PostRequest::HandleRequest(std::string &data)
     return false;
 }
 
-void PostRequest::GetRequestedResource()
+int PostRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
 
@@ -53,9 +53,10 @@ void PostRequest::GetRequestedResource()
      */
     if (FileExtention == ".php")
     {
-        
+        return false;
     }
     throw HTTPError(403);
+    return true;
 }
 
 PostRequest::~PostRequest()

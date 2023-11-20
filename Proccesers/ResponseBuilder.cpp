@@ -88,11 +88,13 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
     if (this->Buffer.empty())
         return (0);
     DEBUGOUT(0, COLORED(this->Buffer, Yellow));
-
-    if (write(SocketFd, this->Buffer.c_str(), this->Buffer.size()) < 0 || this->Buffer == "0\r\n\r\n")
+    int i = 0;
+    if ((i = write(SocketFd, this->Buffer.c_str(), this->Buffer.size())) < 0 || this->Buffer == "0\r\n\r\n")
     {
+
         return (0);
     }
+
     this->Buffer.clear();
     this->FillBuffer();
     return (1);

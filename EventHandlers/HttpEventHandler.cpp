@@ -18,7 +18,7 @@ int HttpEventHandler::Read()
     char buffer[1025];
     int read_bytes;
     bool Parsed;
-    read_bytes = recv(this->SocketFd, buffer, KB, 0);
+    read_bytes = read(this->SocketFd, buffer, KB);
     buffer[read_bytes] = 0;
     if (read_bytes <= 0)
         return (0);
@@ -65,8 +65,12 @@ int HttpEventHandler::Write()
 {
     try
     {
-        if (this->response != NULL && this->response->FlushBuffer(this->SocketFd) == 0)
-            return (0);
+        if (this->response != NULL)
+        {
+            this->start = clock();
+            if (this->response->FlushBuffer(this->SocketFd) == 0)
+                return (0);
+        }
     }
     catch (const std::exception &e)
     {

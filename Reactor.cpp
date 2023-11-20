@@ -45,6 +45,8 @@ void Reactor::HandleEvents()
     int i;
 
     i = 0;
+    times++;
+
     fds = new struct pollfd[this->clients.size() * sizeof(struct pollfd)];
     for (it = this->clients.begin(); it != this->clients.end(); it++)
     {
@@ -55,11 +57,10 @@ void Reactor::HandleEvents()
 
     if (poll(fds, i, -1) >= 0)
     {
-        times++;
-        DEBUGOUT(0, COLORED("\e[A\r\e[0K"
+        Dispatch(fds);
+        DEBUGOUT(1, COLORED("\e[A\r\e[0K"
                                 << "Dispatch " << times,
                             Yellow));
-        Dispatch(fds);
     }
     else
         throw std::runtime_error("poll() failled");
@@ -70,7 +71,6 @@ void Reactor::Dispatch(struct pollfd *fds)
 {
     AcceptEventHandler *server;
     HttpEventHandler *client;
-
     int i;
 
     i = 0;
@@ -78,9 +78,7 @@ void Reactor::Dispatch(struct pollfd *fds)
     {
         if (fds[i].revents & POLLRDNORM)
         {
-            DEBUGOUT(0, COLORED("\e[A\r\e[0K"
-                                    << "Readable " << times,
-                                Yellow));
+
             if ((server = dynamic_cast<AcceptEventHandler *>(it->second)) != NULL)
             {
                 client = dynamic_cast<HttpEventHandler *>(server->Accept());
@@ -89,6 +87,7 @@ void Reactor::Dispatch(struct pollfd *fds)
             }
             else if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
             {
+                client->start = clock();
                 if (client->Read() == 0)
                     return UnRegisterSocket(it->first);
             }
@@ -98,12 +97,11 @@ void Reactor::Dispatch(struct pollfd *fds)
 
             if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
             {
-                /* ****CHECK TIMOUT***** */
-                // clock_t diff = clock() - client->start;
-                // if (diff > 10 * 3 * 1000)
-                //     return UnRegisterSocket(it->first);
+
+                // /* ****CHECK TIMOUT***** */
+                if ((clock() - client->start) > 3 * 300000)
+                    return UnRegisterSocket(it->first);
                 /* ********************* */
-     
 
                 if (client->GetResponse() == NULL)
                     CheckCGIOutput(client);
@@ -118,6 +116,7 @@ void Reactor::Dispatch(struct pollfd *fds)
 
 void CheckCGIOutput(HttpEventHandler *client)
 {
+    DEBUGOUT(0, "Checking CGI RESPONSE");
     Request *RequestHandler;
 
     if ((RequestHandler = client->GetRequestParser().GetRequestHandler()))
