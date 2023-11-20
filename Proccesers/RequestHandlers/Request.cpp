@@ -51,8 +51,12 @@ std::string Request::GetIndex(std::string &path)
 
 void Request::PrintfFullRequest()
 {
+    DEBUGOUT(1, COLORED("------------------------------", Green));
+
+    DEBUGOUT(1, COLORED("Requested File  " << this->ResourceFilePath << " Method : " << (this->dataPool.Method == POST ? "POST" : "GET"), Green));
     for (HeadersIterator i = dataPool.Headers.begin(); i != dataPool.Headers.end(); i++)
-        DEBUGOUT(0, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
+        DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
+    DEBUGOUT(1, COLORED("------------------------------", Green));
 }
 
 std::string Request::GetFileExtention(std::string &FilePath)
@@ -109,7 +113,6 @@ void ServerError(std::string Msg)
  */
 void Request::ExecuteCGI(std::string CGIName, std::string Method)
 {
-
     DEBUGOUT(1, COLORED("RUNNING CGI ..", Blue));
 
     CGIFileName = "/tmp/" + Lstring::RandomStr(10);
@@ -118,12 +121,20 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
     this->env.push_back("REQUEST_METHOD=" + Method);
     env.push_back("SCRIPT_FILENAME=" + this->ResourceFilePath);
     env.push_back("QUERY_STRING=" + this->dataPool.Query);
+    if (Method == "POST")
+    {
 
+        env.push_back("CONTENT_LENGTH=" + GetHeaderAttr(this->dataPool, "Content-Length"));
+        env.push_back("CONTENT_TYPE=" + GetHeaderAttr(this->dataPool, "Content-Type"));
+        DEBUGOUT(1, COLORED("SET POST DATA CGI .. \n" + env.back() + "  \n" + *(env.end() - 2), Blue));
+    }
     if ((CGIProcessId = fork()) < 0)
         ServerError("fork() Failed");
     if (CGIProcessId == 0)
     {
         dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
+        if (Method == "POST")
+            dup2(IO::OpenFile(this->BodyReceiver->GetFileName().c_str(), "r+"), 0);
         if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
             ServerError("execve() Failed");
         close(1);

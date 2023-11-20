@@ -6,14 +6,18 @@ PostRequest::PostRequest(DataPool &dataPool) : Request(dataPool)
 
 bool PostRequest::HandleRequest(std::string &data)
 {
+    bool SupportedUpload = false;
+    PrintfFullRequest();
+
     if (!this->BodyReady)
         this->BodyReady = BodyReceiver ? BodyReceiver->Receiver(data) : false;
     if (this->BodyReady)
     {
-
-        GetRequestedResource();
+        if (SupportedUpload)
+            return (dataPool.ResponseStatus = CREATED, true);
+        if (!GetRequestedResource())
+            return false;
         this->BodyReceiver->Parser();
-        PrintfFullRequest();
 
         /**
          * TODO: if is a cgi respounce with output from cgi
@@ -23,7 +27,6 @@ bool PostRequest::HandleRequest(std::string &data)
     }
     return false;
 }
-
 int PostRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
@@ -53,6 +56,8 @@ int PostRequest::GetRequestedResource()
      */
     if (FileExtention == ".php")
     {
+        DEBUGOUT(1, COLORED("POST CGI " << this->ResourceFilePath, Cyan));
+        Request::ExecuteCGI("/usr/bin/php-cgi", "POST");
         return false;
     }
     throw HTTPError(403);

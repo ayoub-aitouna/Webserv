@@ -95,14 +95,10 @@ void RequestParser::ParseHeaders(std::string data)
         throw HTTPError(501);
 
     RequestHandlersFactory(Lstring::tolower(MethodName));
-
-    this->RequestHandler->SetBodyController(
-        TransferEncoding == "chunked"
-            ? Chunked
-        : (!ContentLength.empty())
-            ? Lenght
-            : NON,
-        0);
+    if (TransferEncoding == "chunked")
+        this->RequestHandler->SetBodyController(Chunked, 0);
+    else if (!ContentLength.empty())
+        this->RequestHandler->SetBodyController(Lenght, atoll(ContentLength.c_str()));
 
     /**
      *  TODO: if => location have redirection like:  return 301 /home/index.html
@@ -112,7 +108,7 @@ void RequestParser::ParseHeaders(std::string data)
 bool RequestParser::Parse(std::string data)
 {
     size_t index;
-    DEBUGOUT(1, "HERE");
+    DEBUGOUT(0, "HERE");
     this->buffer.append(data);
     if ((index = buffer.find(DBLCRLF)) != std::string::npos && dataPool.Headers.empty())
     {

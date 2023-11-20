@@ -13,12 +13,15 @@ public:
     void Parser();
     WBSRVFILE SaveMultiPartFile(std::string &part);
     WBSRVFILE SaveBodyAsFile();
+    std::string &GetFileName();
     virtual ~BodyController();
 
 protected:
     unsigned long Remaining;
     int Encoding;
     DataPool &dataPool;
+    int SavedFileFd;
+    std::string FileName;
 };
 
 #endif

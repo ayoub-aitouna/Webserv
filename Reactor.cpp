@@ -58,7 +58,7 @@ void Reactor::HandleEvents()
     if (poll(fds, i, -1) >= 0)
     {
         Dispatch(fds);
-        DEBUGOUT(1, COLORED("\e[A\r\e[0K"
+        DEBUGOUT(0, COLORED("\e[A\r\e[0K"
                                 << "Dispatch " << times,
                             Yellow));
     }

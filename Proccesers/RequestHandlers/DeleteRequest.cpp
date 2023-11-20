@@ -50,6 +50,8 @@ int DeleteRequest::GetRequestedResource()
     {
         if (unlink(ResourceFilePath.c_str()) < 0)
         {
+            DEBUGOUT(1, COLORED("Error While deleting File " << ResourceFilePath, Red));
+
             throw HTTPError(500);
         }
         throw HTTPError(204);

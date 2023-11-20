@@ -35,6 +35,7 @@ int ChunkController::Receiver(std::string &data)
                 Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
                 RawData = data.substr(0, Part);
                 dataPool.body.append(RawData);
+                SaveBodyAsFile();
                 Remaining -= Part;
                 data = data.erase(0, Part);
             }
@@ -52,6 +53,7 @@ int ChunkController::Receiver(std::string &data)
             }
             break;
         case End:
+            close(this->SavedFileFd);
             return (true);
             break;
 

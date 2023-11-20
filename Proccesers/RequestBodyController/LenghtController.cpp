@@ -6,21 +6,28 @@ LenghtController::LenghtController(DataPool &dataPool) : BodyController(dataPool
 
 LenghtController::LenghtController(DataPool &dataPool, u_int64_t Remaining) : BodyController(dataPool)
 {
+    DEBUGOUT(1, COLORED("Set Remaining  " << Remaining, Green));
     this->Remaining = Remaining;
 }
 
 int LenghtController::Receiver(std::string &data)
 {
+
     if (Remaining != 0)
     {
         size_t PartSize = data.size() > (size_t)Remaining ? Remaining : data.size();
         DEBUGOUT(0, COLORED(data.substr(0, PartSize), Red));
         this->dataPool.body.append(data.substr(0, PartSize));
+        SaveBodyAsFile();
         Remaining -= PartSize;
         data = data.substr(PartSize);
     }
     if (Remaining == 0)
+    {
+        DEBUGOUT(1, COLORED("DONE ", Green));
+        close(this->SavedFileFd);
         return (true);
+    }
     return (false);
 }
 

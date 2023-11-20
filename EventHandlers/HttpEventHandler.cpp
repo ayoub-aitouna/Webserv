@@ -23,7 +23,7 @@ int HttpEventHandler::Read()
     if (read_bytes <= 0)
         return (0);
     this->start = clock();
-    DEBUGOUT(1, "Read " << read_bytes);
+    DEBUGOUT(0, "Read " << read_bytes);
     try
     {
         if (this->response != NULL)

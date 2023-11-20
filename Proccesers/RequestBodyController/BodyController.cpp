@@ -2,8 +2,21 @@
 
 BodyController::BodyController(DataPool &dataPool) : dataPool(dataPool)
 {
+    std::string extention;
+    HeadersIterator it;
+
     this->Remaining = 0;
     this->Encoding = NON;
+    it = dataPool.Reverse_Content_Types.find(GetHeaderAttr(this->dataPool, "Content-Type"));
+    if (it != dataPool.Reverse_Content_Types.end())
+        extention = it->second;
+    this->FileName = "public/" + Lstring::RandomStr(10) + extention;
+    this->SavedFileFd = IO::OpenFile(this->FileName.c_str(), "w+");
+    if (this->SavedFileFd < 0)
+    {
+        DEBUGOUT(1, "Couldn't Open File : " << this->FileName);
+        throw HTTPError(500);
+    }
 }
 
 void BodyController::Parser()
@@ -41,7 +54,6 @@ void BodyController::Parser()
             WBSRVFILE File = SaveMultiPartFile(*it);
         return;
     }
-    SaveBodyAsFile();
 }
 
 WBSRVFILE BodyController::SaveMultiPartFile(std::string &part)
@@ -74,27 +86,28 @@ WBSRVFILE BodyController::SaveMultiPartFile(std::string &part)
 
 WBSRVFILE BodyController::SaveBodyAsFile()
 {
-    DEBUGOUT(1, "SAVE AS FILE   " << this->dataPool.body.size());
-
-    std::string extention;
-    HeadersIterator it;
-    std::string FileName;
+    DEBUGOUT(0, "SAVE CHUNK AS FILE   " << this->dataPool.body.size());
     WBSRVFILE File;
-    int fd;
-
-    it = dataPool.Reverse_Content_Types.find(GetHeaderAttr(this->dataPool, "Content-Type"));
-    if (it != dataPool.Reverse_Content_Types.end())
-        extention = it->second;
-    FileName = "public/" + Lstring::RandomStr(10) + extention;
-    fd = IO::OpenFile(FileName.c_str(), "w+");
-    if (fd < 0)
+    int i;
+    if ((i = write(this->SavedFileFd, this->dataPool.body.c_str(), this->dataPool.body.length())) < 0)
     {
-        DEBUGOUT(1, "Couldn't Open File : " << FileName);
+        DEBUGOUT(1, COLORED("Error While write into File : SaveBodyAsFile() "
+                                << FileName
+                                << "\nData : {\n"
+                                << this->dataPool.body
+                                << "\n}\n"
+                                << "Data Size " << this->dataPool.body.size()
+                                << "\n write() return : " << i,
+                            Blue));
         throw HTTPError(500);
     }
-    if (write(fd, this->dataPool.body.c_str(), this->dataPool.body.length()) < 0)
-        throw HTTPError(500);
+    this->dataPool.body.clear();
     return (File);
+}
+
+std::string &BodyController::GetFileName()
+{
+    return this->FileName;
 }
 
 BodyController::~BodyController()
