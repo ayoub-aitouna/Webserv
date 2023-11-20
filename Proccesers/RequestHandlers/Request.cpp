@@ -4,12 +4,10 @@ Request::Request(DataPool &dataPool) : dataPool(dataPool)
 {
     this->BodyReady = false;
     this->BodyReceiver = NULL;
-    this->Type = NON;
-    this->isCGIRuning = false;
-    env.push_back("REDIRECT_STATUS=1");
+    this->CGIProcessId = 0;
 }
 
-int Request::GetRequestedResource()
+void Request::GetRequestedResource()
 {
     struct stat ResourceState;
     ResourceFilePath = "public" + dataPool.Url;
@@ -26,7 +24,6 @@ int Request::GetRequestedResource()
         this->dataPool.ResourceType = WB_DIRECTORY;
     else
         this->dataPool.ResourceType = WB_NEITHER;
-    return (NONFILE);
 }
 
 std::string Request::GetIndex(std::string &path)
@@ -109,53 +106,54 @@ void ServerError(std::string Msg)
  * Loop through them and check if a procces is done excuting
  * parse the response it's response then create a ResponseBuilder Object
  */
-bool Request::ExecuteCGI(std::string CGIName, std::string Method)
+void Request::ExecuteCGI(std::string CGIName, std::string Method)
 {
-    std::string TmpFileName;
-    pid_t pid;
+
+    DEBUGOUT(1, COLORED("RUNNING CGI ..", Blue));
+
+    CGIFileName = "/tmp/" + Lstring::RandomStr(10);
+    av.push_back(CGIName);
+    env.push_back("REDIRECT_STATUS=1");
+    this->env.push_back("REQUEST_METHOD=" + Method);
+    env.push_back("SCRIPT_FILENAME=" + this->ResourceFilePath);
+    env.push_back("QUERY_STRING=" + this->dataPool.Query);
+
+    if ((CGIProcessId = fork()) < 0)
+        ServerError("fork() Failed");
+    if (CGIProcessId == 0)
+    {
+        dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
+        if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
+            ServerError("execve() Failed");
+        close(1);
+    }
+    DEBUGOUT(1, "ExecuteCGI CGIProcessId > " << this->CGIProcessId);
+}
+
+bool Request::ParseCGIOutput()
+{
+    if (this->CGIProcessId == 0)
+        return false;
+    DEBUGOUT(1, "ParseCGIOutput CGIProcessId > " << this->CGIProcessId);
+    int status_ptr = 0;
     int FileFd;
-    int status_ptr;
     int wait_pid;
     std::string responseBuffer;
     std::string line;
-    if (!this->isCGIRuning)
-    {
-        DEBUGOUT(1, COLORED("RUNNING CGI ..", Blue));
-
-        TmpFileName = "/tmp/" + Lstring::RandomStr(10);
-        av.push_back(CGIName);
-        this->env.push_back("REQUEST_METHOD=" + Method);
-        env.push_back("SCRIPT_FILENAME=" + this->ResourceFilePath);
-        env.push_back("QUERY_STRING=" + this->dataPool.Query);
-
-        pid = fork();
-
-        if (pid < 0)
-            ServerError("fork() Failed");
-        if (pid == 0)
-        {
-            dup2(IO::OpenFile(TmpFileName.c_str(), "w+"), 1);
-            if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
-                ServerError("execve() Failed");
-            close(1);
-        }
-    }
-    /**
-     * *****PART TO MOVE*****
-     */
-    if ((wait_pid = waitpid(pid, &status_ptr, 0)) < 0)
+    if ((wait_pid = waitpid(CGIProcessId, &status_ptr, 0)) < 0)
         ServerError("waitpid() Failed");
     if (wait_pid == 0)
     {
         DEBUGOUT(1, COLORED("STILL RUNNING CGI ..", Blue));
-        return true;
+        return false;
     }
+    this->CGIProcessId = 0;
     DEBUGOUT(1, COLORED("DONE RUNNING CGI YAY ..", Blue));
 
     if (WIFEXITED(status_ptr) && WEXITSTATUS(status_ptr) != 0)
         ServerError("exited with error " + SSTR(WEXITSTATUS(status_ptr)));
 
-    std::ifstream responseFile(TmpFileName.c_str());
+    std::ifstream responseFile(CGIFileName.c_str());
     while (getline(responseFile, line))
     {
         if (line.find("Content-type") != std::string::npos)
@@ -164,14 +162,15 @@ bool Request::ExecuteCGI(std::string CGIName, std::string Method)
             responseBuffer.append(line);
     }
 
-    unlink(TmpFileName.c_str());
-    FileFd = IO::OpenFile(TmpFileName.c_str(), "w+");
+    unlink(CGIFileName.c_str());
+    FileFd = IO::OpenFile(CGIFileName.c_str(), "w+");
     write(FileFd, responseBuffer.c_str(), responseBuffer.size());
     close(FileFd);
-    this->dataPool.File.Fd = IO::OpenFile(TmpFileName.c_str(), "r+");
-    return false;
+    this->dataPool.File.Fd = IO::OpenFile(CGIFileName.c_str(), "r+");
+    return true;
 }
 
 Request::~Request()
 {
+    delete this->BodyReceiver;
 }

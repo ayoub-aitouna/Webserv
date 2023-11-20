@@ -6,6 +6,7 @@ RequestParser::RequestParser()
     this->dataPool.Reverse_Content_Types = MimeTypes::GetReverseContenTypes(dataPool.Content_Types);
     this->dataPool.Method = OTHER;
     this->dataPool.File.Fd = NOBODY;
+    this->RequestHandler = NULL;
 }
 
 void RequestParser::ParseUrl(std::string &Url)
@@ -36,6 +37,8 @@ void RequestParser::ParseUrl(std::string &Url)
         DEBUGOUT(1, COLORED(this->dataPool.Query, Yellow));
         this->dataPool.Url = Url.substr(0, index);
     }
+
+    DEBUGOUT(1, "Requested :: " << this->dataPool.Url);
 }
 
 void RequestParser::RequestHandlersFactory(std::string &Method)
@@ -121,6 +124,11 @@ bool RequestParser::Parse(std::string data)
     return (this->RequestHandler->HandleRequest(this->buffer));
 }
 
+Request *RequestParser::GetRequestHandler()
+{
+    return this->RequestHandler;
+}
+
 std::string GetHeaderAttr(DataPool &dataPool, std::string name)
 {
     HeadersIterator it;
@@ -129,4 +137,9 @@ std::string GetHeaderAttr(DataPool &dataPool, std::string name)
     if (it != dataPool.Headers.end())
         return it->second;
     return ("");
+}
+
+RequestParser::~RequestParser()
+{
+    delete this->RequestHandler;
 }

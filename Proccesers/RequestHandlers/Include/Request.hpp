@@ -30,21 +30,22 @@ public:
     BodyController *BodyReceiver;
     std::string ResourceFilePath;
     bool BodyReady;
-    int Type;
-    bool isCGIRuning;
+    std::string CGIFileName;
+    pid_t CGIProcessId;
     std::vector<std::string> env;
     std::vector<std::string> av;
 
 public:
     Request(DataPool &dataPool);
     virtual bool HandleRequest(std::string &data) = 0;
-    virtual int GetRequestedResource();
+    virtual void GetRequestedResource();
     void PrintfFullRequest();
     std::string GetIndex(std::string &path);
     std::string GetFileExtention(std::string &FilePath);
     void SetBodyController(int Type, u_int64_t Remaining);
-    bool ExecuteCGI(std::string CGIName, std::string Method);
-    ~Request();
+    void ExecuteCGI(std::string CGIName, std::string Method);
+    bool ParseCGIOutput();
+    virtual ~Request();
 };
 
 #endif

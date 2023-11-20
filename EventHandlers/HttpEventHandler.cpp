@@ -5,6 +5,7 @@ HttpEventHandler::HttpEventHandler(int SocketFd, struct sockaddr_storage address
     this->client.address = address;
     this->client.address_len = address_len;
     this->response = NULL;
+    this->start = clock();
 }
 
 HttpEventHandler::HttpEventHandler() : EventHandler(-1)
@@ -21,7 +22,8 @@ int HttpEventHandler::Read()
     buffer[read_bytes] = 0;
     if (read_bytes <= 0)
         return (0);
-    DEBUGOUT(0, "Read " << read_bytes);
+    this->start = clock();
+    DEBUGOUT(1, "Read " << read_bytes);
     try
     {
         if (this->response != NULL)
@@ -42,6 +44,21 @@ int HttpEventHandler::Read()
         return (0);
     }
     return (read_bytes);
+}
+
+void HttpEventHandler::CreateResponse()
+{
+    this->response = new ResponseBuilder(this->request.dataPool);
+}
+
+RequestParser &HttpEventHandler::GetRequestParser()
+{
+    return this->request;
+}
+
+ResponseBuilder *HttpEventHandler::GetResponse()
+{
+    return (this->response);
 }
 
 int HttpEventHandler::Write()
@@ -72,4 +89,5 @@ const int &HttpEventHandler::GetSocketFd() const
 
 HttpEventHandler::~HttpEventHandler()
 {
+    delete this->response;
 }

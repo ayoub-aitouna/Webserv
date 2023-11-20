@@ -17,6 +17,8 @@ public:
     void ParseHeaders(std::string data);
     void ParseUrl(std::string &Url);
     void RequestHandlersFactory(std::string &Method);
+    Request *GetRequestHandler();
+    ~RequestParser();
 
 private:
     Request *RequestHandler;

@@ -13,7 +13,7 @@ public:
     void Parser();
     WBSRVFILE SaveMultiPartFile(std::string &part);
     WBSRVFILE SaveBodyAsFile();
-    ~BodyController();
+    virtual ~BodyController();
 
 protected:
     unsigned long Remaining;

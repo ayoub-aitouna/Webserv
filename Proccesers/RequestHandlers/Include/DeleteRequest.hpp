@@ -10,7 +10,7 @@ private:
 public:
     DeleteRequest(DataPool &dataPool);
     virtual bool HandleRequest(std::string &data);
-    virtual int GetRequestedResource();
+    virtual void GetRequestedResource();
     ~DeleteRequest();
 };
 

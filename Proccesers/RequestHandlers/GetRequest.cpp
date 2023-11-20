@@ -10,18 +10,13 @@ bool GetRequest::HandleRequest(std::string &data)
 
     (void)data;
     PrintfFullRequest();
-    this->Type = this->GetRequestedResource();
-    if (Type == SCRIPT)
-    {
-        this->isCGIRuning = Request::ExecuteCGI("/usr/bin/php-cgi", "GET");
-        this->dataPool.ResponseStatus = 200;
-        return !this->isCGIRuning;
-    }
+    this->GetRequestedResource();
+
     this->dataPool.ResponseStatus = 200;
     return (true);
 }
 
-int GetRequest::GetRequestedResource()
+void GetRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
 
@@ -41,7 +36,7 @@ int GetRequest::GetRequestedResource()
             if (true)
             {
                 AutoIndex(this->dataPool, ResourceFilePath);
-                return NRMLFILE;
+                return;
             }
             throw HTTPError(403);
         }
@@ -58,13 +53,12 @@ int GetRequest::GetRequestedResource()
      * Config Exutable of Cgi
      */
     if (FileExtention == ".php")
-        return SCRIPT;
+        return (Request::ExecuteCGI("/usr/bin/php-cgi", "GET"));
 
     this->dataPool.File.Fd = IO::OpenFile(ResourceFilePath.c_str(), "r");
     this->dataPool.File.ResourceFileType = this->dataPool.Content_Types[FileExtention];
     if (this->dataPool.File.Fd < 0)
         throw HTTPError(404);
-    return NRMLFILE;
 }
 
 GetRequest::~GetRequest()

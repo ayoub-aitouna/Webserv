@@ -11,7 +11,7 @@ bool PostRequest::HandleRequest(std::string &data)
     if (this->BodyReady)
     {
 
-        Type = GetRequestedResource();
+        GetRequestedResource();
         this->BodyReceiver->Parser();
         PrintfFullRequest();
 
@@ -24,7 +24,7 @@ bool PostRequest::HandleRequest(std::string &data)
     return false;
 }
 
-int PostRequest::GetRequestedResource()
+void PostRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
 
@@ -52,9 +52,10 @@ int PostRequest::GetRequestedResource()
      * Config Exutable of Cgi
      */
     if (FileExtention == ".php")
-        return SCRIPT;
+    {
+        
+    }
     throw HTTPError(403);
-    return NONFILE;
 }
 
 PostRequest::~PostRequest()

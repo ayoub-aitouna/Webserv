@@ -17,10 +17,11 @@
 /**
  * copies binary data from a buffer into a std::string object
  */
-#define CBFTSTR(buffer, bytes_number)                   \
-    static_cast<std::ostringstream &>(                  \
+#define CBFTSTR(buffer, bytes_number)                     \
+    static_cast<std::ostringstream &>(                    \
         std::ostringstream().write(buffer, bytes_number)) \
         .str()
+
 class Client
 {
 public:
@@ -39,7 +40,14 @@ public:
     int Read();
     int Write();
     EventHandler *Accept();
+    void CreateResponse();
     const int &GetSocketFd() const;
+    RequestParser &GetRequestParser();
+    Request *GetRequestHandler();
+    ResponseBuilder *GetResponse();
+
+public:
+    clock_t start;
 
 private:
     Client client;

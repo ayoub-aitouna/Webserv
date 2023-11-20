@@ -19,6 +19,7 @@ public:
 
 private:
     std::vector<std::pair<int, EventHandler *> > clients;
+    int times;
 
 public:
     void RegisterSocket(int SocketFd, EventHandler *);
@@ -28,5 +29,5 @@ public:
     void EventLoop();
 };
 typedef std::vector<std::pair<int, EventHandler *> >::iterator iterator;
-
+void CheckCGIOutput(HttpEventHandler *client);
 #endif
