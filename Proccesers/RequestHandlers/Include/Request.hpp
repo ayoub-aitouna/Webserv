@@ -47,5 +47,5 @@ public:
     bool ParseCGIOutput();
     virtual ~Request();
 };
-
+void ServerError(std::string Msg);
 #endif

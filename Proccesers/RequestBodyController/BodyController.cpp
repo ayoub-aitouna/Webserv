@@ -12,7 +12,6 @@ BodyController::BodyController(DataPool &dataPool) : dataPool(dataPool)
         extention = it->second;
     this->FileName = "public/" + Lstring::RandomStr(10) + extention;
     int fd = IO::OpenFile(this->FileName.c_str(), "w+");
-    SetFileFd(fd, fd);
     if (fd < 0)
     {
         DEBUGOUT(1, "Couldn't Open File : " << this->FileName);

@@ -136,7 +136,7 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
         if (Method == "POST")
             dup2(this->BodyReceiver->GetReadFd(), 0);
         if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
-            ServerError("execve() Failed");
+            exit(1);
         close(1);
     }
     DEBUGOUT(1, "ExecuteCGI CGIProcessId > " << this->CGIProcessId);
@@ -144,14 +144,17 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
 
 bool Request::ParseCGIOutput()
 {
-    if (this->CGIProcessId == 0)
-        return false;
     DEBUGOUT(1, "ParseCGIOutput CGIProcessId > " << this->CGIProcessId);
+
     int status_ptr = 0;
     int FileFd;
     int wait_pid;
     std::string responseBuffer;
     std::string line;
+
+    if (this->CGIProcessId == 0)
+        return false;
+
     if ((wait_pid = waitpid(CGIProcessId, &status_ptr, 0)) < 0)
         ServerError("waitpid() Failed");
     if (wait_pid == 0)

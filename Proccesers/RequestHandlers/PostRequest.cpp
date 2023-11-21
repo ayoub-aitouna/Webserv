@@ -2,41 +2,30 @@
 
 PostRequest::PostRequest(DataPool &dataPool) : Request(dataPool)
 {
+    this->SupportedUpload = false;
+    this->UploadBodyState = ZERO;
 }
 
 bool PostRequest::HandleRequest(std::string &data)
 {
-    bool SupportedUpload = false;
-
-    Request::GetRequestedResource();
-    
-    PrintfFullRequest();
-
-    if (!SupportedUpload)
+    if (this->UploadBodyState == ZERO && GetRequestedResource())
     {
-        if (pipe(fds) < 0)
-        {
-            DEBUGOUT(1, COLORED("pipe() failed ", Red));
-            throw HTTPError(500);
-        }
-        DEBUGOUT(1, COLORED("FD[0] " << fds[0] << " FD[1] " << fds[1], Yellow));
-        this->BodyReceiver->SetFileFd(fds[0], fds[1]);
-    }
-    if (!this->BodyReady)
-        this->BodyReady = BodyReceiver ? BodyReceiver->Receiver(data) : false;
-    if (this->BodyReady)
-    {
-        if (SupportedUpload)
-            return (dataPool.ResponseStatus = CREATED, true);
-        if (!GetRequestedResource())
-            return false;
+        PrintfFullRequest();
         this->BodyReceiver->Parser();
-
-        /**
-         * TODO: if is a cgi respounce with output from cgi
-         *         else responce with 201
-         */
         return (dataPool.ResponseStatus = CREATED, true);
+    }
+    if (this->UploadBodyState == UP_INPROGRESS || this->UploadBodyState == CGI_INPROGRESS)
+    {
+        if (!this->BodyReady)
+            this->BodyReady = BodyReceiver ? BodyReceiver->Receiver(data) : false;
+        if (this->BodyReady)
+        {
+            if (this->UploadBodyState == UP_INPROGRESS)
+                return (this->UploadBodyState = DONE,
+                        dataPool.ResponseStatus = CREATED, true);
+            else if (this->UploadBodyState == CGI_INPROGRESS)
+                return (this->UploadBodyState = DONE, false);
+        }
     }
     return false;
 }
@@ -45,8 +34,8 @@ int PostRequest::GetRequestedResource()
     Request::GetRequestedResource();
 
     std::string IndexFileName;
-    std::string FileExtention;
 
+    // CHECK DIRETORY
     if (this->dataPool.ResourceType == WB_DIRECTORY)
     {
         if (*(this->dataPool.Url.end() - 1) != '/')
@@ -59,22 +48,24 @@ int PostRequest::GetRequestedResource()
         ResourceFilePath.append(IndexFileName);
     }
 
-    DEBUGOUT(0, COLORED("POST - ResourceFile Path ", Blue) << COLORED(ResourceFilePath, Green));
-
     FileExtention = GetFileExtention(ResourceFilePath);
 
-    /**
-     * TODO: Files extention From Config File
-     * Config Exutable of Cgi
-     */
-    if (FileExtention == ".php")
+    if (SupportedUpload)
+        return (this->UploadBodyState = UP_INPROGRESS, false);
+    else if (FileExtention == ".php")
     {
-        DEBUGOUT(1, COLORED("POST CGI " << this->ResourceFilePath, Cyan));
+        /**
+         * TODO: Files extention From Config File
+         * Config Exutable of Cgi
+         */
+        if (pipe(fds) < 0)
+            ServerError("pipe() failed");
+        this->BodyReceiver->SetFileFd(fds[0], fds[1]);
+        this->UploadBodyState = CGI_INPROGRESS;
         Request::ExecuteCGI("/usr/bin/php-cgi", "POST");
         return false;
     }
     throw HTTPError(403);
-    return true;
 }
 
 PostRequest::~PostRequest()
