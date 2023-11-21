@@ -53,7 +53,7 @@ int ChunkController::Receiver(std::string &data)
             }
             break;
         case End:
-            close(this->SavedFileFd);
+            close(this->BodyFileFds[1]);
             return (true);
             break;
 

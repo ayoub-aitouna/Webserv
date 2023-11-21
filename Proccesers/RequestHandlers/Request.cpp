@@ -134,7 +134,7 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
     {
         dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
         if (Method == "POST")
-            dup2(IO::OpenFile(this->BodyReceiver->GetFileName().c_str(), "r+"), 0);
+            dup2(this->BodyReceiver->GetReadFd(), 0);
         if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
             ServerError("execve() Failed");
         close(1);

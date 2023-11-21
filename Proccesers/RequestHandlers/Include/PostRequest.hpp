@@ -5,7 +5,8 @@
 class PostRequest : public Request
 {
 private:
-    /* data */
+    int fds[2];
+
 public:
     PostRequest(DataPool &dataPool);
     virtual bool HandleRequest(std::string &data);

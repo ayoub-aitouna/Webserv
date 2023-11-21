@@ -9,7 +9,7 @@ NAME = WebServ
 CC = g++
 
 CPPFLAGS = -Wall -Wextra -Werror -std=c++98 
-# Sanitize		:= -g -fsanitize=address
+Sanitize		:= -g -fsanitize=address
 
 all : Start
 

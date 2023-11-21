@@ -14,13 +14,17 @@ public:
     WBSRVFILE SaveMultiPartFile(std::string &part);
     WBSRVFILE SaveBodyAsFile();
     std::string &GetFileName();
+    void SetFileFd(int ReadFd, int WriteFd);
+    int GetReadFd();
+    int GetWriteFd();
+
     virtual ~BodyController();
 
 protected:
     unsigned long Remaining;
     int Encoding;
     DataPool &dataPool;
-    int SavedFileFd;
+    int BodyFileFds[2];
     std::string FileName;
 };
 

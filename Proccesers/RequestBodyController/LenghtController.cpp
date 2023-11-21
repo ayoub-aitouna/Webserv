@@ -25,7 +25,7 @@ int LenghtController::Receiver(std::string &data)
     if (Remaining == 0)
     {
         DEBUGOUT(1, COLORED("DONE ", Green));
-        close(this->SavedFileFd);
+        close(this->BodyFileFds[1]);
         return (true);
     }
     return (false);

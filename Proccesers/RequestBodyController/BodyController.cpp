@@ -11,12 +11,31 @@ BodyController::BodyController(DataPool &dataPool) : dataPool(dataPool)
     if (it != dataPool.Reverse_Content_Types.end())
         extention = it->second;
     this->FileName = "public/" + Lstring::RandomStr(10) + extention;
-    this->SavedFileFd = IO::OpenFile(this->FileName.c_str(), "w+");
-    if (this->SavedFileFd < 0)
+    int fd = IO::OpenFile(this->FileName.c_str(), "w+");
+    SetFileFd(fd, fd);
+    if (fd < 0)
     {
         DEBUGOUT(1, "Couldn't Open File : " << this->FileName);
         throw HTTPError(500);
     }
+    SetFileFd(fd, fd);
+}
+
+int BodyController::GetReadFd()
+{
+    return this->BodyFileFds[0];
+}
+
+int BodyController::GetWriteFd()
+{
+    return this->BodyFileFds[1];
+}
+
+void BodyController::SetFileFd(int ReadFd, int WriteFd)
+{
+    this->BodyFileFds[0] = ReadFd;
+    this->BodyFileFds[1] = WriteFd;
+    unlink(FileName.c_str());
 }
 
 void BodyController::Parser()
@@ -89,10 +108,10 @@ WBSRVFILE BodyController::SaveBodyAsFile()
     DEBUGOUT(0, "SAVE CHUNK AS FILE   " << this->dataPool.body.size());
     WBSRVFILE File;
     int i;
-    if ((i = write(this->SavedFileFd, this->dataPool.body.c_str(), this->dataPool.body.length())) < 0)
+    if ((i = write(this->BodyFileFds[1], this->dataPool.body.c_str(), this->dataPool.body.length())) < 0)
     {
         DEBUGOUT(1, COLORED("Error While write into File : SaveBodyAsFile() "
-                                << FileName
+                                << this->BodyFileFds[1]
                                 << "\nData : {\n"
                                 << this->dataPool.body
                                 << "\n}\n"

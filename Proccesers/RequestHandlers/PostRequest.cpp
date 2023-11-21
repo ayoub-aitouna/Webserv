@@ -7,8 +7,21 @@ PostRequest::PostRequest(DataPool &dataPool) : Request(dataPool)
 bool PostRequest::HandleRequest(std::string &data)
 {
     bool SupportedUpload = false;
+
+    Request::GetRequestedResource();
+    
     PrintfFullRequest();
 
+    if (!SupportedUpload)
+    {
+        if (pipe(fds) < 0)
+        {
+            DEBUGOUT(1, COLORED("pipe() failed ", Red));
+            throw HTTPError(500);
+        }
+        DEBUGOUT(1, COLORED("FD[0] " << fds[0] << " FD[1] " << fds[1], Yellow));
+        this->BodyReceiver->SetFileFd(fds[0], fds[1]);
+    }
     if (!this->BodyReady)
         this->BodyReady = BodyReceiver ? BodyReceiver->Receiver(data) : false;
     if (this->BodyReady)
