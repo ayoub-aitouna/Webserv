@@ -82,6 +82,8 @@ void RequestParser::ParseHeaders(std::string data)
     for (std::vector<std::string>::iterator it = List.begin() + 1; it != List.end(); it++)
     {
         std::vector<std::string> Attr = Lstring::Split(*it, ": ");
+        // if headr Attr == "Cockie" added in Cockies_vector
+        // to be passed later to cgi
         this->dataPool.Headers[Attr.at(0)] = Attr.at(1);
     }
 

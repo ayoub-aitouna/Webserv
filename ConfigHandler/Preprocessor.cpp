@@ -1,12 +1,21 @@
 
 #include "Headers/Preprocessor.hpp"
 
-Preprocessor::Preprocessor(std::string &data)
+Preprocessor::Preprocessor(std::ifstream &inputFile) : inputFile(inputFile)
 {
-    std::stringstream ss(data);
+}
+
+std::string Preprocessor::Processor()
+{
+    std::string ProccesedData;
+    std::stringstream ss;
+    std::stringstream Tmpss;
     std::ostringstream ProcessedData;
     std::string Line;
     std::vector<std::string> LineParts;
+    int brakets = 0;
+
+    ss << inputFile.rdbuf();
     while (std::getline(ss, Line))
     {
         // Ignore comments
@@ -33,17 +42,69 @@ Preprocessor::Preprocessor(std::string &data)
                 std::ifstream includeFile(LineParts.at(1).c_str());
                 if (!includeFile)
                     throw std::runtime_error("Invalide included File " + LineParts.at(1));
-                ss << includeFile.rdbuf();
+                Tmpss.str("");
+                Tmpss << ss.rdbuf();
+                ss.str("");
+                ss << includeFile.rdbuf() << '\n'
+                   << Tmpss.str();
                 continue;
             }
         }
         ProcessedData << Line << '\n';
     }
+    ProccesedData = ProcessedData.str();
+    for (size_t i = 0; i < ProccesedData.size(); i++)
+    {
+        if (ProccesedData.at(i) == '{')
+            brakets++;
+        else if (ProccesedData.at(i) == '}')
+            brakets--;
+        if (brakets < 0)
+            throw std::runtime_error("Invalide Conf File\nReason:\n\tBraket not closed properly");
+    }
+    if (brakets != 0)
+        throw std::runtime_error("Invalide Conf File\nReason:\n\tBraket not (closed or opend) properly");
+    std::ofstream processedFile("processedFile.conf");
+    processedFile << ProccesedData;
+    return (ProccesedData);
+}
 
-    std::cout << "\n\n\n"
-              << ProcessedData.str()
-              << "\n\n\n"
-              << std::endl;
+void erase_portion(std::string &data, int start, int end)
+{
+    std::string tmp = data.substr(0, start);
+    data = data.substr(end);
+    data = tmp + data;
+}
+
+std::vector<std::string> ExtractBlock(std::string &data, std::string BlockName)
+{
+    size_t start;
+    size_t brackets = 0;
+    std::vector<std::string> blocks;
+
+    for (;;)
+    {
+        if ((start = data.find(BlockName)) == std::string::npos)
+            break;
+
+        for (size_t index = data.find_first_of('{', start); index < data.size(); index++)
+        {
+
+            if (data[index] == '{')
+                brackets++;
+            else if (data[index] == '}')
+                brackets--;
+            if (brackets == 0)
+            {
+                blocks.push_back(data.substr(start, (index - start) + 1));
+                erase_portion(data, start, index + 1);
+                break;
+            }
+        }
+        if (brackets != 0)
+            throw std::runtime_error("Couldn't find proper Block : " + BlockName);
+    }
+    return (blocks);
 }
 
 Preprocessor::~Preprocessor()

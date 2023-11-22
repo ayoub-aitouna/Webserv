@@ -175,7 +175,7 @@ void BodyController::SaveBodyAsFile()
     }
     else
     {
-        DEBUGOUT(1, "WRITNG USING SAVE FIILE CODE");
+        DEBUGOUT(0, "WRITNG USING SAVE FIILE CODE");
         if (write(BodyFileFds[1], dataPool.body.c_str(), dataPool.body.length()) < 0)
             throw HTTPError(500);
 

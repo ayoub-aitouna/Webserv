@@ -41,18 +41,17 @@ int PostRequest::GetRequestedResource()
             this->dataPool.Location = this->dataPool.Url + "/";
             throw HTTPError(301);
         }
-        if ((IndexFileName = GetIndex(ResourceFilePath)).empty())
+        if ((IndexFileName = GetIndex(ResourceFilePath)).empty() && !SupportedUpload)
             throw HTTPError(403);
         ResourceFilePath.append(IndexFileName);
     }
     FileExtention = GetFileExtention(ResourceFilePath);
-    if (SupportedUpload)
-    {
-        if (GetHeaderAttr(this->dataPool, "Content-Type").find("boundary=") == std::string::npos)
-            this->BodyReceiver->CreateFile();
-        return (this->UploadBodyState = UP_INPROGRESS, false);
-    }
-    else if (FileExtention == ".php")
+
+    /**
+     * TODO: Files extention From Config File
+     * Config Exutable of Cgi
+     */
+    if (FileExtention == ".php")
     {
         /**
          * TODO: Files extention From Config File
@@ -64,6 +63,14 @@ int PostRequest::GetRequestedResource()
         this->BodyReceiver->SetIsCGI(true);
         Request::ExecuteCGI("/usr/bin/php-cgi", "POST");
         return (this->UploadBodyState = CGI_INPROGRESS, false);
+    }
+    if (this->SupportedUpload)
+    {
+        DEBUGOUT(1, "HERERERER");
+        this->BodyReceiver->SetIsCGI(false);
+        if (GetHeaderAttr(this->dataPool, "Content-Type").find("boundary=") == std::string::npos)
+            this->BodyReceiver->CreateFile();
+        return (this->UploadBodyState = UP_INPROGRESS, false);
     }
     throw HTTPError(403);
 }

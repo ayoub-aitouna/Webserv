@@ -1,11 +1,15 @@
-#include "Headers/ConfigHandler.hpp"
+#include "Headers/EventClass.hpp"
 
-void EventClass::Parse(std::string &block)
+EventClass::EventClass(std::string &RawData) : RawData(RawData)
 {
-     (void)block;
 }
 
-EventClass::EventClass(/* args */)
+void EventClass::SetRawData(std::string &RawData)
+{
+     this->RawData = RawData;
+}
+
+void EventClass::Parse()
 {
 }
 

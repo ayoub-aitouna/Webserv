@@ -7,11 +7,13 @@
 class EventClass
 {
 private:
+    std::string RawData;
     int worker_connections;
 
 public:
-    EventClass(/* args */);
-    void Parse(std::string &block);
+    EventClass(std::string &RawData);
+    void SetRawData(std::string &RawData);
+    void Parse();
     ~EventClass();
 };
 #endif

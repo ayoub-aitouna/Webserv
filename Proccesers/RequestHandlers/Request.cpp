@@ -120,6 +120,13 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
     env.push_back("REDIRECT_STATUS=1");
     this->env.push_back("REQUEST_METHOD=" + Method);
     env.push_back("SCRIPT_FILENAME=" + this->ResourceFilePath);
+
+    /**
+     * TODO: all values that abtiened from clinet
+     * add to them prefix HTTP example:
+     *  . env.push_back("HTTP_COOKIE=1245);
+     * see: https://fr.wikipedia.org/wiki/Variables_d%27environnement_CGI
+    */
     env.push_back("QUERY_STRING=" + this->dataPool.Query);
     if (Method == "POST")
     {
@@ -135,6 +142,9 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
         dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
         if (Method == "POST")
             dup2(this->BodyReceiver->GetReadFd(), 0);
+        /**
+         * TODO: use pthone3 as py cgi 
+        */
         if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
             exit(1);
         close(1);
@@ -169,6 +179,10 @@ bool Request::ParseCGIOutput()
     std::ifstream responseFile(CGIFileName.c_str());
     while (getline(responseFile, line))
     {
+        /**
+         * fasdfa:afasdf
+         * \r\n\r\n
+        */
         if (line.find("Content-type") != std::string::npos)
             this->dataPool.File.ResourceFileType = Lstring::ExtractFromString(line, "Content-type: ", "; ");
         else

@@ -1,9 +1,7 @@
 #include "Server/Server.hpp"
 #include <vector>
-#include "EventHandlers/HttpEventHandler.hpp"
 #include <signal.h>
-#include "ConfigHandler/Headers/Preprocessor.hpp"
-
+#include "ConfigHandler/Headers/ConfigHandler.hpp"
 void HandleSigPip(int signal)
 {
 
@@ -13,19 +11,9 @@ void HandleSigPip(int signal)
 
 int main(int ac, char **av)
 {
-    // Preprocessor pre
-    std::stringstream content;
     if (ac > 1)
-    {
-        std::ifstream inputFile(av[1]);
-        if (!inputFile)
-            throw std::runtime_error("Invalide File");
-        content << inputFile.rdbuf();
-        std::string str = content.str();
-        Preprocessor processor(str);
-    }
+        ConfigHandler conf(av[1]);
     signal(SIGPIPE, HandleSigPip);
-
     Server server;
     try
     {
