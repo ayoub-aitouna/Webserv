@@ -144,8 +144,6 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
 
 bool Request::ParseCGIOutput()
 {
-    DEBUGOUT(1, "ParseCGIOutput CGIProcessId > " << this->CGIProcessId);
-
     int status_ptr = 0;
     int FileFd;
     int wait_pid;

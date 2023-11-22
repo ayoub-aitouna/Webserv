@@ -12,12 +12,13 @@ public:
     virtual void SetRemaining(unsigned long Remaining) = 0;
     void Parser();
     WBSRVFILE SaveMultiPartFile(std::string &part);
-    WBSRVFILE SaveBodyAsFile();
+    void SaveBodyAsFile();
     std::string &GetFileName();
+    void CreateFile(std::string ContentType = "");
     void SetFileFd(int ReadFd, int WriteFd);
     int GetReadFd();
     int GetWriteFd();
-
+    void SetIsCGI(bool isCGI);
     virtual ~BodyController();
 
 protected:
@@ -26,6 +27,11 @@ protected:
     DataPool &dataPool;
     int BodyFileFds[2];
     std::string FileName;
+    bool isCGI;
+    // multipart/form-data;
+    std::string Boundary;
+    std::string DivaderBoundary;
+    std::string EndBoundary;
 };
 
 #endif

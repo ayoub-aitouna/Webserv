@@ -2,7 +2,7 @@
 
 PostRequest::PostRequest(DataPool &dataPool) : Request(dataPool)
 {
-    this->SupportedUpload = false;
+    this->SupportedUpload = true;
     this->UploadBodyState = ZERO;
 }
 
@@ -32,10 +32,8 @@ bool PostRequest::HandleRequest(std::string &data)
 int PostRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
-
     std::string IndexFileName;
 
-    // CHECK DIRETORY
     if (this->dataPool.ResourceType == WB_DIRECTORY)
     {
         if (*(this->dataPool.Url.end() - 1) != '/')
@@ -47,11 +45,13 @@ int PostRequest::GetRequestedResource()
             throw HTTPError(403);
         ResourceFilePath.append(IndexFileName);
     }
-
     FileExtention = GetFileExtention(ResourceFilePath);
-
     if (SupportedUpload)
+    {
+        if (GetHeaderAttr(this->dataPool, "Content-Type").find("boundary=") == std::string::npos)
+            this->BodyReceiver->CreateFile();
         return (this->UploadBodyState = UP_INPROGRESS, false);
+    }
     else if (FileExtention == ".php")
     {
         /**
@@ -61,9 +61,9 @@ int PostRequest::GetRequestedResource()
         if (pipe(fds) < 0)
             ServerError("pipe() failed");
         this->BodyReceiver->SetFileFd(fds[0], fds[1]);
-        this->UploadBodyState = CGI_INPROGRESS;
+        this->BodyReceiver->SetIsCGI(true);
         Request::ExecuteCGI("/usr/bin/php-cgi", "POST");
-        return false;
+        return (this->UploadBodyState = CGI_INPROGRESS, false);
     }
     throw HTTPError(403);
 }

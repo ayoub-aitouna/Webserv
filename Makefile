@@ -21,7 +21,7 @@ $(NAME) : $(OBJ)
 	$(CC) $(CPPFLAGS) $(Sanitize) $(OBJ) -o $(NAME) 
 
 Start: $(NAME)
-	clear && ./$(NAME)
+	clear && ./$(NAME) conf/serv.conf
 
 clean :
 	rm $(OBJ)

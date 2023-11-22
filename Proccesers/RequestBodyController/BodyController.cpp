@@ -2,16 +2,41 @@
 
 BodyController::BodyController(DataPool &dataPool) : dataPool(dataPool)
 {
-    std::string extention;
-    HeadersIterator it;
+    this->isCGI = false;
+    std::string ContentType;
+    std::string BoundaryName = "boundary=";
+    size_t index;
 
+    if ((index = (ContentType = GetHeaderAttr(this->dataPool, "Content-Type"))
+                     .find(BoundaryName)) != std::string::npos)
+    {
+        this->Boundary = "--" + ContentType.substr(index + BoundaryName.size());
+        this->DivaderBoundary = Boundary + '\r' + '\n';
+        this->EndBoundary = Boundary + '-' + '-';
+    }
     this->Remaining = 0;
     this->Encoding = NON;
-    it = dataPool.Reverse_Content_Types.find(GetHeaderAttr(this->dataPool, "Content-Type"));
+}
+
+void BodyController::SetIsCGI(bool isCGI)
+{
+    this->isCGI = isCGI;
+}
+
+void BodyController::CreateFile(std::string ContentType)
+{
+    std::string extention;
+    HeadersIterator it;
+    int fd;
+
+    if (ContentType.empty())
+        ContentType = GetHeaderAttr(this->dataPool, "Content-Type");
+    it = dataPool.Reverse_Content_Types.find(ContentType);
     if (it != dataPool.Reverse_Content_Types.end())
         extention = it->second;
-    this->FileName = "public/" + Lstring::RandomStr(10) + extention;
-    int fd = IO::OpenFile(this->FileName.c_str(), "w+");
+    this->FileName = "public/Uploads/" + Lstring::RandomStr(10) + extention;
+    DEBUGOUT(1, "NAME " << this->FileName);
+    fd = IO::OpenFile(this->FileName.c_str(), "w+");
     if (fd < 0)
     {
         DEBUGOUT(1, "Couldn't Open File : " << this->FileName);
@@ -34,7 +59,6 @@ void BodyController::SetFileFd(int ReadFd, int WriteFd)
 {
     this->BodyFileFds[0] = ReadFd;
     this->BodyFileFds[1] = WriteFd;
-    unlink(FileName.c_str());
 }
 
 void BodyController::Parser()
@@ -102,25 +126,61 @@ WBSRVFILE BodyController::SaveMultiPartFile(std::string &part)
     return (File);
 }
 
-WBSRVFILE BodyController::SaveBodyAsFile()
+/**
+ * Example of multipart/form
+ *  -----------------------------9051914041544843365972754266
+ *  Content-Disposition: form-data; name="text"
+ *  Content-Type: text/plain
+ *
+ * text default
+ *   -----------------------------9051914041544843365972754266--
+ *
+ */
+void BodyController::SaveBodyAsFile()
 {
-    DEBUGOUT(0, "SAVE CHUNK AS FILE   " << this->dataPool.body.size());
-    WBSRVFILE File;
-    int i;
-    if ((i = write(this->BodyFileFds[1], this->dataPool.body.c_str(), this->dataPool.body.length())) < 0)
+    if (!Boundary.empty() && !this->isCGI)
     {
-        DEBUGOUT(1, COLORED("Error While write into File : SaveBodyAsFile() "
-                                << this->BodyFileFds[1]
-                                << "\nData : {\n"
-                                << this->dataPool.body
-                                << "\n}\n"
-                                << "Data Size " << this->dataPool.body.size()
-                                << "\n write() return : " << i,
-                            Blue));
-        throw HTTPError(500);
+        size_t start, end;
+        std::string Part;
+        for (;;)
+        {
+            if ((start = this->dataPool.body.find(DivaderBoundary)) != std::string::npos)
+            {
+                if ((end = this->dataPool.body.find("\r\n\r\n", start + DivaderBoundary.size())) != std::string::npos)
+                {
+                    this->CreateFile(Lstring::ExtractFromString(this->dataPool.body, "Content-Type: ", CRLF, "text/plain"));
+                    this->dataPool.body = this->dataPool.body.substr(end + 4);
+                }
+                else
+                    break;
+            }
+            if ((end = this->dataPool.body.find(DivaderBoundary)) != std::string::npos)
+            {
+                Part = this->dataPool.body.substr(0, end);
+                if (this->dataPool.body.find(EndBoundary, end) != std::string::npos)
+                    this->dataPool.body.clear();
+                else
+                    this->dataPool.body = this->dataPool.body.substr(end);
+            }
+            else
+            {
+                Part = this->dataPool.body;
+                this->dataPool.body.clear();
+            }
+            if (write(BodyFileFds[1], Part.c_str(), Part.length()) < 0)
+                throw HTTPError(500);
+            if (this->dataPool.body.empty())
+                break;
+        }
     }
-    this->dataPool.body.clear();
-    return (File);
+    else
+    {
+        DEBUGOUT(1, "WRITNG USING SAVE FIILE CODE");
+        if (write(BodyFileFds[1], dataPool.body.c_str(), dataPool.body.length()) < 0)
+            throw HTTPError(500);
+
+        this->dataPool.body.clear();
+    }
 }
 
 std::string &BodyController::GetFileName()

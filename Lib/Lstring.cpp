@@ -25,17 +25,17 @@ std::string &Lstring::tolower(std::string &str)
     return (str);
 }
 
-std::string Lstring::ExtractFromString(std::string data, std::string start, std::string end)
+std::string Lstring::ExtractFromString(std::string data, std::string start, std::string end, std::string defaultReturn)
 {
     size_t start_index, end_index;
-    std::string Value = "";
+    std::string Value;
     if ((start_index = data.find(start)) != std::string::npos)
     {
         Value = data.substr(start_index + start.size());
         if ((end_index = Value.find(end)) != std::string::npos)
             return (Value.substr(0, end_index));
     }
-    return ("");
+    return (defaultReturn);
 }
 
 std::string Lstring::RandomStr(size_t len)
@@ -150,4 +150,54 @@ bool Lstring::IsAlNum(const std::string &input, size_t pos, size_t n)
         index++;
     }
     return (true);
+}
+
+std::string Lstring::SkipLine(std::string &input, std::string endl)
+{
+    size_t index;
+
+    if ((index = input.find(endl)) != std::string::npos)
+        input = input.substr(index + endl.size());
+    return (input);
+}
+
+std::string Lstring::GetLine(std::string input, std::string endl, size_t LineIndex)
+{
+    size_t index;
+    size_t curLineIndex = 0;
+    std::string Line;
+    while (curLineIndex <= LineIndex)
+    {
+        if ((index = input.find(endl)) != std::string::npos)
+        {
+            if (input.substr(0, index + endl.size()) == endl)
+                return (endl);
+            Line = input.substr(0, index);
+            input = input.substr(index + endl.size());
+        }
+        else
+            return "";
+        curLineIndex++;
+    }
+    return (Line);
+}
+
+std::string Lstring::SkipLineIfContains(std::string &input, std::string content, std::string endl)
+{
+    size_t index;
+    std::string Line;
+
+    if ((index = input.find(endl)) != std::string::npos)
+    {
+        Line = input.substr(0, index);
+        if ((index = Line.find(content)) != std::string::npos)
+            SkipLine(input, endl);
+    }
+    return (Line);
+}
+
+void Lstring::Trim(std::string &input, std::string delim)
+{
+    input.erase(0, input.find_first_not_of(delim));
+    input.erase(input.find_last_not_of(delim) + 1);
 }

@@ -54,7 +54,7 @@ private:
 
 public:
     static std::vector<std::string> Split(std::string line, std::string delimiter);
-    static std::string ExtractFromString(std::string data, std::string start, std::string end);
+    static std::string ExtractFromString(std::string data, std::string start, std::string end, std::string defaultReturn = "");
     static std::string &tolower(std::string &str);
     static void LogAsBinary(std::string &str, bool to_file);
     static std::string RandomStr(size_t len);
@@ -63,6 +63,11 @@ public:
     static std::string base64_encode(const std::string &input);
     static bool IsAlNum(const std::string &input, size_t pos, size_t n = std::string::npos);
     static bool Contains(const std::string &input, std::string &checklist, size_t pos);
+    static std::string SkipLine(std::string &input, std::string endl = "\r\n");
+    static std::string SkipLineIfContains(std::string &input, std::string content = "", std::string endl = "\r\n");
+    static std::string GetLine(std::string input, std::string endl = "\r\n", size_t LineIndex = 0);
+
+    static void Trim(std::string &input, std::string delim = " ");
 };
 
 #endif

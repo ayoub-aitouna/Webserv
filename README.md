@@ -13,6 +13,6 @@
 # TODO:
 
 - parse config file
-- save multipart form data in files in chunks
-- restructer POST handle request
+- save multipart form data in files in chunks #DONE
+- restructer POST handle request #DONE
 - implement piplining
