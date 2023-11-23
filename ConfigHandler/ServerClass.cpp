@@ -1,8 +1,39 @@
 #include "Headers/ServerClass.hpp"
 
+ServerClass::ServerClass()
+{
+}
+
 ServerClass::ServerClass(std::string &RawData) : RawData(RawData)
 {
     Parse();
+}
+
+ServerClass::ServerClass(const ServerClass &lhs)
+{
+    *this = lhs;
+}
+
+void ServerClass::SetData(std::string &RawData)
+{
+    this->RawData = RawData;
+    Parse();
+}
+
+ServerClass &ServerClass::operator=(const ServerClass &lhs)
+{
+    if (this != &lhs)
+    {
+        this->RawData = lhs.RawData;
+        this->port = lhs.port;
+        this->host = lhs.host;
+        this->root = lhs.root;
+        this->server_name = lhs.server_name;
+        this->redirection = lhs.redirection;
+        this->error_page = lhs.error_page;
+        this->locations = lhs.locations;
+    }
+    return (*this);
 }
 
 void ServerClass::Parse()
@@ -12,9 +43,11 @@ void ServerClass::Parse()
     Blocks = ExtractBlock(this->RawData, "location");
     for (size_t i = 0; i < Blocks.size(); i++)
         locations.push_back(LocationClass(Blocks.at(i)));
+
     std::stringstream ss(this->RawData);
     std::string Line;
     std::vector<std::string> tokens;
+
     while (getline(ss, Line))
     {
         tokens = Lstring::Split(std::string(Line), " ");
@@ -61,27 +94,73 @@ void ServerClass::Parse()
         else if (tokens.at(0) == "error_page")
         {
             ExactSize(tokens.size() < 3, "Server");
-            this->error_page.push_back(std::make_pair(atoi(tokens.at(1).c_str()), tokens.at(2)));
+            this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
         }
         else if (tokens.at(0) != "}" && tokens.at(0) != "server")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
+    DisplayValues(false);
+}
 
-    DEBUGOUT(1, "\n\n-- :: SERVER ::-----\n\n"
-                    << COLORED(this->RawData
-                                   << "\n\n--------\n\n",
-                               Magenta));
-    /*Print Resulting Values*/
-    DEBUGOUT(1, COLORED("port " << port, Magenta));
-    DEBUGOUT(1, COLORED("host " << host, Magenta));
+std::string ServerClass::GetErrorPagePath(int ErrorCode)
+{
+    std::map<int, std::string>::iterator it;
+    it = this->error_page.find(ErrorCode);
+    if (it != this->error_page.end())
+        return (it->second);
+    return ("");
+}
+
+std::string ServerClass::GetHostName()
+{
+    return (this->host);
+}
+
+std::string ServerClass::GetPort()
+{
+    return (this->port);
+}
+
+std::string ServerClass::GetRoot()
+{
+    return (this->root);
+}
+
+std::vector<std::string> &ServerClass::GetServerNames()
+{
+    return (this->server_name);
+}
+
+std::pair<int, std::string> ServerClass::GetRedirection()
+{
+    return (this->redirection);
+}
+
+LocationClass *ServerClass::GetLocation(std::string &path)
+{
+    LocationClass *firstGlobal = NULL;
+    for (size_t i = 0; i < this->locations.size(); i++)
+    {
+        if (this->locations.at(i).GetPath() == "/")
+            firstGlobal = new LocationClass(this->locations.at(i));
+        if (this->locations.at(i).GetPath() == path)
+            return new LocationClass(this->locations.at(i));
+    }
+    return (firstGlobal);
+}
+
+void ServerClass::DisplayValues(bool Show)
+{
+    DEBUGOUT(Show, COLORED("\n\n------- ServerClass -------\n\n", Magenta));
+    DEBUGOUT(Show, COLORED("port " << this->port, Magenta));
+    DEBUGOUT(Show, COLORED("host " << host, Magenta));
     for (size_t i = 0; i < server_name.size(); i++)
-        DEBUGOUT(1, COLORED("server_name " << server_name.at(i), Magenta));
-    DEBUGOUT(1, COLORED("root " << root, Magenta));
-    DEBUGOUT(1, COLORED("redirection " << redirection.first << " : " << redirection.second, Magenta));
-    for (size_t i = 0; i < error_page.size(); i++)
-        DEBUGOUT(1, COLORED("error_page " << error_page.at(i).first << " : " << error_page.at(i).second, Magenta));
-    DEBUGOUT(1, COLORED("\n\n-- :: END SERVER ::-----\n\n",
-                        Magenta));
+        DEBUGOUT(Show, COLORED("server_name " << server_name.at(i), Magenta));
+    DEBUGOUT(Show, COLORED("root " << root, Magenta));
+    DEBUGOUT(Show, COLORED("redirection " << redirection.first << " : " << redirection.second, Magenta));
+    for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
+        DEBUGOUT(Show, COLORED("error_page " << i->first << " : " << i->second, Magenta));
+    DEBUGOUT(Show, COLORED("\n\n-- :: END SERVER ::-----\n\n", Magenta));
 }
 
 ServerClass::~ServerClass()

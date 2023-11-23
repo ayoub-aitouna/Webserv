@@ -3,6 +3,9 @@
 #define EVENTCLASS
 
 #include <string>
+#include "ServerClass.hpp"
+#include "TypesClass.hpp"
+#include "Preprocessor.hpp"
 
 class EventClass
 {
@@ -11,9 +14,10 @@ private:
     int worker_connections;
 
 public:
-    EventClass(std::string &RawData);
+    EventClass();
     void SetRawData(std::string &RawData);
     void Parse();
+    void DisplayValues(bool Show);
     ~EventClass();
 };
 #endif

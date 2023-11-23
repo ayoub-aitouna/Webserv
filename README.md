@@ -11,8 +11,7 @@
 ####
 
 # TODO:
-
-- parse config file
+- parse config file #DONE
 - save multipart form data in files in chunks #DONE
 - restructer POST handle request #DONE
 - implement piplining

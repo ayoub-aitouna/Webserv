@@ -2,11 +2,10 @@
 
 RequestParser::RequestParser()
 {
-    this->dataPool.Content_Types = MimeTypes::GetContenTypes();
-    this->dataPool.Reverse_Content_Types = MimeTypes::GetReverseContenTypes(dataPool.Content_Types);
     this->dataPool.Method = OTHER;
     this->dataPool.File.Fd = NOBODY;
     this->RequestHandler = NULL;
+    this->dataPool.ServerConf  = NULL;
 }
 
 void RequestParser::ParseUrl(std::string &Url)
@@ -101,7 +100,18 @@ void RequestParser::ParseHeaders(std::string data)
         this->RequestHandler->SetBodyController(Chunked, 0);
     else if (!ContentLength.empty())
         this->RequestHandler->SetBodyController(Lenght, atoll(ContentLength.c_str()));
+    if (!this->dataPool.ServerConf)
+    {
 
+        if (!(this->dataPool.ServerConf = ConfigHandler::GetHttp()
+                                              .GetServersByHost(GetHeaderAttr(this->dataPool, "Host"))))
+            throw HTTPError(500);
+    }
+    if (this->dataPool.ServerConf == NULL)
+    {
+        DEBUGOUT(1, COLORED("SERVER CONFIG CLASS IS NULL", Red));
+    }
+    this->dataPool.ServerConf->DisplayValues(true);
     /**
      *  TODO: if => location have redirection like:  return 301 /home/index.html
      */

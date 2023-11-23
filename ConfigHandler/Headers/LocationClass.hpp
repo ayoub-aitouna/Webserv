@@ -4,13 +4,17 @@
 #include <string>
 #include <vector>
 #include "Preprocessor.hpp"
+#include <map>
 
 class LocationClass
 {
 
 public:
     LocationClass(std::string &RawData);
+    LocationClass(const LocationClass &locatin);
     void Parse();
+    void DisplayValues(bool Show);
+    std::string &GetPath();
     ~LocationClass();
 
 private:
@@ -22,7 +26,7 @@ private:
     std::vector<std::string> allowed;
     bool upload;
     std::string upload_stor;
-    std::vector<std::pair<int, std::string> > error_page;
+    std::map<int, std::string> error_page;
     std::string cgi;
     std::string cgi_path;
 };

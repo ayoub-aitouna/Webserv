@@ -5,6 +5,29 @@ LocationClass::LocationClass(std::string &RawData) : RawData(RawData)
     Parse();
 }
 
+LocationClass::LocationClass(const LocationClass &locatin)
+{
+    if (this != &locatin)
+    {
+        this->path = locatin.path;
+        this->root = locatin.root;
+        this->index = locatin.index;
+        this->redirection = locatin.redirection;
+        this->autoindex = locatin.autoindex;
+        this->allowed = locatin.allowed;
+        this->upload = locatin.upload;
+        this->upload_stor = locatin.upload_stor;
+        this->error_page = locatin.error_page;
+        this->cgi = locatin.cgi;
+        this->cgi_path = locatin.cgi_path;
+    }
+}
+
+std::string &LocationClass::GetPath()
+{
+    return (this->path);
+}
+
 void ExactSize(bool cond, std::string Block)
 {
     if (cond)
@@ -93,30 +116,30 @@ void LocationClass::Parse()
         else if (tokens.at(0) == "error_page")
         {
             ExactSize(tokens.size() < 3, "location");
-            this->error_page.push_back(std::make_pair(atoi(tokens.at(1).c_str()), tokens.at(2)));
+            this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
         }
         else if (tokens.at(0) != "}")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
+    DisplayValues(false);
+}
 
-    DEBUGOUT(1, "\n\n--------\n\n"
-                    << COLORED(this->RawData
-                                   << "\n\n--------\n\n",
-                               Magenta));
-
-    /*Print Resulting Values*/
-    DEBUGOUT(1, COLORED("path " << path, Green));
-    DEBUGOUT(1, COLORED("root " << root, Green));
+void LocationClass::DisplayValues(bool show)
+{
+    DEBUGOUT(show, COLORED("\n\n------- LocationClass -------\n\n", Magenta));
+    DEBUGOUT(show, COLORED("path " << path, Green));
+    DEBUGOUT(show, COLORED("root " << root, Green));
     for (size_t i = 0; i < index.size(); i++)
-        DEBUGOUT(1, COLORED("index " << index.at(i), Green));
-    DEBUGOUT(1, COLORED("redirection " << redirection.first << " : " << redirection.second, Green));
-    DEBUGOUT(1, COLORED("autoindex " << autoindex, Green));
+        DEBUGOUT(show, COLORED("index " << index.at(i), Green));
+    DEBUGOUT(show, COLORED("redirection " << redirection.first << " : " << redirection.second, Green));
+    DEBUGOUT(show, COLORED("autoindex " << autoindex, Green));
     for (size_t i = 0; i < allowed.size(); i++)
-        DEBUGOUT(1, COLORED("allowed " << allowed.at(i), Green));
-    DEBUGOUT(1, COLORED("upload " << upload, Green));
-    DEBUGOUT(1, COLORED("upload_stor " << upload_stor, Green));
-    for (size_t i = 0; i < error_page.size(); i++)
-        DEBUGOUT(1, COLORED("error_page " << error_page.at(i).first << " : " << error_page.at(i).second, Green));
+        DEBUGOUT(show, COLORED("allowed " << allowed.at(i), Green));
+    DEBUGOUT(show, COLORED("upload " << upload, Green));
+    DEBUGOUT(show, COLORED("upload_stor " << upload_stor, Green));
+    for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
+        DEBUGOUT(show, COLORED("error_page " << i->first << " : " << i->second, Green));
+    DEBUGOUT(show, COLORED("\n\n------- END LocationClass -------\n\n", Magenta));
 }
 
 LocationClass::~LocationClass()

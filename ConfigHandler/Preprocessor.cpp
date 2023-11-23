@@ -5,6 +5,23 @@ Preprocessor::Preprocessor(std::ifstream &inputFile) : inputFile(inputFile)
 {
 }
 
+void CheckBrakets(std::string &ProccesedData)
+{
+    int brakets = 0;
+
+    for (size_t i = 0; i < ProccesedData.size(); i++)
+    {
+        if (ProccesedData.at(i) == '{')
+            brakets++;
+        else if (ProccesedData.at(i) == '}')
+            brakets--;
+        if (brakets < 0)
+            throw std::runtime_error("Invalide Conf File\nReason:\n\tBraket not closed properly");
+    }
+    if (brakets != 0)
+        throw std::runtime_error("Invalide Conf File\nReason:\n\tBraket not (closed or opend) properly");
+}
+
 std::string Preprocessor::Processor()
 {
     std::string ProccesedData;
@@ -13,7 +30,6 @@ std::string Preprocessor::Processor()
     std::ostringstream ProcessedData;
     std::string Line;
     std::vector<std::string> LineParts;
-    int brakets = 0;
 
     ss << inputFile.rdbuf();
     while (std::getline(ss, Line))
@@ -53,17 +69,7 @@ std::string Preprocessor::Processor()
         ProcessedData << Line << '\n';
     }
     ProccesedData = ProcessedData.str();
-    for (size_t i = 0; i < ProccesedData.size(); i++)
-    {
-        if (ProccesedData.at(i) == '{')
-            brakets++;
-        else if (ProccesedData.at(i) == '}')
-            brakets--;
-        if (brakets < 0)
-            throw std::runtime_error("Invalide Conf File\nReason:\n\tBraket not closed properly");
-    }
-    if (brakets != 0)
-        throw std::runtime_error("Invalide Conf File\nReason:\n\tBraket not (closed or opend) properly");
+    CheckBrakets(ProccesedData);
     std::ofstream processedFile("processedFile.conf");
     processedFile << ProccesedData;
     return (ProccesedData);

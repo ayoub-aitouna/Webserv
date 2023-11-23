@@ -5,13 +5,14 @@
 #include <iostream>
 #include <sstream>
 #include <stack>
+#include <fstream>
 #include "../../Lib/Lstring.hpp"
 #include "../../Lib/IO.hpp"
 
 class Preprocessor
 {
 private:
-   std::ifstream &inputFile;
+    std::ifstream &inputFile;
 
 public:
     Preprocessor(std::ifstream &inputFile);

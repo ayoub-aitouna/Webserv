@@ -11,16 +11,24 @@ class HttpClass
 {
 
 public:
-    HttpClass(std::string &RawData);
+    HttpClass();
+    void SetRawData(std::string &RawData);
     void Parse();
+    void DisplayValues(bool Show);
+    std::string GetContentType(std::string FileExtention);
+    std::string GetFileExtention(std::string ContentType);
+    std::string GetGlobalErrorPagePath(int ErrorCode);
+    unsigned long GetMaxBodySize();
+    std::vector<ServerClass> &GetServers();
+    ServerClass *GetServersByHost(std::string host);
     ~HttpClass();
 
 private:
-    std::string &RawData;
+    std::string RawData;
     TypesClass types;
     std::string default_type;
     unsigned long client_max_body_size;
-    std::vector<std::pair<int, std::string> > error_page;
+    std::map<int, std::string> error_page;
     std::vector<ServerClass> servers;
 };
 

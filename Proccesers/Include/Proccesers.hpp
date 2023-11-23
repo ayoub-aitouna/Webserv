@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include "../../HTTPError/HTTPError.hpp"
+#include "../../ConfigHandler/Headers/ConfigHandler.hpp"
 
 #define KB 1024
 #define DBLCRLF "\r\n\r\n"
@@ -62,14 +63,13 @@ typedef struct S_File
 
 typedef struct S_DataPool
 {
+    ServerClass *ServerConf;
     std::map<std::string, std::string> Headers;
     WBSRVFILE File;
     std::string Url;
     std::string Query;
     std::string body;
     std::string Location;
-    std::map<std::string, std::string> Content_Types;
-    std::map<std::string, std::string> Reverse_Content_Types;
     int ResponseStatus;
     int ResourceType;
     int Method;

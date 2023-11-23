@@ -56,7 +56,7 @@ int GetRequest::GetRequestedResource()
     }
 
     this->dataPool.File.Fd = IO::OpenFile(ResourceFilePath.c_str(), "r");
-    this->dataPool.File.ResourceFileType = this->dataPool.Content_Types[FileExtention];
+    this->dataPool.File.ResourceFileType = ConfigHandler::GetHttp().GetContentType(FileExtention);
     this->dataPool.ResponseStatus = OK;
     if (this->dataPool.File.Fd < 0)
         throw HTTPError(404);

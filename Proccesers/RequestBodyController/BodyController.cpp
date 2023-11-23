@@ -31,10 +31,7 @@ void BodyController::CreateFile(std::string ContentType)
 
     if (ContentType.empty())
         ContentType = GetHeaderAttr(this->dataPool, "Content-Type");
-    it = dataPool.Reverse_Content_Types.find(ContentType);
-    if (it != dataPool.Reverse_Content_Types.end())
-        extention = it->second;
-    this->FileName = "public/Uploads/" + Lstring::RandomStr(10) + extention;
+    this->FileName = "public/Uploads/" + Lstring::RandomStr(10) + ConfigHandler::GetHttp().GetFileExtention(ContentType);
     DEBUGOUT(1, "NAME " << this->FileName);
     fd = IO::OpenFile(this->FileName.c_str(), "w+");
     if (fd < 0)
