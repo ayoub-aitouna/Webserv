@@ -79,4 +79,6 @@ typedef std::map<std::string, std::string>::iterator HeadersIterator;
 
 std::string GetHeaderAttr(DataPool &dataPool, std::string name);
 
+
+
 #endif

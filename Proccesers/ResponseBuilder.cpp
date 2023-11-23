@@ -1,5 +1,7 @@
 #include "Include/ResponseBuilder.hpp"
 
+#define SHOWBUFFER 0
+
 void ResponseBuilder::InitStatusCode()
 {
     StatusCodes[100] = "Continue";
@@ -71,7 +73,6 @@ void ResponseBuilder::FillHeaders(int StatusCode)
     Buffer = ("HTTP/1.1 " + SSTR(StatusCode) + " " + StatusCodes[StatusCode] + "  \r\n");
     if (dataPool.File.Fd == NOBODY)
         CreateStatusFile();
-
     Buffer += this->dataPool.Location.empty() ? "" : "Location: " + this->dataPool.Location + " \r\n";
     Buffer += "Content-Type: " + this->dataPool.File.ResourceFileType + " \r\n";
     Buffer += "Connection: closed \r\n";
@@ -87,7 +88,7 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
 
     if (this->Buffer.empty())
         return (0);
-    DEBUGOUT(0, COLORED(this->Buffer, Yellow));
+    DEBUGOUT(SHOWBUFFER, COLORED(this->Buffer, Yellow));
     int i = 0;
     if ((i = write(SocketFd, this->Buffer.c_str(), this->Buffer.size())) < 0 || this->Buffer == "0\r\n\r\n")
     {

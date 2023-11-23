@@ -7,7 +7,6 @@ GetRequest::GetRequest(DataPool &dataPool) : Request(dataPool)
 bool GetRequest::HandleRequest(std::string &data)
 {
     DEBUGOUT(1, "GET - HandleRequest RESOURCES");
-
     (void)data;
     PrintfFullRequest();
     return (this->GetRequestedResource());
@@ -57,6 +56,7 @@ int GetRequest::GetRequestedResource()
 
     this->dataPool.File.Fd = IO::OpenFile(ResourceFilePath.c_str(), "r");
     this->dataPool.File.ResourceFileType = ConfigHandler::GetHttp().GetContentType(FileExtention);
+    DEBUGOUT(1, COLORED("File Extention: " << FileExtention << "  Content-Type : " << this->dataPool.File.ResourceFileType, Green));
     this->dataPool.ResponseStatus = OK;
     if (this->dataPool.File.Fd < 0)
         throw HTTPError(404);

@@ -23,6 +23,7 @@ void ConfigHandler::SetFile(std::string FileName)
     catch (const std::exception &e)
     {
         std::cerr << COLORED(e.what(), Red) << std::endl;
+        exit(1);
     }
 }
 
@@ -33,7 +34,6 @@ void ConfigHandler::Parse()
     Blocks = ExtractBlock(ConfigHandler::RawData, "events");
     if (Blocks.size() != 1)
         throw std::runtime_error("It Should be one `events` Block");
-    DEBUGOUT(1, Blocks.at(0));
     ConfigHandler::events.SetRawData(Blocks.at(0));
     ConfigHandler::events.Parse();
     Blocks = ExtractBlock(ConfigHandler::RawData, "http");

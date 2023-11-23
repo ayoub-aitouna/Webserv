@@ -11,6 +11,7 @@ TypesClass::TypesClass(std::string &RawData) : RawData(RawData)
 void TypesClass::SetRawData(std::string &RawData)
 {
     this->RawData = RawData;
+    Parse();
 }
 
 void TypesClass::Parse()

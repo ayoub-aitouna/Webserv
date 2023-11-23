@@ -1,16 +1,20 @@
 #include "Include/Request.hpp"
 
+/**
+ * /, /other, /other/, /otherss/other/index.html
+ */
 Request::Request(DataPool &dataPool) : dataPool(dataPool)
 {
     this->BodyReady = false;
     this->BodyReceiver = NULL;
     this->CGIProcessId = 0;
+    this->location = this->dataPool.ServerConf->GetLocation(this->dataPool.Url);
 }
 
 int Request::GetRequestedResource()
 {
     struct stat ResourceState;
-    ResourceFilePath = "public" + dataPool.Url;
+    ResourceFilePath = this->dataPool.ServerConf->GetRoot() + dataPool.Url;
     if (access(ResourceFilePath.c_str(), F_OK) != 0)
         throw HTTPError(404);
     if (stat(ResourceFilePath.c_str(), &ResourceState) < 0)
@@ -24,6 +28,16 @@ int Request::GetRequestedResource()
         this->dataPool.ResourceType = WB_DIRECTORY;
     else
         this->dataPool.ResourceType = WB_NEITHER;
+
+    std::pair<int, std::string> redirection =
+        this->dataPool.ServerConf->GetRedirection(dataPool.Url);
+
+    if (redirection.first != 0)
+    {
+        DEBUGOUT(1, "S :" << redirection.first << " Location " << redirection.second);
+        this->dataPool.Location = redirection.second;
+        throw HTTPError(redirection.first);
+    }
     return true;
 }
 
@@ -63,7 +77,7 @@ std::string Request::GetFileExtention(std::string &FilePath)
 {
     size_t LastDotPos;
     if ((LastDotPos = FilePath.find_last_of(".")) != std::string::npos)
-        return (FilePath.substr(LastDotPos));
+        return (FilePath.substr(LastDotPos + 1));
     return ("");
 }
 
@@ -104,12 +118,7 @@ void ServerError(std::string Msg)
 }
 
 /**
- * TODO:
- * When Done Running CGI_PROCESS
- * add it's pid to std::vector<std::pair<pid,outputfilefd> > running_processes;
- * after poll run
- * Loop through them and check if a procces is done excuting
- * parse the response it's response then create a ResponseBuilder Object
+ * TODO: use pthone3 as py cgi
  */
 void Request::ExecuteCGI(std::string CGIName, std::string Method)
 {
@@ -126,7 +135,7 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
      * add to them prefix HTTP example:
      *  . env.push_back("HTTP_COOKIE=1245);
      * see: https://fr.wikipedia.org/wiki/Variables_d%27environnement_CGI
-    */
+     */
     env.push_back("QUERY_STRING=" + this->dataPool.Query);
     if (Method == "POST")
     {
@@ -142,9 +151,7 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
         dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
         if (Method == "POST")
             dup2(this->BodyReceiver->GetReadFd(), 0);
-        /**
-         * TODO: use pthone3 as py cgi 
-        */
+
         if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
             exit(1);
         close(1);
@@ -182,7 +189,7 @@ bool Request::ParseCGIOutput()
         /**
          * fasdfa:afasdf
          * \r\n\r\n
-        */
+         */
         if (line.find("Content-type") != std::string::npos)
             this->dataPool.File.ResourceFileType = Lstring::ExtractFromString(line, "Content-type: ", "; ");
         else

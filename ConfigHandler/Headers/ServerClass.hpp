@@ -24,7 +24,7 @@ public:
     std::string GetPort();
     std::string GetRoot();
     std::vector<std::string> &GetServerNames();
-    std::pair<int, std::string> GetRedirection();
+    std::pair<int, std::string> GetRedirection(std::string &path);
     LocationClass *GetLocation(std::string &path);
 
 private:

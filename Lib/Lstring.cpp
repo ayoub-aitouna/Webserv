@@ -3,16 +3,24 @@
 std::vector<std::string> Lstring::Split(std::string line, std::string delimiter)
 {
     std::vector<std::string> list;
+    std::string item;
     while (true)
     {
         size_t pos = line.find(delimiter);
         if (pos == std::string::npos)
         {
             if (line.size() != 0)
-                list.push_back(line);
+            {
+                Lstring::Trim(line, delimiter);
+                if (!line.empty())
+                    list.push_back(line);
+            }
             break;
         }
-        list.push_back(line.substr(0, pos));
+        item = line.substr(0, pos);
+        Lstring::Trim(item, delimiter);
+        if (!item.empty())
+            list.push_back(item);
         line = line.substr(pos + delimiter.size());
     }
     return (list);

@@ -1,4 +1,6 @@
 #include "Headers/HttpClass.hpp"
+#define MB 1048576
+#define GB 1073741824
 
 HttpClass::HttpClass()
 {
@@ -10,36 +12,51 @@ void HttpClass::SetRawData(std::string &RawData)
     Parse();
 }
 
-unsigned long ConvertToBytes(std::string &value)
+unsigned long long ConvertToBytes(std::string &value)
 {
-    (void)value;
-    return (0);
+    char MUnit;
+    unsigned long long DecimalValue;
+    if (!Lstring::IsAlNum(value, 0, value.length() - 1))
+        throw std::runtime_error("Invalide body_size");
+    DecimalValue = atol(value.c_str());
+    MUnit = *(value.end() - 1);
+    MUnit = tolower(MUnit);
+    switch (MUnit)
+    {
+    case 'k':
+        DecimalValue *= 1024;
+        break;
+    case 'm':
+        DecimalValue *= MB;
+        break;
+    case 'g':
+        DecimalValue *= GB;
+        break;
+    default:
+        throw std::runtime_error("Invalide measure unit" + MUnit);
+        break;
+    }
+    return (DecimalValue);
 }
 
 void HttpClass::Parse()
 {
     std::vector<std::string> Blocks;
+    std::stringstream ss;
+    std::string Line;
+    std::vector<std::string> tokens;
 
     Blocks = ExtractBlock(this->RawData, "types");
-    if (Blocks.size() != 1)
-        throw std::runtime_error("more or less then 1 `types` Block");
-    this->types.SetRawData(Blocks.at(0));
-    this->types.Parse();
+    if (Blocks.size() >= 1)
+        this->types.SetRawData(Blocks.at(0));
+    // throw std::runtime_error("more or less then 1 `types` Block");
     Blocks = ExtractBlock(this->RawData, "server");
     if (!Blocks.size())
         throw std::runtime_error("It Should be at least one `server` Block");
     for (size_t i = 0; i < Blocks.size(); i++)
-    {
-        DEBUGOUT(1, "HEEEEY-------");
         servers.push_back(ServerClass(Blocks.at(i)));
-    }
 
-    /**
-     * PARSE http block props
-     */
-    std::stringstream ss(this->RawData);
-    std::string Line;
-    std::vector<std::string> tokens;
+    ss.str(this->RawData);
     while (getline(ss, Line))
     {
         tokens = Lstring::Split(std::string(Line), " ");
@@ -64,7 +81,7 @@ void HttpClass::Parse()
         else if (tokens.at(0) != "}" && tokens.at(0) != "http")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
-    DisplayValues(false);
+    DisplayValues(true);
 }
 
 std::string HttpClass::GetContentType(std::string FileExtention)
@@ -90,7 +107,7 @@ std::string HttpClass::GetGlobalErrorPagePath(int ErrorCode)
     return ("");
 }
 
-unsigned long HttpClass::GetMaxBodySize()
+unsigned long long HttpClass::GetMaxBodySize()
 {
     return (this->client_max_body_size);
 }
@@ -107,10 +124,9 @@ ServerClass *HttpClass::GetServersByHost(std::string host)
     for (size_t i = 0; i < this->servers.size(); i++)
     {
         hostname = this->servers.at(i).GetHostName() + ":" + this->servers.at(i).GetPort();
-        if (host == hostname)
+        if (host == hostname || Containes(this->servers.at(i).GetServerNames(), host))
             return (new ServerClass(this->servers.at(i)));
     }
-
     if (!this->servers.empty())
         return (new ServerClass(this->servers.at(0)));
     return (NULL);

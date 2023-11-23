@@ -12,10 +12,22 @@ class LocationClass
 public:
     LocationClass(std::string &RawData);
     LocationClass(const LocationClass &locatin);
+    ~LocationClass();
+
+public:
     void Parse();
     void DisplayValues(bool Show);
-    std::string &GetPath();
-    ~LocationClass();
+    std::string GetPath();
+    std::string GetRoot();
+    std::vector<std::string> GetIndex();
+    std::pair<int, std::string> GetRedirection();
+    bool GetAutoindex();
+    std::vector<std::string> GetAllowed();
+    bool GetUpload();
+    std::string GetUpload_stor();
+    std::string GetError_page(int ErrorCode);
+    std::string GetCgi();
+    std::string GetCgi_path();
 
 private:
     std::string RawData;

@@ -2,6 +2,7 @@
 #include <vector>
 #include <signal.h>
 #include "ConfigHandler/Headers/ConfigHandler.hpp"
+#include "Proccesers/Include/Proccesers.hpp"
 
 void HandleSigPip(int signal)
 {
@@ -11,6 +12,7 @@ void HandleSigPip(int signal)
 
 int main(int ac, char **av)
 {
+    std::vector<std::string> taken_ports;
     if (ac != 2)
     {
         std::cout << "Please Provide a Conf file" << std::endl;
@@ -23,7 +25,12 @@ int main(int ac, char **av)
     try
     {
         for (size_t i = 0; i < ServersConf.size(); i++)
+        {
+            if (Containes(taken_ports, ServersConf.at(i).GetPort()))
+                continue;
             server.CreatSocket(ServersConf.at(i).GetHostName(), ServersConf.at(i).GetPort());
+            taken_ports.push_back(ServersConf.at(i).GetPort());
+        }
         server.Run();
     }
     catch (const std::exception &e)

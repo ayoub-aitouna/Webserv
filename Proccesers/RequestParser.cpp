@@ -5,7 +5,7 @@ RequestParser::RequestParser()
     this->dataPool.Method = OTHER;
     this->dataPool.File.Fd = NOBODY;
     this->RequestHandler = NULL;
-    this->dataPool.ServerConf  = NULL;
+    this->dataPool.ServerConf = NULL;
 }
 
 void RequestParser::ParseUrl(std::string &Url)
@@ -81,8 +81,6 @@ void RequestParser::ParseHeaders(std::string data)
     for (std::vector<std::string>::iterator it = List.begin() + 1; it != List.end(); it++)
     {
         std::vector<std::string> Attr = Lstring::Split(*it, ": ");
-        // if headr Attr == "Cockie" added in Cockies_vector
-        // to be passed later to cgi
         this->dataPool.Headers[Attr.at(0)] = Attr.at(1);
     }
 
@@ -94,33 +92,26 @@ void RequestParser::ParseHeaders(std::string data)
 
     if (!TransferEncoding.empty() && TransferEncoding != "chunked")
         throw HTTPError(501);
+    if (!this->dataPool.ServerConf)
+    {
+        if (!(this->dataPool.ServerConf = ConfigHandler::GetHttp()
+                                              .GetServersByHost(GetHeaderAttr(this->dataPool, "Host"))))
+            throw HTTPError(500);
+        this->dataPool.ServerConf->DisplayValues(true);
+    }
 
     RequestHandlersFactory(Lstring::tolower(MethodName));
     if (TransferEncoding == "chunked")
         this->RequestHandler->SetBodyController(Chunked, 0);
     else if (!ContentLength.empty())
         this->RequestHandler->SetBodyController(Lenght, atoll(ContentLength.c_str()));
-    if (!this->dataPool.ServerConf)
-    {
 
-        if (!(this->dataPool.ServerConf = ConfigHandler::GetHttp()
-                                              .GetServersByHost(GetHeaderAttr(this->dataPool, "Host"))))
-            throw HTTPError(500);
-    }
-    if (this->dataPool.ServerConf == NULL)
-    {
-        DEBUGOUT(1, COLORED("SERVER CONFIG CLASS IS NULL", Red));
-    }
-    this->dataPool.ServerConf->DisplayValues(true);
-    /**
-     *  TODO: if => location have redirection like:  return 301 /home/index.html
-     */
+    DEBUGOUT(1, COLORED(this->dataPool.Url, Magenta));
 }
 
 bool RequestParser::Parse(std::string data)
 {
     size_t index;
-    DEBUGOUT(0, "HERE");
     this->buffer.append(data);
     if ((index = buffer.find(DBLCRLF)) != std::string::npos && dataPool.Headers.empty())
     {

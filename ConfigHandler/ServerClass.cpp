@@ -1,5 +1,8 @@
 #include "Headers/ServerClass.hpp"
 
+/**
+ * Constructors
+ */
 ServerClass::ServerClass()
 {
 }
@@ -35,6 +38,10 @@ ServerClass &ServerClass::operator=(const ServerClass &lhs)
     }
     return (*this);
 }
+
+/**
+ * PARSERS
+ */
 
 void ServerClass::Parse()
 {
@@ -99,9 +106,31 @@ void ServerClass::Parse()
         else if (tokens.at(0) != "}" && tokens.at(0) != "server")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
-    DisplayValues(false);
+    DisplayValues(true);
 }
 
+void ServerClass::DisplayValues(bool Show)
+{
+    DEBUGOUT(Show, COLORED("\n\n------- ServerClass -------\n\n", Magenta));
+    DEBUGOUT(Show, COLORED("port " << this->port, Magenta));
+    DEBUGOUT(Show, COLORED("host " << host, Magenta));
+    for (size_t i = 0; i < server_name.size(); i++)
+        DEBUGOUT(Show, COLORED("server_name " << server_name.at(i), Magenta));
+    DEBUGOUT(Show, COLORED("root " << root, Magenta));
+    DEBUGOUT(Show, COLORED("redirection " << redirection.first << " : " << redirection.second, Magenta));
+    for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
+        DEBUGOUT(Show, COLORED("error_page " << i->first << " : " << i->second, Magenta));
+
+    DEBUGOUT(Show, "Locations :");
+    for (size_t i = 0; i < this->locations.size(); i++)
+        DEBUGOUT(Show, COLORED(this->locations.at(i).GetPath(), Magenta));
+
+    DEBUGOUT(Show, COLORED("\n\n-- :: END SERVER ::-----\n\n", Magenta));
+}
+
+/**
+ * GETTERS
+ */
 std::string ServerClass::GetErrorPagePath(int ErrorCode)
 {
     std::map<int, std::string>::iterator it;
@@ -131,14 +160,22 @@ std::vector<std::string> &ServerClass::GetServerNames()
     return (this->server_name);
 }
 
-std::pair<int, std::string> ServerClass::GetRedirection()
+std::pair<int, std::string> ServerClass::GetRedirection(std::string &path)
 {
+    DEBUGOUT(1, "GETTING REDIRECTION VALUES " << path);
+    for (size_t i = 0; i < locations.size(); i++)
+    {
+        if (locations.at(i).GetPath() == path &&
+            locations.at(i).GetRedirection().first != 0)
+            return (locations.at(i).GetRedirection());
+    }
     return (this->redirection);
 }
 
 LocationClass *ServerClass::GetLocation(std::string &path)
 {
     LocationClass *firstGlobal = NULL;
+    std::string directory = path.substr(0, path.find_last_of('/') + 1);
     for (size_t i = 0; i < this->locations.size(); i++)
     {
         if (this->locations.at(i).GetPath() == "/")
@@ -147,20 +184,6 @@ LocationClass *ServerClass::GetLocation(std::string &path)
             return new LocationClass(this->locations.at(i));
     }
     return (firstGlobal);
-}
-
-void ServerClass::DisplayValues(bool Show)
-{
-    DEBUGOUT(Show, COLORED("\n\n------- ServerClass -------\n\n", Magenta));
-    DEBUGOUT(Show, COLORED("port " << this->port, Magenta));
-    DEBUGOUT(Show, COLORED("host " << host, Magenta));
-    for (size_t i = 0; i < server_name.size(); i++)
-        DEBUGOUT(Show, COLORED("server_name " << server_name.at(i), Magenta));
-    DEBUGOUT(Show, COLORED("root " << root, Magenta));
-    DEBUGOUT(Show, COLORED("redirection " << redirection.first << " : " << redirection.second, Magenta));
-    for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
-        DEBUGOUT(Show, COLORED("error_page " << i->first << " : " << i->second, Magenta));
-    DEBUGOUT(Show, COLORED("\n\n-- :: END SERVER ::-----\n\n", Magenta));
 }
 
 ServerClass::~ServerClass()

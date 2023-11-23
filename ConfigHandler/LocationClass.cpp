@@ -23,11 +23,6 @@ LocationClass::LocationClass(const LocationClass &locatin)
     }
 }
 
-std::string &LocationClass::GetPath()
-{
-    return (this->path);
-}
-
 void ExactSize(bool cond, std::string Block)
 {
     if (cond)
@@ -49,6 +44,8 @@ void LocationClass::Parse()
         {
             ExactSize(tokens.size() != 3, "location");
             this->path = tokens.at(1);
+            if (this->path != "/" && *(this->path.end() - 1) != '/')
+                this->path.append("/");
         }
         else if (tokens.at(0) == "root")
         {
@@ -121,7 +118,7 @@ void LocationClass::Parse()
         else if (tokens.at(0) != "}")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
-    DisplayValues(false);
+    DisplayValues(true);
 }
 
 void LocationClass::DisplayValues(bool show)
@@ -140,6 +137,55 @@ void LocationClass::DisplayValues(bool show)
     for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
         DEBUGOUT(show, COLORED("error_page " << i->first << " : " << i->second, Green));
     DEBUGOUT(show, COLORED("\n\n------- END LocationClass -------\n\n", Magenta));
+}
+
+std::string LocationClass::GetPath()
+{
+    return (this->path);
+}
+std::string LocationClass::GetRoot()
+{
+    return (this->root);
+}
+std::vector<std::string> LocationClass::GetIndex()
+{
+    return (this->index);
+}
+std::pair<int, std::string> LocationClass::GetRedirection()
+{
+    return (this->redirection);
+}
+bool LocationClass::GetAutoindex()
+{
+    return (this->autoindex);
+}
+std::vector<std::string> LocationClass::GetAllowed()
+{
+    return (this->allowed);
+}
+bool LocationClass::GetUpload()
+{
+    return (this->upload);
+}
+std::string LocationClass::GetUpload_stor()
+{
+    return (this->upload_stor);
+}
+std::string LocationClass::GetError_page(int ErrorCode)
+{
+    std::map<int, std::string>::iterator it;
+    it = this->error_page.find(ErrorCode);
+    if (it != this->error_page.end())
+        return (it->second);
+    return ("");
+}
+std::string LocationClass::GetCgi()
+{
+    return (this->cgi);
+}
+std::string LocationClass::GetCgi_path()
+{
+    return (this->cgi_path);
 }
 
 LocationClass::~LocationClass()
