@@ -27,7 +27,6 @@ class Request
 {
 public:
     DataPool &dataPool;
-    LocationClass *location;
     BodyController *BodyReceiver;
     std::string ResourceFilePath;
     bool BodyReady;

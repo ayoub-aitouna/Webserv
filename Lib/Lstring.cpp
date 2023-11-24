@@ -209,3 +209,28 @@ void Lstring::Trim(std::string &input, std::string delim)
     input.erase(0, input.find_first_not_of(delim));
     input.erase(input.find_last_not_of(delim) + 1);
 }
+
+std::string &Lstring::LTrim(std::string &input, std::string delim)
+{
+    input.erase(0, input.find_first_not_of(delim));
+    return (input);
+}
+
+std::string &Lstring::RTrim(std::string &input, std::string delim)
+{
+    input.erase(input.find_last_not_of(delim) + 1);
+    return (input);
+}
+
+std::string &Lstring::Replace(std::string &input, std::string target, std::string _new)
+{
+    size_t start, end;
+    std::string part1, part2;
+    if ((start = input.find(target)) == std::string::npos)
+        return (input);
+    end = start + target.length();
+    part1 = input.substr(0, start);
+    part2 = input.substr(end);
+    input = (part1 + _new + part2);
+    return (input);
+}

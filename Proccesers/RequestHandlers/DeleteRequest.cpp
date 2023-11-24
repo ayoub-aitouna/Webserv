@@ -34,7 +34,7 @@ int DeleteRequest::GetRequestedResource()
      * TODO: Files extention From Config File
      * Config Exutable of Cgi
      */
-    if (FileExtention == ".php" || FileExtention == ".py")
+    if (FileExtention == "php" || FileExtention == "py")
     {
         return false;
     }

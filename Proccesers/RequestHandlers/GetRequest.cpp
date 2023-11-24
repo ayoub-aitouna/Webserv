@@ -48,7 +48,7 @@ int GetRequest::GetRequestedResource()
      * TODO: Files extention From Config File
      * Config Exutable of Cgi
      */
-    if (FileExtention == ".php")
+    if (FileExtention == "php")
     {
         Request::ExecuteCGI("/usr/bin/php-cgi", "GET");
         return false;

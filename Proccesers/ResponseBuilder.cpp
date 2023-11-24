@@ -1,6 +1,6 @@
 #include "Include/ResponseBuilder.hpp"
 
-#define SHOWBUFFER 0
+#define SHOWBUFFER false
 
 void ResponseBuilder::InitStatusCode()
 {
@@ -52,7 +52,9 @@ ResponseBuilder::ResponseBuilder(DataPool dataPool)
     this->dataPool = dataPool;
     InitStatusCode();
     if (dataPool.File.Fd != -2)
+    {
         FillHeaders(dataPool.ResponseStatus);
+    }
 }
 
 void ResponseBuilder::CreateStatusFile()

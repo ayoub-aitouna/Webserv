@@ -8,13 +8,15 @@ Request::Request(DataPool &dataPool) : dataPool(dataPool)
     this->BodyReady = false;
     this->BodyReceiver = NULL;
     this->CGIProcessId = 0;
-    this->location = this->dataPool.ServerConf->GetLocation(this->dataPool.Url);
+    DEBUGOUT(1, "REQUESTED URL : " << dataPool.Url);
+    this->dataPool.ServerConf->SetRequestPath(this->dataPool.Url);
 }
 
 int Request::GetRequestedResource()
 {
     struct stat ResourceState;
-    ResourceFilePath = this->dataPool.ServerConf->GetRoot() + dataPool.Url;
+
+    ResourceFilePath = dataPool.ServerConf->GetRoot(dataPool.Url);
     if (access(ResourceFilePath.c_str(), F_OK) != 0)
         throw HTTPError(404);
     if (stat(ResourceFilePath.c_str(), &ResourceState) < 0)
@@ -46,17 +48,20 @@ std::string Request::GetIndex(std::string &path)
     dirent *entry;
     DIR *dir;
     std::string CurrentName;
-    size_t index;
+    std::vector<std::string> indexList;
+
     dir = opendir(path.c_str());
     if (dir == NULL)
         return ("");
+    indexList = this->dataPool.ServerConf->GetIndex();
+    if (indexList.empty())
+        return (closedir(dir), "");
     while ((entry = readdir(dir)) != NULL)
     {
         CurrentName = entry->d_name;
-        if ((index = CurrentName.find("index.", 0, 6)) != std::string::npos)
+        for (size_t i = 0; i < indexList.size(); i++)
         {
-            DEBUGOUT(1, COLORED(CurrentName << " " << CurrentName.substr(index + 6), Green));
-            if (Lstring::IsAlNum(CurrentName, index + 6))
+            if (CurrentName == indexList.at(i))
                 return (closedir(dir), CurrentName);
         }
     }
@@ -65,12 +70,13 @@ std::string Request::GetIndex(std::string &path)
 
 void Request::PrintfFullRequest()
 {
-    DEBUGOUT(1, COLORED("------------------------------", Green));
+    bool Print = false;
+    DEBUGOUT(Print, COLORED("------------------------------", Green));
 
-    DEBUGOUT(1, COLORED("Requested File  " << this->ResourceFilePath << " Method : " << (this->dataPool.Method == POST ? "POST" : "GET"), Green));
+    DEBUGOUT(Print, COLORED("Requested File  " << this->ResourceFilePath << " Method : " << (this->dataPool.Method == POST ? "POST" : "GET"), Green));
     for (HeadersIterator i = dataPool.Headers.begin(); i != dataPool.Headers.end(); i++)
-        DEBUGOUT(1, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
-    DEBUGOUT(1, COLORED("------------------------------", Green));
+        DEBUGOUT(Print, COLORED(i->first, Magenta) << " : " << COLORED(i->second, Green));
+    DEBUGOUT(Print, COLORED("------------------------------", Green));
 }
 
 std::string Request::GetFileExtention(std::string &FilePath)
@@ -88,16 +94,6 @@ void Request::SetBodyController(int Type, u_int64_t Remaining)
     else if (Type == Lenght)
         this->BodyReceiver = new LenghtController(this->dataPool, Remaining);
 }
-
-/**
- * TODO: check if location support php | python Cgi
- * pass body to cgi as redirection
- * & requested file as first argument
- *
- * example:
- * export all_varaibles look at 'cgi rfc'
- *  body_file | ./php-cgi requested_file.php > return_file
- */
 
 char **FromVectorToArray(std::vector<std::string> vec)
 {

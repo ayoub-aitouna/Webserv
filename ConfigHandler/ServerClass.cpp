@@ -5,10 +5,12 @@
  */
 ServerClass::ServerClass()
 {
+    this->location = NULL;
 }
 
 ServerClass::ServerClass(std::string &RawData) : RawData(RawData)
 {
+    this->location = NULL;
     Parse();
 }
 
@@ -34,6 +36,7 @@ ServerClass &ServerClass::operator=(const ServerClass &lhs)
         this->server_name = lhs.server_name;
         this->redirection = lhs.redirection;
         this->error_page = lhs.error_page;
+        this->index = lhs.index;
         this->locations = lhs.locations;
     }
     return (*this);
@@ -77,6 +80,12 @@ void ServerClass::Parse()
             for (size_t i = 1; i < tokens.size(); i++)
                 server_name.push_back(tokens.at(i));
         }
+        else if (tokens.at(0) == "index")
+        {
+            ExactSize(tokens.size() < 2, "Server");
+            for (size_t i = 1; i < tokens.size(); i++)
+                this->index.push_back(tokens.at(i));
+        }
         else if (tokens.at(0) == "root")
         {
             ExactSize(tokens.size() != 2, "Server");
@@ -106,7 +115,7 @@ void ServerClass::Parse()
         else if (tokens.at(0) != "}" && tokens.at(0) != "server")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
-    DisplayValues(true);
+    DisplayValues(false);
 }
 
 void ServerClass::DisplayValues(bool Show)
@@ -150,9 +159,11 @@ std::string ServerClass::GetPort()
     return (this->port);
 }
 
-std::string ServerClass::GetRoot()
+std::string ServerClass::GetRoot(std::string &Url)
 {
-    return (this->root);
+    if (location && !location->GetRoot().empty())
+        return Lstring::Replace(Url, location->GetPath(), location->GetRoot());
+    return (Lstring::RTrim(root, "/") + Url);
 }
 
 std::vector<std::string> &ServerClass::GetServerNames()
@@ -160,30 +171,55 @@ std::vector<std::string> &ServerClass::GetServerNames()
     return (this->server_name);
 }
 
+std::vector<std::string> ServerClass::GetIndex()
+{
+    if (location != NULL && location->GetIndex().size() > 0)
+        return (location->GetIndex());
+    else
+        return (index);
+}
+
 std::pair<int, std::string> ServerClass::GetRedirection(std::string &path)
 {
-    DEBUGOUT(1, "GETTING REDIRECTION VALUES " << path);
-    for (size_t i = 0; i < locations.size(); i++)
-    {
-        if (locations.at(i).GetPath() == path &&
-            locations.at(i).GetRedirection().first != 0)
-            return (locations.at(i).GetRedirection());
-    }
-    return (this->redirection);
+
+    LocationClass *location;
+    std::pair<int, std::string> redirection;
+
+    redirection = this->redirection;
+    location = NULL;
+    location = GetLocation(path);
+
+    if (!location)
+        return (redirection);
+    if (location->GetRedirection().first != 0)
+        redirection = location->GetRedirection();
+    return (delete location, redirection);
+}
+
+void ServerClass::SetRequestPath(std::string &path)
+{
+    location = GetLocation(path);
+    if (location)
+        location->DisplayValues(true);
+    else
+        DEBUGOUT(1, "LOCATION NOT FOUND");
 }
 
 LocationClass *ServerClass::GetLocation(std::string &path)
 {
-    LocationClass *firstGlobal = NULL;
-    std::string directory = path.substr(0, path.find_last_of('/') + 1);
+    LocationClass *lastmatch = NULL;
+    size_t matchSize = 0, locationPathSize;
     for (size_t i = 0; i < this->locations.size(); i++)
     {
-        if (this->locations.at(i).GetPath() == "/")
-            firstGlobal = new LocationClass(this->locations.at(i));
-        if (this->locations.at(i).GetPath() == path)
-            return new LocationClass(this->locations.at(i));
+        locationPathSize = this->locations.at(i).GetPath().length();
+        if (locationPathSize > matchSize &&
+            path.find(this->locations.at(i).GetPath().c_str(), 0, locationPathSize) != std::string::npos)
+        {
+            lastmatch = new LocationClass(this->locations.at(i));
+            matchSize = locationPathSize;
+        }
     }
-    return (firstGlobal);
+    return (lastmatch);
 }
 
 ServerClass::~ServerClass()

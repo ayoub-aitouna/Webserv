@@ -44,8 +44,6 @@ void LocationClass::Parse()
         {
             ExactSize(tokens.size() != 3, "location");
             this->path = tokens.at(1);
-            if (this->path != "/" && *(this->path.end() - 1) != '/')
-                this->path.append("/");
         }
         else if (tokens.at(0) == "root")
         {
@@ -118,7 +116,7 @@ void LocationClass::Parse()
         else if (tokens.at(0) != "}")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
-    DisplayValues(true);
+    DisplayValues(false);
 }
 
 void LocationClass::DisplayValues(bool show)

@@ -97,7 +97,7 @@ void RequestParser::ParseHeaders(std::string data)
         if (!(this->dataPool.ServerConf = ConfigHandler::GetHttp()
                                               .GetServersByHost(GetHeaderAttr(this->dataPool, "Host"))))
             throw HTTPError(500);
-        this->dataPool.ServerConf->DisplayValues(true);
+        this->dataPool.ServerConf->DisplayValues(false);
     }
 
     RequestHandlersFactory(Lstring::tolower(MethodName));

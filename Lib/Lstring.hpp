@@ -68,6 +68,10 @@ public:
     static std::string GetLine(std::string input, std::string endl = "\r\n", size_t LineIndex = 0);
 
     static void Trim(std::string &input, std::string delim = " ");
+    static std::string &LTrim(std::string &input, std::string delim = " ");
+    static std::string &RTrim(std::string &input, std::string delim = " ");
+
+    static std::string &Replace(std::string &input, std::string target, std::string _new);
 };
 
 #endif

@@ -51,7 +51,7 @@ int PostRequest::GetRequestedResource()
      * TODO: Files extention From Config File
      * Config Exutable of Cgi
      */
-    if (FileExtention == ".php")
+    if (FileExtention == "php")
     {
         /**
          * TODO: Files extention From Config File

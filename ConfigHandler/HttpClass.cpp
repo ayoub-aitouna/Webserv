@@ -81,7 +81,7 @@ void HttpClass::Parse()
         else if (tokens.at(0) != "}" && tokens.at(0) != "http")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
-    DisplayValues(true);
+    DisplayValues(false);
 }
 
 std::string HttpClass::GetContentType(std::string FileExtention)
