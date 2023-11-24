@@ -4,8 +4,6 @@
 
 class GetRequest : public Request
 {
-private:
-    /* data */
 public:
     GetRequest(DataPool &dataPool);
     virtual bool HandleRequest(std::string &data);

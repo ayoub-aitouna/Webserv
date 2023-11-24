@@ -6,6 +6,8 @@
 #include "Preprocessor.hpp"
 #include <map>
 
+#define IS_ON_OR_OFF(val) val == "on" ? true : false
+
 class LocationClass
 {
 
@@ -21,12 +23,12 @@ public:
     std::string GetRoot();
     std::vector<std::string> GetIndex();
     std::pair<int, std::string> GetRedirection();
-    bool GetAutoindex();
+    std::string GetAutoindex();
     std::vector<std::string> GetAllowed();
-    bool GetUpload();
+    std::string GetUpload();
     std::string GetUpload_stor();
     std::string GetError_page(int ErrorCode);
-    std::string GetCgi();
+    std::vector<std::string> &GetCgi();
     std::string GetCgi_path();
 
 private:
@@ -34,12 +36,12 @@ private:
     std::string path, root;
     std::vector<std::string> index;
     std::pair<int, std::string> redirection;
-    bool autoindex;
+    std::string autoindex;
     std::vector<std::string> allowed;
-    bool upload;
+    std::string upload;
     std::string upload_stor;
     std::map<int, std::string> error_page;
-    std::string cgi;
+    std::vector<std::string> cgi;
     std::string cgi_path;
 };
 void ExactSize(bool cond, std::string Block);

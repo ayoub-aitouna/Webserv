@@ -1,29 +1,23 @@
 #include "Include/Request.hpp"
 
-/**
- * /, /other, /other/, /otherss/other/index.html
- */
 Request::Request(DataPool &dataPool) : dataPool(dataPool)
 {
     this->BodyReady = false;
     this->BodyReceiver = NULL;
     this->CGIProcessId = 0;
-    DEBUGOUT(1, "REQUESTED URL : " << dataPool.Url);
-    this->dataPool.ServerConf->SetRequestPath(this->dataPool.Url);
 }
 
 int Request::GetRequestedResource()
 {
     struct stat ResourceState;
-
     ResourceFilePath = dataPool.ServerConf->GetRoot(dataPool.Url);
+
     if (access(ResourceFilePath.c_str(), F_OK) != 0)
         throw HTTPError(404);
+
     if (stat(ResourceFilePath.c_str(), &ResourceState) < 0)
-    {
-        DEBUGOUT(1, COLORED("Error Finiding State of File " << ResourceFilePath, Red));
         throw HTTPError(500);
-    }
+
     if (S_ISREG(ResourceState.st_mode))
         this->dataPool.ResourceType = WB_FILE;
     else if (S_ISDIR(ResourceState.st_mode))
@@ -113,37 +107,38 @@ void ServerError(std::string Msg)
     throw HTTPError(500);
 }
 
+// std::string GetFileRoot(std::string FilePath)
+// {
+//     // if(FilePath.fi)
+// }
+
 /**
- * TODO: use pthone3 as py cgi
+ * TODO: all values that abtiened from clinet
+ * add to them prefix HTTP example:
+ * see: https://fr.wikipedia.org/wiki/Variables_d%27environnement_CGI
  */
 void Request::ExecuteCGI(std::string CGIName, std::string Method)
 {
-    DEBUGOUT(1, COLORED("RUNNING CGI ..", Blue));
 
     CGIFileName = "/tmp/" + Lstring::RandomStr(10);
+    DEBUGOUT(1, COLORED("CGI CGIFileName " << CGIFileName, Blue));
+
     av.push_back(CGIName);
     env.push_back("REDIRECT_STATUS=1");
     this->env.push_back("REQUEST_METHOD=" + Method);
     env.push_back("SCRIPT_FILENAME=" + this->ResourceFilePath);
-
-    /**
-     * TODO: all values that abtiened from clinet
-     * add to them prefix HTTP example:
-     *  . env.push_back("HTTP_COOKIE=1245);
-     * see: https://fr.wikipedia.org/wiki/Variables_d%27environnement_CGI
-     */
     env.push_back("QUERY_STRING=" + this->dataPool.Query);
+    env.push_back("HTTP_COOKIE=" + GetHeaderAttr(dataPool.Headers, "cockie"));
     if (Method == "POST")
     {
-
-        env.push_back("CONTENT_LENGTH=" + GetHeaderAttr(this->dataPool, "Content-Length"));
-        env.push_back("CONTENT_TYPE=" + GetHeaderAttr(this->dataPool, "Content-Type"));
-        DEBUGOUT(1, COLORED("SET POST DATA CGI .. \n" + env.back() + "  \n" + *(env.end() - 2), Blue));
+        env.push_back("CONTENT_LENGTH=" + GetHeaderAttr(dataPool.Headers, "Content-Length"));
+        env.push_back("CONTENT_TYPE=" + GetHeaderAttr(dataPool.Headers, "Content-Type"));
     }
     if ((CGIProcessId = fork()) < 0)
         ServerError("fork() Failed");
     if (CGIProcessId == 0)
     {
+        // if(chdir())
         dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
         if (Method == "POST")
             dup2(this->BodyReceiver->GetReadFd(), 0);
@@ -152,7 +147,6 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
             exit(1);
         close(1);
     }
-    DEBUGOUT(1, "ExecuteCGI CGIProcessId > " << this->CGIProcessId);
 }
 
 bool Request::ParseCGIOutput()
@@ -160,8 +154,11 @@ bool Request::ParseCGIOutput()
     int status_ptr = 0;
     int FileFd;
     int wait_pid;
+    bool passedHeader;
     std::string responseBuffer;
     std::string line;
+    std::vector<std::string> HeadersBuffer;
+    std::map<std::string, std::string> Headers;
 
     if (this->CGIProcessId == 0)
         return false;
@@ -174,30 +171,39 @@ bool Request::ParseCGIOutput()
         return false;
     }
     this->CGIProcessId = 0;
-    DEBUGOUT(1, COLORED("DONE RUNNING CGI YAY ..", Blue));
 
     if (WIFEXITED(status_ptr) && WEXITSTATUS(status_ptr) != 0)
         ServerError("exited with error " + SSTR(WEXITSTATUS(status_ptr)));
 
     std::ifstream responseFile(CGIFileName.c_str());
+    passedHeader = false;
+
     while (getline(responseFile, line))
     {
-        /**
-         * fasdfa:afasdf
-         * \r\n\r\n
-         */
-        if (line.find("Content-type") != std::string::npos)
-            this->dataPool.File.ResourceFileType = Lstring::ExtractFromString(line, "Content-type: ", "; ");
+        if (!passedHeader && line == "\r")
+            passedHeader = true;
+        else if (!passedHeader)
+            HeadersBuffer.push_back(line);
         else
             responseBuffer.append(line);
     }
+    for (size_t i = 0; i < HeadersBuffer.size(); i++)
+    {
+        std::vector<std::string> Attr = Lstring::Split(HeadersBuffer.at(i), ": ");
+        Headers[Attr.at(0)] = Attr.at(1);
+    }
+
+    dataPool.File.ResourceFileType = GetHeaderAttr(Headers, "Content-type");
+    dataPool.File.ResourceFileType =
+        dataPool.File.ResourceFileType
+            .substr(0, dataPool.File.ResourceFileType.find_first_of(';'));
 
     unlink(CGIFileName.c_str());
     FileFd = IO::OpenFile(CGIFileName.c_str(), "w+");
     write(FileFd, responseBuffer.c_str(), responseBuffer.size());
     close(FileFd);
-    this->dataPool.File.Fd = IO::OpenFile(CGIFileName.c_str(), "r+");
-    this->dataPool.ResponseStatus = OK;
+    dataPool.File.Fd = IO::OpenFile(CGIFileName.c_str(), "r+");
+    dataPool.ResponseStatus = OK;
     return true;
 }
 

@@ -20,15 +20,25 @@ public:
     void Parse();
     void DisplayValues(bool Show);
 
+    // Server Specific
 public:
-    std::string GetErrorPagePath(int ErrorCode);
     std::string GetHostName();
     std::string GetPort();
-    std::string GetRoot(std::string &Url);
+    LocationClass *GetLocation(std::string &path);
     std::vector<std::string> &GetServerNames();
+
+    // Shared  (Server | Location)
+public:
+    std::string GetErrorPagePath(int ErrorCode);
+    std::string GetRoot(std::string Url);
     std::pair<int, std::string> GetRedirection(std::string &path);
     std::vector<std::string> GetIndex();
-    LocationClass *GetLocation(std::string &path);
+    bool GetAutoindex();
+    bool GetUpload();
+    std::string GetUpload_stor();
+    std::vector<std::string> &GetCgi();
+    std::string GetCgi_path();
+    std::vector<std::string> GetAllowed();
 
 public:
     void SetRequestPath(std::string &path);
@@ -36,11 +46,19 @@ public:
 private:
     std::string RawData;
     std::string port, host, root;
-    std::vector<std::string> index;
     std::vector<std::string> server_name;
-    std::pair<int, std::string> redirection;
-    std::map<int, std::string> error_page;
     std::vector<LocationClass> locations;
     LocationClass *location;
+
+    // Shared attr (Server | Location)
+private:
+    std::vector<std::string> index;
+    std::pair<int, std::string> redirection;
+    std::map<int, std::string> error_page;
+    std::string autoindex;
+    std::string upload;
+    std::string upload_stor;
+    std::vector<std::string> cgi;
+    std::string cgi_path;
 };
 #endif

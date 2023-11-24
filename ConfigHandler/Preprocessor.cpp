@@ -44,10 +44,7 @@ std::string Preprocessor::Processor()
             Line.erase(Line.find("#"));
         Lstring::Trim(Line);
         if (*(Line.end() - 1) != ';' && *(Line.end() - 1) != '{' && *(Line.end() - 1) != '}')
-        {
-            DEBUGOUT(1, COLORED("CONFIG FILE ERROR \n Line : " << Line, Red));
-            throw std::runtime_error("Conf file invalide \nLine : \n\t" + Line);
-        }
+            throw std::runtime_error("invalide end of line:\n\t>> " + Line);
         if (*(Line.end() - 1) == ';')
             Line.erase((Line.end() - 1));
         LineParts = Lstring::Split(Line, " ");

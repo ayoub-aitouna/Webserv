@@ -7,7 +7,44 @@ DeleteRequest::DeleteRequest(DataPool &dataPool) : Request(dataPool)
 bool DeleteRequest::HandleRequest(std::string &data)
 {
     (void)data;
-    return false;
+    PrintfFullRequest();
+    return (this->GetRequestedResource());
+}
+
+void DeleteRequest::DeleteDirectory(std::string Dir)
+{
+    struct stat fileInfo;
+    dirent *entry;
+    std::string entrypath;
+    DIR *dir;
+
+    if (stat(Dir.c_str(), &fileInfo) < 0)
+        HTTPError(500);
+    if (!(fileInfo.st_mode & S_IWUSR))
+        HTTPError(403);
+
+    dir = opendir(Dir.c_str());
+    if (dir == NULL)
+        return;
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (std::string(entry->d_name) == "." || std::string(entry->d_name) == "..")
+            continue;
+        entrypath = Lstring::RTrim(Dir, "/") + "/" + entry->d_name;
+        if (stat(entrypath.c_str(), &fileInfo) < 0)
+            HTTPError(500);
+        if (!(fileInfo.st_mode & S_IWUSR))
+            HTTPError(403);
+        if (S_ISDIR(fileInfo.st_mode))
+            DeleteDirectory(entrypath);
+        else if (unlink(entrypath.c_str()) < 0)
+            throw HTTPError(500);
+    }
+    if (rmdir(Dir.c_str()) < 0)
+    {
+        perror("Error removing directory");
+        throw HTTPError(500);
+    }
 }
 
 int DeleteRequest::GetRequestedResource()
@@ -16,42 +53,32 @@ int DeleteRequest::GetRequestedResource()
 
     std::string IndexFileName;
     std::string FileExtention;
+    struct stat fileInfo;
 
     if (this->dataPool.ResourceType == WB_DIRECTORY)
     {
         if (*(this->dataPool.Url.end() - 1) != '/')
             throw HTTPError(409);
-        if ((IndexFileName = GetIndex(ResourceFilePath)).empty())
-            throw HTTPError(403);
         ResourceFilePath.append(IndexFileName);
     }
-
-    DEBUGOUT(0, COLORED("DELETE - ResourceFile Path ", Red) << COLORED(ResourceFilePath, Green));
-
     FileExtention = GetFileExtention(ResourceFilePath);
-
-    /**
-     * TODO: Files extention From Config File
-     * Config Exutable of Cgi
-     */
-    if (FileExtention == "php" || FileExtention == "py")
+    if (Containes(this->dataPool.ServerConf->GetCgi(), FileExtention))
     {
-        return false;
+        if (IndexFileName.empty())
+            throw HTTPError(403);
+        return (Request::ExecuteCGI("/usr/bin/php-cgi", "DELETE"), false);
     }
 
     if (this->dataPool.ResourceType == WB_DIRECTORY)
-    {
-        /**
-         * TODO:
-         * Recursively Delete All Files And Folders in Requested Directory
-         */
-    }
+        return (DeleteDirectory(ResourceFilePath), dataPool.ResponseStatus = 204, true);
     else if (this->dataPool.ResourceType == WB_FILE)
     {
         if (unlink(ResourceFilePath.c_str()) < 0)
         {
-            DEBUGOUT(1, COLORED("Error While deleting File " << ResourceFilePath, Red));
-
+            if (stat(ResourceFilePath.c_str(), &fileInfo) < 0)
+                HTTPError(500);
+            if (!(fileInfo.st_mode & S_IWUSR))
+                HTTPError(403);
             throw HTTPError(500);
         }
         throw HTTPError(204);

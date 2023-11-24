@@ -38,6 +38,12 @@ ServerClass &ServerClass::operator=(const ServerClass &lhs)
         this->error_page = lhs.error_page;
         this->index = lhs.index;
         this->locations = lhs.locations;
+
+        this->autoindex = lhs.autoindex;
+        this->upload = lhs.upload;
+        this->upload_stor = lhs.upload_stor;
+        this->cgi = lhs.cgi;
+        this->cgi_path = lhs.cgi_path;
     }
     return (*this);
 }
@@ -80,6 +86,7 @@ void ServerClass::Parse()
             for (size_t i = 1; i < tokens.size(); i++)
                 server_name.push_back(tokens.at(i));
         }
+
         else if (tokens.at(0) == "index")
         {
             ExactSize(tokens.size() < 2, "Server");
@@ -112,6 +119,40 @@ void ServerClass::Parse()
             ExactSize(tokens.size() < 3, "Server");
             this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
         }
+        else if (tokens.at(0) == "autoindex")
+        {
+            ExactSize(tokens.size() < 2, "location");
+            this->autoindex = tokens.at(1);
+            Lstring::tolower(this->autoindex);
+            if (this->autoindex != "on" && this->autoindex != "off")
+                throw std::runtime_error("Invalide autoindex Value");
+        }
+        else if (tokens.at(0) == "upload")
+        {
+            ExactSize(tokens.size() < 2, "location");
+
+            this->upload = tokens.at(1);
+            Lstring::tolower(this->upload);
+            if (this->upload != "on" && this->upload != "off")
+                throw std::runtime_error("Invalide upload Value");
+        }
+        else if (tokens.at(0) == "upload_stor")
+        {
+            ExactSize(tokens.size() < 2, "Server");
+            this->upload_stor = tokens.at(1);
+        }
+        else if (tokens.at(0) == "cgi_accept")
+        {
+            ExactSize(tokens.size() < 2, "Server");
+            for (size_t i = 1; i < tokens.size(); i++)
+                cgi.push_back(tokens.at(i));
+        }
+        else if (tokens.at(0) == "cgi_path")
+        {
+            ExactSize(tokens.size() != 2, "Server");
+            this->cgi_path = tokens.at(1);
+        }
+
         else if (tokens.at(0) != "}" && tokens.at(0) != "server")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
@@ -159,7 +200,7 @@ std::string ServerClass::GetPort()
     return (this->port);
 }
 
-std::string ServerClass::GetRoot(std::string &Url)
+std::string ServerClass::GetRoot(std::string Url)
 {
     if (location && !location->GetRoot().empty())
         return Lstring::Replace(Url, location->GetPath(), location->GetRoot());
@@ -196,11 +237,50 @@ std::pair<int, std::string> ServerClass::GetRedirection(std::string &path)
     return (delete location, redirection);
 }
 
+bool ServerClass::GetAutoindex()
+{
+    if (this->location && !this->location->GetAutoindex().empty())
+        return IS_ON_OR_OFF(this->location->GetAutoindex());
+    return IS_ON_OR_OFF(this->autoindex);
+}
+bool ServerClass::GetUpload()
+{
+    if (this->location && !this->location->GetUpload().empty())
+        return IS_ON_OR_OFF(this->location->GetUpload());
+    return IS_ON_OR_OFF(this->upload);
+}
+std::string ServerClass::GetUpload_stor()
+{
+    if (location && !location->GetUpload().empty())
+        return (this->location->GetUpload());
+    return (this->upload_stor);
+}
+std::vector<std::string> &ServerClass::GetCgi()
+{
+    if (location && !location->GetCgi().empty())
+        return (this->location->GetCgi());
+    return (this->cgi);
+}
+
+std::vector<std::string> ServerClass::GetAllowed()
+{
+    if (location)
+        return (this->location->GetAllowed());
+    return (std::vector<std::string>());
+}
+
+std::string ServerClass::GetCgi_path()
+{
+    if (location && !location->GetCgi_path().empty())
+        return (this->location->GetCgi_path());
+    return (this->cgi_path);
+}
+
 void ServerClass::SetRequestPath(std::string &path)
 {
     location = GetLocation(path);
     if (location)
-        location->DisplayValues(true);
+        location->DisplayValues(false);
     else
         DEBUGOUT(1, "LOCATION NOT FOUND");
 }

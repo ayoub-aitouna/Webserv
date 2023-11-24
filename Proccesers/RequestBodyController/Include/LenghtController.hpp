@@ -4,8 +4,7 @@
 
 class LenghtController : public BodyController
 {
-private:
-    /* data */
+
 public:
     LenghtController(DataPool &dataPool);
     LenghtController(DataPool &dataPool, u_int64_t Remaining);

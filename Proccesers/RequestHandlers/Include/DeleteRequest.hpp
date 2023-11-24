@@ -5,12 +5,12 @@
 
 class DeleteRequest : public Request
 {
-private:
-    /* data */
+
 public:
     DeleteRequest(DataPool &dataPool);
     virtual bool HandleRequest(std::string &data);
     virtual int GetRequestedResource();
+    void DeleteDirectory(std::string Dir);
     ~DeleteRequest();
 };
 

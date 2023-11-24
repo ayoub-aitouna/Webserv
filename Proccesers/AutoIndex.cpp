@@ -125,11 +125,14 @@ void AutoIndex(DataPool &dataPool, std::string &dirPath)
         }
     }
     buffer.append("</tbody></table></body></html>");
-    dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "w+");
 
+    dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "w+");
     write(dataPool.File.Fd, buffer.c_str(), buffer.size());
     close(dataPool.File.Fd);
+
     dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "r+");
     dataPool.File.ResourceFileType = "text/html";
+    dataPool.ResponseStatus = OK;
+
     closedir(dir);
 }

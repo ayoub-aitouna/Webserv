@@ -55,6 +55,14 @@ enum
     WB_NEITHER
 };
 
+enum
+{
+    OK = 200,
+    CREATED = 201,
+    NOTFOUND = 404,
+    FORBIDDEN = 403
+};
+
 typedef struct S_File
 {
     int Fd;
@@ -77,8 +85,6 @@ typedef struct S_DataPool
 
 typedef std::map<std::string, std::string>::iterator HeadersIterator;
 
-std::string GetHeaderAttr(DataPool &dataPool, std::string name);
-
-
+std::string GetHeaderAttr(std::map<std::string, std::string> &Headers, std::string name);
 
 #endif

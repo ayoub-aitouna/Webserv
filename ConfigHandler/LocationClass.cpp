@@ -40,6 +40,7 @@ void LocationClass::Parse()
 
         if (tokens.size() == 0)
             continue;
+
         if (tokens.at(0) == "location")
         {
             ExactSize(tokens.size() != 3, "location");
@@ -75,11 +76,9 @@ void LocationClass::Parse()
         else if (tokens.at(0) == "autoindex")
         {
             ExactSize(tokens.size() < 2, "location");
-            if (tokens.at(1) == "on")
-                this->autoindex = true;
-            else if (tokens.at(1) == "off")
-                this->autoindex = true;
-            else
+            this->autoindex = tokens.at(1);
+            Lstring::tolower(this->autoindex);
+            if (this->autoindex != "on" && this->autoindex != "off")
                 throw std::runtime_error("Invalide autoindex Value");
         }
         else if (tokens.at(0) == "allow")
@@ -96,11 +95,9 @@ void LocationClass::Parse()
         else if (tokens.at(0) == "upload")
         {
             ExactSize(tokens.size() < 2, "location");
-            if (tokens.at(1) == "on")
-                this->upload = true;
-            else if (tokens.at(1) == "off")
-                this->upload = false;
-            else
+            this->upload = tokens.at(1);
+            Lstring::tolower(this->upload);
+            if (this->upload != "on" && this->upload != "off")
                 throw std::runtime_error("Invalide upload Value");
         }
         else if (tokens.at(0) == "upload_stor")
@@ -112,6 +109,18 @@ void LocationClass::Parse()
         {
             ExactSize(tokens.size() < 3, "location");
             this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
+        }
+
+        else if (tokens.at(0) == "cgi_accept")
+        {
+            ExactSize(tokens.size() < 2, "location");
+            for (size_t i = 1; i < tokens.size(); i++)
+                cgi.push_back(tokens.at(i));
+        }
+        else if (tokens.at(0) == "cgi_path")
+        {
+            ExactSize(tokens.size() != 2, "location");
+            this->cgi_path = tokens.at(1);
         }
         else if (tokens.at(0) != "}")
             throw std::runtime_error("Invalide token " + tokens.at(0));
@@ -149,11 +158,13 @@ std::vector<std::string> LocationClass::GetIndex()
 {
     return (this->index);
 }
+
 std::pair<int, std::string> LocationClass::GetRedirection()
 {
     return (this->redirection);
 }
-bool LocationClass::GetAutoindex()
+
+std::string LocationClass::GetAutoindex()
 {
     return (this->autoindex);
 }
@@ -161,14 +172,17 @@ std::vector<std::string> LocationClass::GetAllowed()
 {
     return (this->allowed);
 }
-bool LocationClass::GetUpload()
+
+std::string LocationClass::GetUpload()
 {
     return (this->upload);
 }
+
 std::string LocationClass::GetUpload_stor()
 {
     return (this->upload_stor);
 }
+
 std::string LocationClass::GetError_page(int ErrorCode)
 {
     std::map<int, std::string>::iterator it;
@@ -177,10 +191,12 @@ std::string LocationClass::GetError_page(int ErrorCode)
         return (it->second);
     return ("");
 }
-std::string LocationClass::GetCgi()
+
+std::vector<std::string> &LocationClass::GetCgi()
 {
     return (this->cgi);
 }
+
 std::string LocationClass::GetCgi_path()
 {
     return (this->cgi_path);

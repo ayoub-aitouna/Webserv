@@ -1,6 +1,6 @@
 #include "Include/ResponseBuilder.hpp"
 
-#define SHOWBUFFER false
+#define SHOWBUFFER 0
 
 void ResponseBuilder::InitStatusCode()
 {

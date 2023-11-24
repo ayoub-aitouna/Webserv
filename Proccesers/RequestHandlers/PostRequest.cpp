@@ -11,6 +11,7 @@ bool PostRequest::HandleRequest(std::string &data)
     if (this->UploadBodyState == ZERO && GetRequestedResource())
     {
         PrintfFullRequest();
+        // this is useless check and delete if correct
         this->BodyReceiver->Parser();
         return (dataPool.ResponseStatus = CREATED, true);
     }
@@ -46,17 +47,8 @@ int PostRequest::GetRequestedResource()
         ResourceFilePath.append(IndexFileName);
     }
     FileExtention = GetFileExtention(ResourceFilePath);
-
-    /**
-     * TODO: Files extention From Config File
-     * Config Exutable of Cgi
-     */
-    if (FileExtention == "php")
+    if (Containes(this->dataPool.ServerConf->GetCgi(), FileExtention))
     {
-        /**
-         * TODO: Files extention From Config File
-         * Config Exutable of Cgi
-         */
         if (pipe(fds) < 0)
             ServerError("pipe() failed");
         this->BodyReceiver->SetFileFd(fds[0], fds[1]);
@@ -66,9 +58,8 @@ int PostRequest::GetRequestedResource()
     }
     if (this->SupportedUpload)
     {
-        DEBUGOUT(1, "HERERERER");
         this->BodyReceiver->SetIsCGI(false);
-        if (GetHeaderAttr(this->dataPool, "Content-Type").find("boundary=") == std::string::npos)
+        if (GetHeaderAttr(dataPool.Headers, "Content-Type").find("boundary=") == std::string::npos)
             this->BodyReceiver->CreateFile();
         return (this->UploadBodyState = UP_INPROGRESS, false);
     }

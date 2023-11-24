@@ -7,7 +7,7 @@ BodyController::BodyController(DataPool &dataPool) : dataPool(dataPool)
     std::string BoundaryName = "boundary=";
     size_t index;
 
-    if ((index = (ContentType = GetHeaderAttr(this->dataPool, "Content-Type"))
+    if ((index = (ContentType = GetHeaderAttr(dataPool.Headers, "Content-Type"))
                      .find(BoundaryName)) != std::string::npos)
     {
         this->Boundary = "--" + ContentType.substr(index + BoundaryName.size());
@@ -30,8 +30,9 @@ void BodyController::CreateFile(std::string ContentType)
     int fd;
 
     if (ContentType.empty())
-        ContentType = GetHeaderAttr(this->dataPool, "Content-Type");
-    this->FileName = "public/Uploads/" + Lstring::RandomStr(10) + ConfigHandler::GetHttp().GetFileExtention(ContentType);
+        ContentType = GetHeaderAttr(dataPool.Headers, "Content-Type");
+    this->FileName = this->dataPool.ServerConf->GetUpload_stor() + Lstring::RandomStr(10) +
+                     ConfigHandler::GetHttp().GetFileExtention(ContentType);
     DEBUGOUT(1, "NAME " << this->FileName);
     fd = IO::OpenFile(this->FileName.c_str(), "w+");
     if (fd < 0)
@@ -60,7 +61,6 @@ void BodyController::SetFileFd(int ReadFd, int WriteFd)
 
 void BodyController::Parser()
 {
-    DEBUGOUT(1, "STARTED PARSING THE BODY   ");
     std::string Boundary;
     size_t index, start, end;
 
@@ -68,7 +68,7 @@ void BodyController::Parser()
     std::vector<std::string> Parts;
 
     Boundary = "boundary=";
-    ContentType = GetHeaderAttr(this->dataPool, "Content-Type");
+    ContentType = GetHeaderAttr(dataPool.Headers, "Content-Type");
     if (ContentType.empty())
         return;
     if ((index = ContentType.find(Boundary)) != std::string::npos)
@@ -123,16 +123,6 @@ WBSRVFILE BodyController::SaveMultiPartFile(std::string &part)
     return (File);
 }
 
-/**
- * Example of multipart/form
- *  -----------------------------9051914041544843365972754266
- *  Content-Disposition: form-data; name="text"
- *  Content-Type: text/plain
- *
- * text default
- *   -----------------------------9051914041544843365972754266--
- *
- */
 void BodyController::SaveBodyAsFile()
 {
     if (!Boundary.empty() && !this->isCGI)

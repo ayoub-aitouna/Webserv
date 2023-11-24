@@ -8,20 +8,6 @@
 #include "../../../Lib/Lstring.hpp"
 #include <sys/wait.h>
 
-enum
-{
-    OK = 200,
-    CREATED = 201,
-    NOTFOUND = 404,
-    FORBIDDEN = 403
-};
-
-enum
-{
-    SCRIPT,
-    NRMLFILE,
-    NONFILE,
-};
 
 class Request
 {
