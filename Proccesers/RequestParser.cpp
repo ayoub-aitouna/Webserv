@@ -35,7 +35,6 @@ void RequestParser::ParseUrl(std::string &Url)
     if ((index = Url.find("?")) != std::string::npos)
     {
         dataPool.Query = Url.substr(index + 1);
-        DEBUGOUT(1, COLORED(dataPool.Query, Yellow));
         dataPool.Url = Url.substr(0, index);
     }
 }
@@ -97,6 +96,7 @@ void RequestParser::ParseHeaders(std::string data)
         !(dataPool.ServerConf = ConfigHandler::GetHttp().GetServersByHost(GetHeaderAttr(dataPool.Headers, "Host"))))
         throw HTTPError(500);
 
+    dataPool.ServerConf->DisplayValues(true);
     dataPool.ServerConf->SetRequestPath(this->dataPool.Url);
 
     if (!dataPool.ServerConf->GetAllowed().empty() && !Containes(dataPool.ServerConf->GetAllowed(), MethodName))
@@ -130,22 +130,6 @@ bool RequestParser::Parse(std::string data)
     return (false);
 }
 
-/**
- * // bool RequestParser::Parse(std::string data)
- * // {
- * //   size_t index;
- * //   this->buffer.append(data);
- * //   if ((index = buffer.find(DBLCRLF)) != std::string::npos && dataPool.Headers.empty())
- * //   {
- * //       ParseHeaders(buffer.substr(0, index));
- * //       buffer = buffer.substr(index + 4);
- * //   }
- * //   if (!this->RequestHandler)
- * //       return (false);
- * //   return (this->RequestHandler->HandleRequest(this->buffer));
- * // }
- */
-
 Request *RequestParser::GetRequestHandler()
 {
     return this->RequestHandler;
@@ -168,5 +152,6 @@ std::string GetHeaderAttr(std::map<std::string, std::string> &Headers, std::stri
 
 RequestParser::~RequestParser()
 {
+    delete this->dataPool.ServerConf;
     delete this->RequestHandler;
 }

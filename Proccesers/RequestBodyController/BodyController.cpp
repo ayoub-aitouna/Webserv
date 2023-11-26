@@ -51,7 +51,15 @@ void BodyController::CreateFile(std::string ContentType, bool isTemp)
 
 int BodyController::GetReadFd()
 {
-    return IO::OpenFile(this->FileName.c_str(), "r");
+    try
+    {
+        int fd = IO::OpenFile(this->FileName.c_str(), "r");
+        return (fd);
+    }
+    catch (const std::exception &e)
+    {
+        throw HTTPError(500);
+    }
 }
 
 int BodyController::GetWriteFd()
