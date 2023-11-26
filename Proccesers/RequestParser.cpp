@@ -7,6 +7,7 @@ RequestParser::RequestParser()
     dataPool.ResponseStatus = 0;
     this->RequestHandler = NULL;
     dataPool.ServerConf = NULL;
+    state = READ_HEADERS;
 }
 
 void RequestParser::ParseUrl(std::string &Url)
@@ -60,8 +61,7 @@ void RequestParser::RequestHandlersFactory(std::string &Method)
         RequestHandler = new DeleteRequest(dataPool);
         return;
     }
-    RequestHandler = NULL;
-    dataPool.Method = OTHER;
+    throw HTTPError(501);
 }
 
 void RequestParser::ParseHeaders(std::string data)
@@ -77,7 +77,6 @@ void RequestParser::ParseHeaders(std::string data)
     stream >> MethodName >> dataPool.Url;
     MethodName = Lstring::tolower(MethodName);
     ParseUrl(dataPool.Url);
-    DEBUGOUT(1, "Requested :: " << dataPool.Url << " Method " << MethodName);
 
     for (std::vector<std::string>::iterator it = List.begin() + 1; it != List.end(); it++)
     {
@@ -114,19 +113,47 @@ bool RequestParser::Parse(std::string data)
 {
     size_t index;
     this->buffer.append(data);
-    if ((index = buffer.find(DBLCRLF)) != std::string::npos && dataPool.Headers.empty())
+    switch (state)
     {
+    case READ_HEADERS:
+        if ((index = buffer.find(DBLCRLF)) == std::string::npos)
+            return (false);
         ParseHeaders(buffer.substr(0, index));
         buffer = buffer.substr(index + 4);
+        state = PROCESS_REQUEST;
+        // intentionally fall through
+    case PROCESS_REQUEST:
+        if (!this->RequestHandler)
+            return (false);
+        return (this->RequestHandler->HandleRequest(this->buffer));
     }
-    if (!this->RequestHandler)
-        return (false);
-    return (this->RequestHandler->HandleRequest(this->buffer));
+    return (false);
 }
+
+/**
+ * // bool RequestParser::Parse(std::string data)
+ * // {
+ * //   size_t index;
+ * //   this->buffer.append(data);
+ * //   if ((index = buffer.find(DBLCRLF)) != std::string::npos && dataPool.Headers.empty())
+ * //   {
+ * //       ParseHeaders(buffer.substr(0, index));
+ * //       buffer = buffer.substr(index + 4);
+ * //   }
+ * //   if (!this->RequestHandler)
+ * //       return (false);
+ * //   return (this->RequestHandler->HandleRequest(this->buffer));
+ * // }
+ */
 
 Request *RequestParser::GetRequestHandler()
 {
     return this->RequestHandler;
+}
+
+DataPool &RequestParser::GetDataPool()
+{
+    return (this->dataPool);
 }
 
 std::string GetHeaderAttr(std::map<std::string, std::string> &Headers, std::string name)

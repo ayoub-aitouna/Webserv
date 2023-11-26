@@ -7,16 +7,21 @@ GetRequest::GetRequest(DataPool &dataPool) : Request(dataPool)
 bool GetRequest::HandleRequest(std::string &data)
 {
     (void)data;
+    if (this->CGIProcessId)
+        return (false);
     PrintfFullRequest();
     return (this->GetRequestedResource());
 }
 
+/**
+ TODO when get request with body postman hangs
+*/
 int GetRequest::GetRequestedResource()
 {
-    Request::GetRequestedResource();
-
     std::string IndexFileName;
     std::string FileExtention;
+
+    Request::GetRequestedResource();
 
     if (this->dataPool.ResourceType == WB_DIRECTORY)
     {
@@ -38,10 +43,9 @@ int GetRequest::GetRequestedResource()
     }
 
     FileExtention = GetFileExtention(ResourceFilePath);
+
     if (Containes(this->dataPool.ServerConf->GetCgi(), FileExtention))
-    {
         return (Request::ExecuteCGI("/usr/bin/php-cgi", "GET"), false);
-    }
 
     this->dataPool.File.Fd = IO::OpenFile(ResourceFilePath.c_str(), "r");
     this->dataPool.File.ResourceFileType = ConfigHandler::GetHttp().GetContentType(FileExtention);

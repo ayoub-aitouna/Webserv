@@ -5,6 +5,8 @@
 #include <vector>
 #include "Preprocessor.hpp"
 #include <map>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define IS_ON_OR_OFF(val) val == "on" ? true : false
 
@@ -30,6 +32,7 @@ public:
     std::string GetError_page(int ErrorCode);
     std::vector<std::string> &GetCgi();
     std::string GetCgi_path();
+    void Validate_Values();
 
 private:
     std::string RawData;
@@ -45,4 +48,5 @@ private:
     std::string cgi_path;
 };
 void ExactSize(bool cond, std::string Block);
+void CheckIfValidePath(std::string path, bool IsDir = true);
 #endif

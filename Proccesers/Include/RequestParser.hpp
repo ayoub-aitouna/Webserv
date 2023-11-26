@@ -8,6 +8,12 @@
 #include "../RequestHandlers/Include/GetRequest.hpp"
 #include "../RequestHandlers/Include/DeleteRequest.hpp"
 
+enum ConnectionState
+{
+    READ_HEADERS,
+    PROCESS_REQUEST,
+};
+
 class RequestParser
 {
 
@@ -17,15 +23,15 @@ public:
     void ParseHeaders(std::string data);
     void ParseUrl(std::string &Url);
     void RequestHandlersFactory(std::string &Method);
+    DataPool &GetDataPool();
     Request *GetRequestHandler();
     ~RequestParser();
 
 private:
     Request *RequestHandler;
     std::string buffer;
-
-public:
     DataPool dataPool;
+    ConnectionState state;
 };
 
 std::string CreateRow(int type, std::string Name, u_int64_t size, std::string permissions);

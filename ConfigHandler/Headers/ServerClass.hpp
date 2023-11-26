@@ -19,6 +19,7 @@ public:
 public:
     void Parse();
     void DisplayValues(bool Show);
+    void Validate_Values();
 
     // Server Specific
 public:

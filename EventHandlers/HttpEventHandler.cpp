@@ -18,37 +18,39 @@ int HttpEventHandler::Read()
     char buffer[1025];
     int read_bytes;
     bool Parsed;
+
     read_bytes = read(this->SocketFd, buffer, KB);
-    buffer[read_bytes] = 0;
     if (read_bytes <= 0)
         return (0);
+    DEBUGOUT(0, "read_bytes " << COLORED(read_bytes, Blue));
+
     this->start = clock();
-    DEBUGOUT(0, "Read " << read_bytes);
     try
     {
         if (this->response != NULL)
             return (read_bytes);
         Parsed = this->request.Parse(CBFTSTR(buffer, read_bytes));
         if (Parsed)
-            this->response = new ResponseBuilder(this->request.dataPool);
+            this->response = new ResponseBuilder(this->request.GetDataPool());
     }
     catch (const HTTPError &e)
     {
-        this->request.dataPool.ResponseStatus = e.statusCode;
-        this->response = new ResponseBuilder(this->request.dataPool);
-        DEBUGOUT(1, "HTTPError " << COLORED(this->response->StatusCodes[e.statusCode], Red));
+        this->request.GetDataPool().ResponseStatus = e.statusCode;
+        this->response = new ResponseBuilder(this->request.GetDataPool());
+        DEBUGOUT(1, "HTTPError " << COLORED(this->response->GetStatusCodes()[e.statusCode], Red));
     }
     catch (const std::exception &e)
     {
         DEBUGOUT(1, COLORED(e.what(), Red));
         return (0);
     }
+
     return (read_bytes);
 }
 
 void HttpEventHandler::CreateResponse()
 {
-    this->response = new ResponseBuilder(this->request.dataPool);
+    this->response = new ResponseBuilder(this->request.GetDataPool());
 }
 
 RequestParser &HttpEventHandler::GetRequestParser()
@@ -89,6 +91,11 @@ EventHandler *HttpEventHandler::Accept(void)
 const int &HttpEventHandler::GetSocketFd() const
 {
     return this->SocketFd;
+}
+
+Request *HttpEventHandler::GetRequestHandler()
+{
+    return this->request.GetRequestHandler();
 }
 
 HttpEventHandler::~HttpEventHandler()

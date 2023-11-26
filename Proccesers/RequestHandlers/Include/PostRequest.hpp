@@ -14,7 +14,6 @@ class PostRequest : public Request
 {
 private:
     int fds[2];
-    bool SupportedUpload;
     int UploadBodyState;
     std::string FileExtention;
 

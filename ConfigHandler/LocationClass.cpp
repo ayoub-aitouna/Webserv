@@ -125,7 +125,38 @@ void LocationClass::Parse()
         else if (tokens.at(0) != "}")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
+    Validate_Values();
     DisplayValues(false);
+}
+
+void CheckIfValidePath(std::string path, bool IsDir)
+{
+    struct stat FileStat;
+    if (path.empty() || access(path.c_str(), F_OK) < 0)
+        throw std::runtime_error(path + " set to non-existent directory");
+    if (stat(path.c_str(), &FileStat) < 0)
+        throw std::runtime_error("Sys Error");
+    if ((IsDir && !S_ISDIR(FileStat.st_mode)) || !(FileStat.st_mode & S_IWUSR))
+        throw std::runtime_error(path + " set to non-directory or inaccessible directory");
+}
+
+void LocationClass::Validate_Values()
+{
+    try
+    {
+        if (IS_ON_OR_OFF(this->upload))
+            CheckIfValidePath(this->upload_stor);
+        if (!this->cgi.empty())
+            CheckIfValidePath(this->cgi_path, false);
+        if (!this->root.empty())
+            CheckIfValidePath(this->root);
+        for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
+            CheckIfValidePath(i->second, false);
+    }
+    catch (const std::exception &e)
+    {
+        throw std::runtime_error("Error: " + std::string(e.what()) + " at location: " + this->path);
+    }
 }
 
 void LocationClass::DisplayValues(bool show)
@@ -150,10 +181,12 @@ std::string LocationClass::GetPath()
 {
     return (this->path);
 }
+
 std::string LocationClass::GetRoot()
 {
     return (this->root);
 }
+
 std::vector<std::string> LocationClass::GetIndex()
 {
     return (this->index);
@@ -168,6 +201,7 @@ std::string LocationClass::GetAutoindex()
 {
     return (this->autoindex);
 }
+
 std::vector<std::string> LocationClass::GetAllowed()
 {
     return (this->allowed);

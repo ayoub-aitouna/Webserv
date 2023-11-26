@@ -52,10 +52,8 @@ int ChunkController::Receiver(std::string &data)
                 }
             }
             break;
-        case End:
-            close(this->BodyFileFds[1]);
-            return (true);
-            break;
+        case End:;
+            return (close(this->FileFd), true);
 
         default:
             this->ChunkState = Error;
@@ -66,19 +64,9 @@ int ChunkController::Receiver(std::string &data)
             DEBUGOUT(1, COLORED("ERROR !!!", Red));
             exit(0);
         }
-        /**
-         *  TODO: if => RequestParser body larger than client max body size in config file
-         *        change <1024> with max-body from config file */
-        // if (dataPool.body.size() > 90 * 1024 * 1024)
-        //     throw HTTPError(413);
     }
 
     return (false);
-}
-
-void ChunkController::SetRemaining(unsigned long Remaining)
-{
-    (void)Remaining;
 }
 
 ChunkController::~ChunkController()

@@ -2,19 +2,13 @@
 
 PostRequest::PostRequest(DataPool &dataPool) : Request(dataPool)
 {
-    this->SupportedUpload = true;
     this->UploadBodyState = ZERO;
 }
 
 bool PostRequest::HandleRequest(std::string &data)
 {
     if (this->UploadBodyState == ZERO && GetRequestedResource())
-    {
-        PrintfFullRequest();
-        // this is useless check and delete if correct
-        this->BodyReceiver->Parser();
-        return (dataPool.ResponseStatus = CREATED, true);
-    }
+        return (PrintfFullRequest(), dataPool.ResponseStatus = OK, true);
     if (this->UploadBodyState == UP_INPROGRESS || this->UploadBodyState == CGI_INPROGRESS)
     {
         if (!this->BodyReady)
@@ -25,11 +19,13 @@ bool PostRequest::HandleRequest(std::string &data)
                 return (this->UploadBodyState = DONE,
                         dataPool.ResponseStatus = CREATED, true);
             else if (this->UploadBodyState == CGI_INPROGRESS)
-                return (this->UploadBodyState = DONE, false);
+                return (Request::ExecuteCGI(this->dataPool.ServerConf->GetCgi_path(), "POST"),
+                        this->UploadBodyState = DONE, false);
         }
     }
     return false;
 }
+
 int PostRequest::GetRequestedResource()
 {
     Request::GetRequestedResource();
@@ -42,22 +38,23 @@ int PostRequest::GetRequestedResource()
             this->dataPool.Location = this->dataPool.Url + "/";
             throw HTTPError(301);
         }
-        if ((IndexFileName = GetIndex(ResourceFilePath)).empty() && !SupportedUpload)
+        if ((IndexFileName = GetIndex(ResourceFilePath)).empty() &&
+            !this->dataPool.ServerConf->GetUpload())
             throw HTTPError(403);
         ResourceFilePath.append(IndexFileName);
     }
+
     FileExtention = GetFileExtention(ResourceFilePath);
     if (Containes(this->dataPool.ServerConf->GetCgi(), FileExtention))
     {
-        if (pipe(fds) < 0)
-            ServerError("pipe() failed");
-        this->BodyReceiver->SetFileFd(fds[0], fds[1]);
+        this->BodyReceiver->CreateFile("", true);
         this->BodyReceiver->SetIsCGI(true);
-        Request::ExecuteCGI("/usr/bin/php-cgi", "POST");
         return (this->UploadBodyState = CGI_INPROGRESS, false);
     }
-    if (this->SupportedUpload)
+    if (this->dataPool.ServerConf->GetUpload())
     {
+        if (!this->BodyReceiver)
+            throw HTTPError(403);
         this->BodyReceiver->SetIsCGI(false);
         if (GetHeaderAttr(dataPool.Headers, "Content-Type").find("boundary=") == std::string::npos)
             this->BodyReceiver->CreateFile();

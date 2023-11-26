@@ -3,6 +3,7 @@
 BodyController::BodyController(DataPool &dataPool) : dataPool(dataPool)
 {
     this->isCGI = false;
+    this->WrittenBytes = 0;
     std::string ContentType;
     std::string BoundaryName = "boundary=";
     size_t index;
@@ -22,41 +23,40 @@ void BodyController::SetIsCGI(bool isCGI)
 {
     this->isCGI = isCGI;
 }
+bool BodyController::GetIsCGI()
+{
+    return (this->isCGI);
+}
 
-void BodyController::CreateFile(std::string ContentType)
+void BodyController::CreateFile(std::string ContentType, bool isTemp)
 {
     std::string extention;
     HeadersIterator it;
-    int fd;
+    std::string uploadStore = this->dataPool.ServerConf->GetUpload_stor();
 
     if (ContentType.empty())
         ContentType = GetHeaderAttr(dataPool.Headers, "Content-Type");
-    this->FileName = this->dataPool.ServerConf->GetUpload_stor() + Lstring::RandomStr(10) +
-                     ConfigHandler::GetHttp().GetFileExtention(ContentType);
-    DEBUGOUT(1, "NAME " << this->FileName);
-    fd = IO::OpenFile(this->FileName.c_str(), "w+");
-    if (fd < 0)
+    if (!isTemp)
+        this->FileName = Lstring::RTrim(uploadStore, "/") + "/" + Lstring::RandomStr(10) + "." +
+                         ConfigHandler::GetHttp().GetFileExtention(ContentType);
+    else
+        this->FileName = "/tmp/WebSrv/" + Lstring::RandomStr(16);
+    this->FileFd = IO::OpenFile(this->FileName.c_str(), "w+");
+    if (this->FileFd < 0)
     {
         DEBUGOUT(1, "Couldn't Open File : " << this->FileName);
         throw HTTPError(500);
     }
-    SetFileFd(fd, fd);
 }
 
 int BodyController::GetReadFd()
 {
-    return this->BodyFileFds[0];
+    return IO::OpenFile(this->FileName.c_str(), "r");
 }
 
 int BodyController::GetWriteFd()
 {
-    return this->BodyFileFds[1];
-}
-
-void BodyController::SetFileFd(int ReadFd, int WriteFd)
-{
-    this->BodyFileFds[0] = ReadFd;
-    this->BodyFileFds[1] = WriteFd;
+    return this->FileFd;
 }
 
 void BodyController::Parser()
@@ -73,9 +73,6 @@ void BodyController::Parser()
         return;
     if ((index = ContentType.find(Boundary)) != std::string::npos)
     {
-        /**
-         * TODO: parse multipart/form-data body
-         */
         Boundary = "--" + ContentType.substr(index + Boundary.size());
 
         for (;;)
@@ -149,25 +146,37 @@ void BodyController::SaveBodyAsFile()
                 else
                     this->dataPool.body = this->dataPool.body.substr(end);
             }
+            else if ((end = this->dataPool.body.find(EndBoundary)) != std::string::npos)
+            {
+                Part = this->dataPool.body.substr(0, end);
+                this->dataPool.body.clear();
+            }
             else
             {
                 Part = this->dataPool.body;
                 this->dataPool.body.clear();
             }
-            if (write(BodyFileFds[1], Part.c_str(), Part.length()) < 0)
-                throw HTTPError(500);
+            WriteToFile(Part);
             if (this->dataPool.body.empty())
                 break;
         }
     }
     else
-    {
-        DEBUGOUT(0, "WRITNG USING SAVE FIILE CODE");
-        if (write(BodyFileFds[1], dataPool.body.c_str(), dataPool.body.length()) < 0)
-            throw HTTPError(500);
+        WriteToFile(this->dataPool.body);
+}
 
-        this->dataPool.body.clear();
+void BodyController::WriteToFile(std::string &chunk)
+{
+
+    this->WrittenBytes += chunk.length();
+    if (this->WrittenBytes > ConfigHandler::GetHttp().GetMaxBodySize())
+        throw HTTPError(413);
+    if (write(this->FileFd, chunk.c_str(), chunk.length()) < 0)
+    {
+        DEBUGOUT(1, "Write() Failed");
+        throw HTTPError(500);
     }
+    chunk.clear();
 }
 
 std::string &BodyController::GetFileName()

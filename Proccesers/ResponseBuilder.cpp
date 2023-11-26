@@ -57,17 +57,37 @@ ResponseBuilder::ResponseBuilder(DataPool dataPool)
     }
 }
 
-void ResponseBuilder::CreateStatusFile()
+std::string ResponseBuilder::GetDefaultErrorPagePath()
 {
     std::string FileName = "/tmp/" + Lstring::RandomStr(16);
-    this->dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "w+");
+    std::string title = SSTR(dataPool.ResponseStatus) + StatusCodes[dataPool.ResponseStatus];
+    std::ofstream ErrorPage(FileName.c_str());
+    ErrorPage << "<!DOCTYPE html>"
+              << "<html>"
+              << "<head>"
+              << "<title>" << title << "</title>"
+              << "</head>"
+              << "<body>"
+              << "<center>"
+              << " <h1>" << title << "</h1>"
+              << "<hr>"
+              << "<p>WebServ</p>"
+              << " </center>"
+              << "</body>"
+              << "</html>";
+    ErrorPage.close();
+    return (FileName);
+}
 
-    write(this->dataPool.File.Fd,
-          StatusCodes[this->dataPool.ResponseStatus].c_str(),
-          StatusCodes[this->dataPool.ResponseStatus].size());
-    close(this->dataPool.File.Fd);
+void ResponseBuilder::CreateStatusFile()
+{
+    std::string FileName;
+
+    FileName = this->dataPool.ServerConf->GetErrorPagePath(dataPool.ResponseStatus);
+    if (FileName.empty())
+        FileName = GetDefaultErrorPagePath();
     this->dataPool.File.Fd = IO::OpenFile(FileName.c_str(), "r+");
-    this->dataPool.File.ResourceFileType = "text/plain";
+    this->dataPool.File.ResourceFileType = "text/html";
 }
 
 void ResponseBuilder::FillHeaders(int StatusCode)
@@ -81,8 +101,9 @@ void ResponseBuilder::FillHeaders(int StatusCode)
     Buffer += "Transfer-Encoding: chunked\r\n\r\n";
 }
 
-ResponseBuilder::~ResponseBuilder()
+std::map<int, std::string> &ResponseBuilder::GetStatusCodes()
 {
+    return this->StatusCodes;
 }
 
 int ResponseBuilder::FlushBuffer(int SocketFd)
@@ -124,4 +145,8 @@ void ResponseBuilder::FillBuffer()
     }
     if (BytesCount < 1)
         close(dataPool.File.Fd);
+}
+
+ResponseBuilder::~ResponseBuilder()
+{
 }

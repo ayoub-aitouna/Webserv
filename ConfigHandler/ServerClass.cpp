@@ -1,8 +1,6 @@
 #include "Headers/ServerClass.hpp"
 
-/**
- * Constructors
- */
+// ? ********** Constructors *************
 ServerClass::ServerClass()
 {
     this->location = NULL;
@@ -16,6 +14,7 @@ ServerClass::ServerClass(std::string &RawData) : RawData(RawData)
 
 ServerClass::ServerClass(const ServerClass &lhs)
 {
+    this->location = NULL;
     *this = lhs;
 }
 
@@ -47,11 +46,9 @@ ServerClass &ServerClass::operator=(const ServerClass &lhs)
     }
     return (*this);
 }
+// ? ********** END Constructors *************
 
-/**
- * PARSERS
- */
-
+// ? SERVER CLLASS PARSER FUNCTIONS
 void ServerClass::Parse()
 {
     std::vector<std::string> Blocks;
@@ -157,6 +154,7 @@ void ServerClass::Parse()
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
     DisplayValues(false);
+    Validate_Values();
 }
 
 void ServerClass::DisplayValues(bool Show)
@@ -178,9 +176,27 @@ void ServerClass::DisplayValues(bool Show)
     DEBUGOUT(Show, COLORED("\n\n-- :: END SERVER ::-----\n\n", Magenta));
 }
 
-/**
- * GETTERS
- */
+void ServerClass::Validate_Values()
+{
+    try
+    {
+        if (IS_ON_OR_OFF(this->upload))
+            CheckIfValidePath(this->upload_stor);
+        if (!this->cgi.empty())
+            CheckIfValidePath(this->cgi_path, false);
+        if (!this->root.empty())
+            CheckIfValidePath(this->root);
+        for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
+            CheckIfValidePath(i->second, false);
+    }
+    catch (const std::exception &e)
+    {
+        throw std::runtime_error("Error: " + std::string(e.what()) + " at Server: " + this->host + ":" + this->port);
+    }
+}
+//? ***********************
+
+// ? ********** GETTERS *************
 std::string ServerClass::GetErrorPagePath(int ErrorCode)
 {
     std::map<int, std::string>::iterator it;
@@ -243,18 +259,21 @@ bool ServerClass::GetAutoindex()
         return IS_ON_OR_OFF(this->location->GetAutoindex());
     return IS_ON_OR_OFF(this->autoindex);
 }
+
 bool ServerClass::GetUpload()
 {
     if (this->location && !this->location->GetUpload().empty())
         return IS_ON_OR_OFF(this->location->GetUpload());
     return IS_ON_OR_OFF(this->upload);
 }
+
 std::string ServerClass::GetUpload_stor()
 {
     if (location && !location->GetUpload().empty())
-        return (this->location->GetUpload());
+        return (this->location->GetUpload_stor());
     return (this->upload_stor);
 }
+
 std::vector<std::string> &ServerClass::GetCgi()
 {
     if (location && !location->GetCgi().empty())
@@ -301,7 +320,10 @@ LocationClass *ServerClass::GetLocation(std::string &path)
     }
     return (lastmatch);
 }
+// ? ********** END GETTERS *************
 
 ServerClass::~ServerClass()
 {
+    if (this->location)
+        delete this->location;
 }

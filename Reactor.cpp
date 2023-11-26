@@ -10,7 +10,7 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
 
     if (eventHandler == NULL)
         return;
-    DEBUGOUT(1, COLORED(std::string("Regester New ")
+    DEBUGOUT(0, COLORED(std::string("Regester New ")
                             << (dynamic_cast<AcceptEventHandler *>(eventHandler) != NULL ? "Server " : "Client ")
                             << "Socket " << SSTR(socketFd) << "\n",
                         Blue));
@@ -25,7 +25,7 @@ void Reactor::UnRegisterSocket(int SocketFd)
     {
         if (it->first == SocketFd)
         {
-            DEBUGOUT(1, COLORED(std::string("UnRegister ")
+            DEBUGOUT(0, COLORED(std::string("UnRegister ")
                                     << (dynamic_cast<AcceptEventHandler *>(it->second) != NULL ? "Server " : "Client ")
                                     << "Socket "
                                     << SSTR(SocketFd) << "\n",
@@ -87,6 +87,7 @@ void Reactor::Dispatch(struct pollfd *fds)
             }
             else if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
             {
+
                 client->start = clock();
                 if (client->Read() == 0)
                     return UnRegisterSocket(it->first);
@@ -94,41 +95,43 @@ void Reactor::Dispatch(struct pollfd *fds)
         }
         else if (fds[i].revents & POLLWRNORM)
         {
-
             if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
             {
+                DEBUGOUT(0, COLORED("Write Avaialable ..", Blue));
 
                 // /* ****CHECK TIMOUT***** */
                 if ((clock() - client->start) > 3 * 300000)
                     return UnRegisterSocket(it->first);
                 /* ********************* */
 
-                if (client->GetResponse() == NULL)
-                    CheckCGIOutput(client);
-
+                CheckCGIOutput(client);
                 if (client->Write() == 0)
                     return UnRegisterSocket(it->first);
             }
         }
+
         i++;
     }
 }
 
 void CheckCGIOutput(HttpEventHandler *client)
 {
-    DEBUGOUT(0, "Checking CGI RESPONSE");
     Request *RequestHandler;
 
+    if (client->GetResponse() != NULL || client->GetRequestHandler() == NULL ||
+        !client->GetRequestHandler()->GetCGIProcessId())
+        return;
     if ((RequestHandler = client->GetRequestParser().GetRequestHandler()))
     {
         try
         {
+
             if (RequestHandler->ParseCGIOutput())
                 client->CreateResponse();
         }
         catch (const HTTPError &e)
         {
-            client->GetRequestParser().dataPool.ResponseStatus = e.statusCode;
+            client->GetRequestParser().GetDataPool().ResponseStatus = e.statusCode;
             client->CreateResponse();
         }
     }

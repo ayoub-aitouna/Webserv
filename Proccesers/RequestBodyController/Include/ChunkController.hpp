@@ -19,7 +19,6 @@ private:
 public:
     ChunkController(DataPool &dataPool);
     int Receiver(std::string &data);
-    void SetRemaining(unsigned long Remaining);
     ~ChunkController();
 };
 

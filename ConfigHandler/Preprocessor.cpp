@@ -5,7 +5,7 @@ Preprocessor::Preprocessor(std::ifstream &inputFile) : inputFile(inputFile)
 {
 }
 
-void CheckBrakets(std::string &ProccesedData)
+std::string CheckBrakets(std::string ProccesedData)
 {
     int brakets = 0;
 
@@ -20,11 +20,11 @@ void CheckBrakets(std::string &ProccesedData)
     }
     if (brakets != 0)
         throw std::runtime_error("Invalide Conf File\nReason:\n\tBraket not (closed or opend) properly");
+    return (ProccesedData);
 }
 
 std::string Preprocessor::Processor()
 {
-    std::string ProccesedData;
     std::stringstream ss;
     std::stringstream Tmpss;
     std::ostringstream ProcessedData;
@@ -65,11 +65,7 @@ std::string Preprocessor::Processor()
         }
         ProcessedData << Line << '\n';
     }
-    ProccesedData = ProcessedData.str();
-    CheckBrakets(ProccesedData);
-    std::ofstream processedFile("processedFile.conf");
-    processedFile << ProccesedData;
-    return (ProccesedData);
+    return (CheckBrakets(ProcessedData.str()));
 }
 
 void erase_portion(std::string &data, int start, int end)

@@ -12,8 +12,6 @@ public:
 private:
     std::string Buffer;
     DataPool dataPool;
-
-public:
     std::map<int, std::string> StatusCodes;
 
 public:
@@ -22,5 +20,7 @@ public:
     int FlushBuffer(int SocketFd);
     void CreateStatusFile();
     void InitStatusCode();
+    std::string GetDefaultErrorPagePath();
+    std::map<int, std::string> &GetStatusCodes();
 };
 #endif

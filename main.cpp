@@ -13,8 +13,6 @@ void HandleSigPip(int signal)
 int main(int ac, char **av)
 {
     std::vector<std::string> taken_ports;
-    std::string input = "/dir/sub/asdasd/index.html";
-    DEBUGOUT(1, COLORED(Lstring::Replace(input, "/dir/sub", "/fileDir"), Green));
     if (ac != 2)
     {
         std::cout << "Please Provide a Conf file" << std::endl;

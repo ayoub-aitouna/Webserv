@@ -6,8 +6,9 @@ LenghtController::LenghtController(DataPool &dataPool) : BodyController(dataPool
 
 LenghtController::LenghtController(DataPool &dataPool, u_int64_t Remaining) : BodyController(dataPool)
 {
-    DEBUGOUT(1, COLORED("Set Remaining  " << Remaining, Green));
     this->Remaining = Remaining;
+    if (Remaining > ConfigHandler::GetHttp().GetMaxBodySize())
+        throw std::runtime_error("413");
 }
 
 int LenghtController::Receiver(std::string &data)
@@ -23,24 +24,8 @@ int LenghtController::Receiver(std::string &data)
         data = data.substr(PartSize);
     }
     if (Remaining == 0)
-    {
-        DEBUGOUT(1, COLORED("DONE ", Green));
-        close(this->BodyFileFds[1]);
-        return (true);
-    }
+        return (close(this->FileFd), true);
     return (false);
-}
-
-void LenghtController::SetRemaining(unsigned long Remaining)
-{
-    DEBUGOUT(1, "HERE Lenght");
-
-    /**
-     *  TODO: if => RequestParser body larger than client max body size in config file
-     *        change <2024> with max-body from config file */
-    if (Remaining > 5 * 1024 * KB)
-        throw std::runtime_error("413");
-    this->Remaining = Remaining;
 }
 
 LenghtController::~LenghtController()
