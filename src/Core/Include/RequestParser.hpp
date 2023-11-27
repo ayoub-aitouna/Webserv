@@ -1,7 +1,7 @@
 #ifndef RequestParser_HPP
 #define RequestParser_HPP
 
-#include "Proccesers.hpp"
+#include "Core.hpp"
 #include "AutoIndex.hpp"
 #include "../RequestHandlers/Include/Request.hpp"
 #include "../RequestHandlers/Include/PostRequest.hpp"

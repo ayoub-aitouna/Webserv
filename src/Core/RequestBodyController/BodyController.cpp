@@ -40,7 +40,7 @@ void BodyController::CreateFile(std::string ContentType, bool isTemp)
         this->FileName = Lstring::RTrim(uploadStore, "/") + "/" + Lstring::RandomStr(10) + "." +
                          ConfigHandler::GetHttp().GetFileExtention(ContentType);
     else
-        this->FileName = "/tmp/WebSrv/" + Lstring::RandomStr(16);
+        this->FileName = "/tmp/" + Lstring::RandomStr(16);
     this->FileFd = IO::OpenFile(this->FileName.c_str(), "w+");
     if (this->FileFd < 0)
     {
@@ -53,11 +53,13 @@ int BodyController::GetReadFd()
 {
     try
     {
+        DEBUGOUT(1, "TRY OPENNING FILE " << this->FileName);
         int fd = IO::OpenFile(this->FileName.c_str(), "r");
         return (fd);
     }
     catch (const std::exception &e)
     {
+        DEBUGOUT(1, "ERROR OPENNING FILE " << this->FileName);
         throw HTTPError(500);
     }
 }

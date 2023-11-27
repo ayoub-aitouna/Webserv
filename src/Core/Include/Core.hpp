@@ -1,5 +1,5 @@
-#ifndef PROCCESERS
-#define PROCCESERS
+#ifndef Core
+#define Core
 
 #include <string>
 #include <map>

@@ -94,10 +94,9 @@ void Request::SetBodyController(int Type, u_int64_t Remaining)
 char **FromVectorToArray(std::vector<std::string> vec)
 {
     char **Array = new char *[vec.size() + 1];
-    for (size_t i = 0; i < vec.size(); i++)
+    for (size_t i = 0; i < (vec.size()); i++)
     {
-
-        Array[i] = new char[vec.at(i).size() + 1];
+        Array[i] = new char[vec.at(i).length() + 1];
         std::strcpy(Array[i], vec.at(i).c_str());
     }
     Array[vec.size()] = NULL;
@@ -135,32 +134,36 @@ std::string GetFileName(std::string FilePath)
 void Request::ExecuteCGI(std::string CGIName, std::string Method)
 {
     CGIFileName = "/tmp/" + Lstring::RandomStr(10);
+
     av.push_back(CGIName);
     av.push_back(GetFileName(this->ResourceFilePath));
+
     env.push_back("REDIRECT_STATUS=1");
-    this->env.push_back("REQUEST_METHOD=" + Method);
+    env.push_back("REQUEST_METHOD=" + Method);
     env.push_back("SCRIPT_FILENAME=" + GetFileName(this->ResourceFilePath));
-    if (!this->dataPool.Query.empty())
-        env.push_back("QUERY_STRING=" + this->dataPool.Query);
     env.push_back("HTTP_COOKIE=" + GetHeaderAttr(dataPool.Headers, "Cookie"));
+    env.push_back("QUERY_STRING=" + this->dataPool.Query);
+
     if (Method == "POST")
     {
         env.push_back("CONTENT_LENGTH=" + GetHeaderAttr(dataPool.Headers, "Content-Length"));
         env.push_back("CONTENT_TYPE=" + GetHeaderAttr(dataPool.Headers, "Content-Type"));
     }
+
     if ((CGIProcessId = fork()) < 0)
         ServerError("fork() Failed");
+
     if (CGIProcessId == 0)
     {
         if (chdir(GetFileRoot(this->ResourceFilePath).c_str()) < 0)
             exit(1);
+
         dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
-        dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 2);
+        dup2(IO::OpenFile((CGIFileName + "-Error").c_str(), "w+"), 2);
         if (Method == "POST")
             dup2(this->BodyReceiver->GetReadFd(), 0);
         if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
             exit(1);
-        close(1);
     }
     this->CgiStart = clock();
 }
@@ -188,9 +191,17 @@ bool Request::ParseCGIOutput()
         return false;
     }
     this->CGIProcessId = 0;
+    std::ifstream responseFile;
     if (WIFEXITED(status_ptr) && WEXITSTATUS(status_ptr) != 0)
-        ServerError("exited with error " + SSTR(WEXITSTATUS(status_ptr)));
-    std::ifstream responseFile(CGIFileName.c_str());
+    {
+        // dataPool.File.Fd = IO::OpenFile(CGIFileName.c_str(), "r+");
+        // dataPool.File.ResourceFileType = "text/html";
+        // dataPool.ResponseStatus = OK;
+        // // return true; "-Error"
+        // responseFile.open((CGIFileName + "-Error").c_str());
+    }
+    else
+        responseFile.open(CGIFileName.c_str());
     passedHeader = false;
 
     while (getline(responseFile, line))
@@ -206,6 +217,8 @@ bool Request::ParseCGIOutput()
     for (size_t i = 0; i < HeadersBuffer.size(); i++)
     {
         std::vector<std::string> Attr = Lstring::Split(HeadersBuffer.at(i), ": ");
+        if (Attr.size() < 2)
+            continue;
         Headers[Attr.at(0)] = Attr.at(1);
     }
 

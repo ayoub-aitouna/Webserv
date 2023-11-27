@@ -96,7 +96,7 @@ void RequestParser::ParseHeaders(std::string data)
         !(dataPool.ServerConf = ConfigHandler::GetHttp().GetServersByHost(GetHeaderAttr(dataPool.Headers, "Host"))))
         throw HTTPError(500);
 
-    dataPool.ServerConf->DisplayValues(true);
+    dataPool.ServerConf->DisplayValues(0);
     dataPool.ServerConf->SetRequestPath(this->dataPool.Url);
 
     if (!dataPool.ServerConf->GetAllowed().empty() && !Containes(dataPool.ServerConf->GetAllowed(), MethodName))
@@ -120,6 +120,8 @@ bool RequestParser::Parse(std::string data)
             return (false);
         ParseHeaders(buffer.substr(0, index));
         buffer = buffer.substr(index + 4);
+        DEBUGOUT(1, COLORED("URL : " << dataPool.Url, Blue)
+                        << COLORED("Query : " << dataPool.Query, Green));
         state = PROCESS_REQUEST;
         // intentionally fall through
     case PROCESS_REQUEST:

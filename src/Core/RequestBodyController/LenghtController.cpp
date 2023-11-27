@@ -13,7 +13,6 @@ LenghtController::LenghtController(DataPool &dataPool, u_int64_t Remaining) : Bo
 
 int LenghtController::Receiver(std::string &data)
 {
-
     if (Remaining != 0)
     {
         size_t PartSize = data.size() > (size_t)Remaining ? Remaining : data.size();

@@ -1,5 +1,7 @@
 #include "Include/GetRequest.hpp"
 
+#define DEBUG_GETREQUEST 1
+
 GetRequest::GetRequest(DataPool &dataPool) : Request(dataPool)
 {
 }
@@ -20,7 +22,8 @@ int GetRequest::GetRequestedResource()
 {
     std::string IndexFileName;
     std::string FileExtention;
-
+    
+    DEBUGOUT(DEBUG_GETREQUEST, COLORED("GetRequestedResource : ", Blue));
     Request::GetRequestedResource();
 
     if (this->dataPool.ResourceType == WB_DIRECTORY)

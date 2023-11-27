@@ -2,7 +2,7 @@
 #include <vector>
 #include <signal.h>
 #include "ConfigHandler/Headers/ConfigHandler.hpp"
-#include "Proccesers/Include/Proccesers.hpp"
+#include "Core/Include/Core.hpp"
 
 void HandleSigPip(int signal)
 {
@@ -13,8 +13,7 @@ void HandleSigPip(int signal)
 
 /**
  TODO example-dir didnt ditect index.html when there is 2 servers
-    post on cgi error find out why 
-
+    post on cgi error find out why  
 */
 int main(int ac, char **av)
 {
