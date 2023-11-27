@@ -155,7 +155,7 @@ void Request::ExecuteCGI(std::string CGIName, std::string Method)
         if (chdir(GetFileRoot(this->ResourceFilePath).c_str()) < 0)
             exit(1);
         dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 1);
-        // dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 2);
+        dup2(IO::OpenFile(CGIFileName.c_str(), "w+"), 2);
         if (Method == "POST")
             dup2(this->BodyReceiver->GetReadFd(), 0);
         if (execve(CGIName.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)

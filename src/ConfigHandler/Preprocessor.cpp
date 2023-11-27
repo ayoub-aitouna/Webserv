@@ -1,5 +1,6 @@
 
 #include "Headers/Preprocessor.hpp"
+#define PREPROCESSDEBUG 1
 
 Preprocessor::Preprocessor(std::ifstream &inputFile) : inputFile(inputFile)
 {
@@ -8,7 +9,11 @@ Preprocessor::Preprocessor(std::ifstream &inputFile) : inputFile(inputFile)
 std::string CheckBrakets(std::string ProccesedData)
 {
     int brakets = 0;
-
+#if PREPROCESSDEBUG
+    std::ofstream preprocessedFile("Pre-Processed.conf");
+    preprocessedFile << ProccesedData;
+    preprocessedFile.close();
+#endif
     for (size_t i = 0; i < ProccesedData.size(); i++)
     {
         if (ProccesedData.at(i) == '{')
@@ -53,12 +58,12 @@ std::string Preprocessor::Processor()
             if (LineParts.at(0) == "include")
             {
                 std::ifstream includeFile(LineParts.at(1).c_str());
-                if (!includeFile)
+                if (!includeFile.is_open())
                     throw std::runtime_error("Invalide included File " + LineParts.at(1));
                 Tmpss.str("");
                 Tmpss << ss.rdbuf();
                 ss.str("");
-                ss << includeFile.rdbuf() << '\n'
+                ss << static_cast<std::stringstream &>(std::ostringstream() << includeFile.rdbuf()).str() << '\n'
                    << Tmpss.str();
                 continue;
             }

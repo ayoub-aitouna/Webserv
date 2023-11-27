@@ -153,7 +153,7 @@ void ServerClass::Parse()
         else if (tokens.at(0) != "}" && tokens.at(0) != "server")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
-    DisplayValues(false);
+    DisplayValues(1);
     Validate_Values();
 }
 

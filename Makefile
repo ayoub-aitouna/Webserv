@@ -1,6 +1,6 @@
 OBJ_DIR			:= .compiled
 
-SRC				:= $(wildcard *.cpp)  $(wildcard **/*.cpp) $(wildcard **/**/*.cpp) $(wildcard **/**/**/*.cpp)
+SRC				:= $(wildcard src/*.cpp)  $(wildcard src/**/*.cpp) $(wildcard src/**/**/*.cpp) $(wildcard src/**/**/**/*.cpp)
 
 OBJ				:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SRC))
 

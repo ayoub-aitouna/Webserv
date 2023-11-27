@@ -18,10 +18,11 @@ void Server::CreatSocket(const std::string &node, const std::string &serv)
 
     const char *str_node = node == "" ? NULL : node.c_str();
     const char *str_servce = serv == "" ? NULL : serv.c_str();
+    DEBUGOUT(1, str_servce);
 
-    getaddrinfo(str_node, str_servce, &hint, &addr);
+    if (getaddrinfo(str_node, str_servce, &hint, &addr) < 0)
+        throw std::runtime_error("getaddrinfo() failed");
 
-    
     socket_fd = socket(addr->ai_family, addr->ai_socktype, 0);
     if (socket_fd < 0)
     {
@@ -30,7 +31,7 @@ void Server::CreatSocket(const std::string &node, const std::string &serv)
     }
 
     resure_flag = 1;
-    
+
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &resure_flag, sizeof(resure_flag)) < 0)
         throw std::runtime_error("setsockopt() failed");
 
