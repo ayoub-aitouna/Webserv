@@ -19,7 +19,6 @@ public:
 
 private:
     std::vector<std::pair<int, EventHandler *> > clients;
-    int times;
 
 public:
     void RegisterSocket(int SocketFd, EventHandler *);

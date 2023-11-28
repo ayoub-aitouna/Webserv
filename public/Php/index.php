@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POST Form Example</title>
 </head>
+
 <body>
 
     <h2>POST Form Example</h2>
@@ -20,9 +22,11 @@
     </form>
 
     <?php
-  echo "Red";
-  echo "Blue";
-  echo "Green";
+    echo "Red";
+    echo "Blue";
+    echo "Green";
+    $asdas = ss;
+    echo $asdas;
     // Check if the form is submitted
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Retrieve and display the submitted data
@@ -36,4 +40,5 @@
     ?>
 
 </body>
+
 </html>

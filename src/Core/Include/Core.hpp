@@ -26,6 +26,7 @@
 #define DBLCRLF "\r\n\r\n"
 #define CRLF "\r\n"
 #define SSTR(x) static_cast<std::ostringstream &>(std::ostringstream() << std::dec << x).str()
+typedef std::map<std::string, std::string> HeadersType;
 
 enum
 {
@@ -72,7 +73,7 @@ typedef struct S_File
 typedef struct S_DataPool
 {
     ServerClass *ServerConf;
-    std::map<std::string, std::string> Headers;
+    HeadersType Headers;
     WBSRVFILE File;
     std::string Url;
     std::string Query;
@@ -83,8 +84,8 @@ typedef struct S_DataPool
     int Method;
 } DataPool;
 
-typedef std::map<std::string, std::string>::iterator HeadersIterator;
+typedef HeadersType::iterator HeadersIterator;
 
-std::string GetHeaderAttr(std::map<std::string, std::string> &Headers, std::string name);
+std::string GetHeaderAttr(HeadersType &Headers, std::string name);
 
 #endif

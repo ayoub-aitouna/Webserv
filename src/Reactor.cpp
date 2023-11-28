@@ -2,7 +2,6 @@
 
 Reactor::Reactor()
 {
-    this->times = 0;
 }
 
 void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
@@ -10,7 +9,7 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
 
     if (eventHandler == NULL)
         return;
-    DEBUGOUT(0, COLORED(std::string("Regester New ")
+    DEBUGOUT(1, COLORED(std::string("Regester New ")
                             << (dynamic_cast<AcceptEventHandler *>(eventHandler) != NULL ? "Server " : "Client ")
                             << "Socket " << SSTR(socketFd) << "\n",
                         Blue));
@@ -25,7 +24,7 @@ void Reactor::UnRegisterSocket(int SocketFd)
     {
         if (it->first == SocketFd)
         {
-            DEBUGOUT(0, COLORED(std::string("UnRegister ")
+            DEBUGOUT(1, COLORED(std::string("UnRegister ")
                                     << (dynamic_cast<AcceptEventHandler *>(it->second) != NULL ? "Server " : "Client ")
                                     << "Socket "
                                     << SSTR(SocketFd) << "\n",
@@ -45,7 +44,6 @@ void Reactor::HandleEvents()
     int i;
 
     i = 0;
-    times++;
 
     fds = new struct pollfd[this->clients.size() * sizeof(struct pollfd)];
     for (it = this->clients.begin(); it != this->clients.end(); it++)
@@ -56,12 +54,7 @@ void Reactor::HandleEvents()
     }
 
     if (poll(fds, i, -1) >= 0)
-    {
         Dispatch(fds);
-        DEBUGOUT(0, COLORED("\e[A\r\e[0K"
-                                << "Dispatch " << times,
-                            Yellow));
-    }
     else
         throw std::runtime_error("poll() failled");
     // delete fds;
@@ -100,7 +93,7 @@ void Reactor::Dispatch(struct pollfd *fds)
                 DEBUGOUT(0, COLORED("Write Avaialable ..", Blue));
 
                 // /* ****CHECK TIMOUT***** */
-                if ((clock() - client->start) > 3 * 300000)
+                if ((clock() - client->start) > 30 * CLOCKS_PER_SEC)
                     return UnRegisterSocket(it->first);
                 /* ********************* */
 
@@ -109,7 +102,6 @@ void Reactor::Dispatch(struct pollfd *fds)
                     return UnRegisterSocket(it->first);
             }
         }
-
         i++;
     }
 }
@@ -117,22 +109,22 @@ void Reactor::Dispatch(struct pollfd *fds)
 void CheckCGIOutput(HttpEventHandler *client)
 {
     Request *RequestHandler;
+    HeadersType ResponseHeaders;
 
-    if (client->GetResponse() != NULL || client->GetRequestHandler() == NULL ||
-        !client->GetRequestHandler()->GetCGIProcessId())
-        return;
-    if ((RequestHandler = client->GetRequestParser().GetRequestHandler()))
+    if ((RequestHandler = client->GetRequestHandler()))
     {
+        if (client->GetResponse() != NULL ||
+            !RequestHandler->GetCGIController()->GetRunningProcessId())
+            return;
         try
         {
-
-            if (RequestHandler->ParseCGIOutput())
-                client->CreateResponse();
+            if (RequestHandler->GetCGIController()->ParseCGIOutput(ResponseHeaders))
+                client->CreateResponse(ResponseHeaders);
         }
         catch (const HTTPError &e)
         {
             client->GetRequestParser().GetDataPool().ResponseStatus = e.statusCode;
-            client->CreateResponse();
+            client->CreateResponse(ResponseHeaders);
         }
     }
 }

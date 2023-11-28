@@ -1,6 +1,6 @@
 #include "Include/ResponseBuilder.hpp"
 
-#define SHOWBUFFER 1
+#define SHOWBUFFER 0
 
 void ResponseBuilder::InitStatusCode()
 {
@@ -57,6 +57,17 @@ ResponseBuilder::ResponseBuilder(DataPool dataPool)
     }
 }
 
+ResponseBuilder::ResponseBuilder(DataPool dataPool, HeadersType &ResponseHeaders)
+{
+    this->dataPool = dataPool;
+    this->ResponseHeaders = ResponseHeaders;
+    InitStatusCode();
+    if (dataPool.File.Fd != -2)
+    {
+        FillHeaders(dataPool.ResponseStatus);
+    }
+}
+
 std::string ResponseBuilder::GetDefaultErrorPagePath()
 {
     std::string FileName = "/tmp/" + Lstring::RandomStr(16);
@@ -92,12 +103,27 @@ void ResponseBuilder::CreateStatusFile()
 
 void ResponseBuilder::FillHeaders(int StatusCode)
 {
-    Buffer = ("HTTP/1.1 " + SSTR(StatusCode) + " " + StatusCodes[StatusCode] + "  \r\n");
+    std::string Status;
+
+    Status = ResponseHeaders["Status"].empty()
+                 ? (SSTR(StatusCode) + " " + StatusCodes[StatusCode])
+                 : ResponseHeaders["Status"];
+    Buffer += ("HTTP/1.1 " + Status + "\r\n");
     if (dataPool.File.Fd == NOBODY)
         CreateStatusFile();
-    Buffer += this->dataPool.Location.empty() ? "" : "Location: " + this->dataPool.Location + " \r\n";
-    Buffer += "Content-Type: " + this->dataPool.File.ResourceFileType + " \r\n";
-    Buffer += "Connection: closed \r\n";
+    Buffer += this->dataPool.Location.empty() ? "" : "Location: " + this->dataPool.Location + "\r\n";
+
+    // Added Response Headers
+
+    for (HeadersIterator it = ResponseHeaders.begin(); it != ResponseHeaders.end(); it++)
+    {
+        if (it->first == "Status")
+            continue;
+        Buffer += (it->first + ": " + it->second + "\r\n");
+    }
+    if (ResponseHeaders.find("Content-type") == ResponseHeaders.end())
+        Buffer += ("Content-Type: " + this->dataPool.File.ResourceFileType + "\r\n");
+    Buffer += "Connection: closed\r\n";
     Buffer += "Transfer-Encoding: chunked\r\n\r\n";
 }
 
@@ -111,7 +137,7 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
 
     if (this->Buffer.empty())
         return (0);
-    DEBUGOUT(SHOWBUFFER, COLORED(this->Buffer, Yellow));
+    DEBUGOUT(SHOWBUFFER, COLORED(this->Buffer.c_str(), Yellow));
     int i = 0;
     if ((i = write(SocketFd, this->Buffer.c_str(), this->Buffer.size())) < 0 || this->Buffer == "0\r\n\r\n")
     {

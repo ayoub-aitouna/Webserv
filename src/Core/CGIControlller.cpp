@@ -1,69 +1,140 @@
-#include "Include/CGIControlller.hpp"
+#include "Include/CGIController.hpp"
 
-CGIControlller::CGIControlller()
+CGIControlller::CGIControlller(DataPool &data, std::string &ScriptPath, std::string &BodyFile,
+                               std::string &RequestMethod) : data(data)
 {
     this->RunningProcessId = 0;
+    this->BodyFile = BodyFile;
+    this->CgiPath = data.ServerConf->GetCgi_path();
+    this->RequestMethod = RequestMethod;
+    this->ScriptPath = ScriptPath;
+    this->Execute();
 }
 
-void CGIControlller::Execute(std::string CgiPath, std::string RequestMethod)
+char **FromVectorToArray(std::vector<std::string> vec)
 {
-    OutputFileName = "/tmp/" + Lstring::RandomStr(10);
+    char **Array = new char *[vec.size() + 1];
+    for (size_t i = 0; i < (vec.size()); i++)
+    {
+        Array[i] = new char[vec.at(i).length() + 1];
+        std::strcpy(Array[i], vec.at(i).c_str());
+    }
+    Array[vec.size()] = NULL;
+    return (Array);
+}
 
+void ServerError(std::string Msg)
+{
+    DEBUGOUT(1, COLORED("SERVER ERROR : " << Msg, Red));
+    throw HTTPError(500);
+}
+
+std::string GetFileRoot(std::string FilePath)
+{
+    size_t index;
+
+    if (FilePath.empty())
+        return (FilePath);
+    if ((index = FilePath.find_last_of("/")) == std::string::npos)
+        return (FilePath);
+    return (FilePath.substr(0, ++index));
+}
+
+std::string GetFileName(std::string FilePath)
+{
+    size_t index;
+
+    if (FilePath.empty())
+        return (FilePath);
+    if ((index = FilePath.find_last_of("/")) == std::string::npos)
+        return (FilePath);
+    return (FilePath.substr(index + 1));
+}
+
+void CGIControlller::FillUpEnv()
+{
     av.push_back(CgiPath);
-    av.push_back(GetFileName(this->ResourceFilePath));
+    av.push_back(GetFileName(ScriptPath));
 
     env.push_back("REDIRECT_STATUS=1");
     env.push_back("REQUEST_METHOD=" + RequestMethod);
-    env.push_back("SCRIPT_FILENAME=" + GetFileName(this->ResourceFilePath));
-    env.push_back("HTTP_COOKIE=" + GetHeaderAttr(dataPool.Headers, "Cookie"));
-    env.push_back("QUERY_STRING=" + this->dataPool.Query);
+    env.push_back("SCRIPT_FILENAME=" + GetFileName(ScriptPath));
+    env.push_back("HTTP_COOKIE=" + GetHeaderAttr(data.Headers, "Cookie"));
+    env.push_back("QUERY_STRING=" + data.Query);
 
     if (RequestMethod == "POST")
     {
-        env.push_back("CONTENT_LENGTH=" + GetHeaderAttr(dataPool.Headers, "Content-Length"));
-        env.push_back("CONTENT_TYPE=" + GetHeaderAttr(dataPool.Headers, "Content-Type"));
+        env.push_back("CONTENT_LENGTH=" + GetHeaderAttr(data.Headers, "Content-Length"));
+        env.push_back("CONTENT_TYPE=" + GetHeaderAttr(data.Headers, "Content-Type"));
     }
+}
+
+void CGIControlller::Execute()
+{
+    OutputFileName = "/tmp/" + Lstring::RandomStr(10);
+    FillUpEnv();
 
     if ((RunningProcessId = fork()) < 0)
-        ServerError("fork() Failed");
+        throw std::runtime_error("fork() failed");
 
     if (RunningProcessId == 0)
     {
-        if (chdir(GetFileRoot(this->ResourceFilePath).c_str()) < 0)
+        if (chdir(GetFileRoot(ScriptPath).c_str()) < 0)
             exit(1);
         dup2(IO::OpenFile(OutputFileName.c_str(), "w+"), 1);
-        dup2(IO::OpenFile((OutputFileName + "-Error").c_str(), "w+"), 2);
+        dup2(IO::OpenFile((OutputFileName + ErrorPrefix).c_str(), "w+"), 2);
         if (RequestMethod == "POST")
-            dup2(this->BodyReceiver->GetReadFd(), 0);
+            dup2(IO::OpenFile(BodyFile.c_str(), "r+"), 0);
         if (execve(CgiPath.c_str(), FromVectorToArray(av), FromVectorToArray(env)) < 0)
             exit(1);
     }
     this->CgiStart = clock();
 }
 
-
 pid_t CGIControlller::GetRunningProcessId()
 {
-    return (this->RunningProcessId)
+    return (this->RunningProcessId);
 }
 
+HeadersType CGIControlller::ParseCgiHeaders()
+{
+    std::ifstream responseFile(OutputFileName.c_str());
+    std::ifstream ErrorFile((OutputFileName + ErrorPrefix).c_str());
+    std::vector<std::string> HeadersVec;
+    std::vector<std::string> HeaderAttr;
+    std::string ErrorContent;
+    HeadersType Headers;
+    std::string line;
 
+    ErrorContent = static_cast<std::ostringstream &>(std::ostringstream() << ErrorFile.rdbuf()).str();
+    while (getline(responseFile, line))
+    {
+        if (line == "\r" || line.empty())
+            break;
+        HeadersVec.push_back(line);
+    }
+    BodyContent = ErrorContent + static_cast<std::ostringstream &>(std::ostringstream() << responseFile.rdbuf()).str();
+    for (size_t i = 0; i < HeadersVec.size(); i++)
+    {
+        HeaderAttr = Lstring::Split(HeadersVec.at(i), ": ");
+        if (HeaderAttr.size() < 2)
+            continue;
+        Headers[HeaderAttr.at(0)] = HeaderAttr.at(1);
+    }
+    return (Headers);
+}
 
-bool CGIControlller::ParseCGIOutput()
+bool CGIControlller::ParseCGIOutput(HeadersType &ResponseHeaders)
 {
     int status_ptr = 0;
     int FileFd;
     int wait_pid;
-    bool passedHeader;
-    std::string responseBuffer;
-    std::string line;
-    std::vector<std::string> HeadersBuffer;
-    std::map<std::string, std::string> Headers;
+    std::string ContentType;
 
-    if (this->CGIProcessId == 0)
+    if (this->RunningProcessId == 0)
         return false;
 
-    if ((wait_pid = waitpid(CGIProcessId, &status_ptr, WNOHANG)) < 0)
+    if ((wait_pid = waitpid(RunningProcessId, &status_ptr, WNOHANG)) < 0)
         ServerError("waitpid() Failed");
     if (wait_pid == 0)
     {
@@ -71,51 +142,16 @@ bool CGIControlller::ParseCGIOutput()
             throw HTTPError(504);
         return false;
     }
-    this->CGIProcessId = 0;
-    std::ifstream responseFile;
-    if (WIFEXITED(status_ptr) && WEXITSTATUS(status_ptr) != 0)
-    {
-        // dataPool.File.Fd = IO::OpenFile(CGIFileName.c_str(), "r+");
-        // dataPool.File.ResourceFileType = "text/html";
-        // dataPool.ResponseStatus = OK;
-        // // return true; "-Error"
-        // responseFile.open((CGIFileName + "-Error").c_str());
-    }
-    else
-        responseFile.open(CGIFileName.c_str());
-    passedHeader = false;
-
-    while (getline(responseFile, line))
-    {
-        if (!passedHeader && line == "\r")
-            passedHeader = true;
-        else if (!passedHeader)
-            HeadersBuffer.push_back(line);
-        else
-            responseBuffer.append(line);
-    }
-
-    for (size_t i = 0; i < HeadersBuffer.size(); i++)
-    {
-        std::vector<std::string> Attr = Lstring::Split(HeadersBuffer.at(i), ": ");
-        if (Attr.size() < 2)
-            continue;
-        Headers[Attr.at(0)] = Attr.at(1);
-    }
-
-    dataPool.File.ResourceFileType = GetHeaderAttr(Headers, "Content-type");
-    dataPool.File.ResourceFileType =
-        dataPool.File.ResourceFileType
-            .substr(0, dataPool.File.ResourceFileType.find_first_of(';'));
-
-    unlink(CGIFileName.c_str());
-    if (this->BodyReceiver)
-        unlink(this->BodyReceiver->GetFileName().c_str());
-    FileFd = IO::OpenFile(CGIFileName.c_str(), "w+");
-    write(FileFd, responseBuffer.c_str(), responseBuffer.size());
+    this->RunningProcessId = 0;
+    ResponseHeaders = ParseCgiHeaders();
+    ContentType = GetHeaderAttr(Headers, "Content-type");
+    data.File.ResourceFileType = ContentType.empty() ? "text/html" : ContentType;
+    unlink(BodyFile.c_str());
+    FileFd = IO::OpenFile(OutputFileName.c_str(), "wt+");
+    write(FileFd, BodyContent.c_str(), BodyContent.size());
     close(FileFd);
-    dataPool.File.Fd = IO::OpenFile(CGIFileName.c_str(), "r+");
-    dataPool.ResponseStatus = OK;
+    data.File.Fd = IO::OpenFile(OutputFileName.c_str(), "r+");
+    data.ResponseStatus = OK;
     return true;
 }
 

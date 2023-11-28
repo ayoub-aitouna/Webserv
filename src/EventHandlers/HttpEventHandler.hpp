@@ -40,7 +40,8 @@ public:
     int Read();
     int Write();
     EventHandler *Accept();
-    void CreateResponse();
+    void CreateResponse(HeadersType &ResponseHeaders);
+
     const int &GetSocketFd() const;
     RequestParser &GetRequestParser();
     Request *GetRequestHandler();

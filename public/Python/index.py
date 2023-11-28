@@ -5,6 +5,8 @@ import cgi, cgitb
 cgitb.enable()
 # Create instance of FieldStorage
 form = cgi.FieldStorage()
+if(not ("name" in form)):
+    print("<h1>{}</h1>".form.name)
 # Get data from fields
 nm=form.getvalue('name')
 f=form.getvalue('faculty')
@@ -13,7 +15,7 @@ text = form.getvalue('about')
 print ("Content-type:text/html\r\n\r\n")
 print("<html>")
 print("<head>")
-print("<title>CGI Script</title>")
+print("<title>Python Script</title>")
 print("</head>")
 print("<body>")
 print ("<h 2>Data received from client form</h 2>")

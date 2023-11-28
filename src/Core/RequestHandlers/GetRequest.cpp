@@ -15,15 +15,11 @@ bool GetRequest::HandleRequest(std::string &data)
     return (this->GetRequestedResource());
 }
 
-/**
- TODO when get request with body postman hangs
-*/
 int GetRequest::GetRequestedResource()
 {
     std::string IndexFileName;
     std::string FileExtention;
-    
-    DEBUGOUT(DEBUG_GETREQUEST, COLORED("GetRequestedResource : ", Blue));
+
     Request::GetRequestedResource();
 
     if (this->dataPool.ResourceType == WB_DIRECTORY)
@@ -38,7 +34,6 @@ int GetRequest::GetRequestedResource()
         {
             if (this->dataPool.ServerConf->GetAutoindex())
                 return AutoIndex(this->dataPool, ResourceFilePath), true;
-
             throw HTTPError(403);
         }
         else
@@ -48,7 +43,7 @@ int GetRequest::GetRequestedResource()
     FileExtention = GetFileExtention(ResourceFilePath);
 
     if (Containes(this->dataPool.ServerConf->GetCgi(), FileExtention))
-        return (Request::ExecuteCGI("/usr/bin/php-cgi", "GET"), false);
+        return (Execute(ResourceFilePath, "GET"), false);
 
     this->dataPool.File.Fd = IO::OpenFile(ResourceFilePath.c_str(), "r");
     this->dataPool.File.ResourceFileType = ConfigHandler::GetHttp().GetContentType(FileExtention);

@@ -120,7 +120,7 @@ bool RequestParser::Parse(std::string data)
             return (false);
         ParseHeaders(buffer.substr(0, index));
         buffer = buffer.substr(index + 4);
-        DEBUGOUT(1, COLORED("URL : " << dataPool.Url, Blue)
+        DEBUGOUT(0, COLORED("URL : " << dataPool.Url, Blue)
                         << COLORED("Query : " << dataPool.Query, Green));
         state = PROCESS_REQUEST;
         // intentionally fall through
@@ -142,7 +142,7 @@ DataPool &RequestParser::GetDataPool()
     return (this->dataPool);
 }
 
-std::string GetHeaderAttr(std::map<std::string, std::string> &Headers, std::string name)
+std::string GetHeaderAttr(HeadersType &Headers, std::string name)
 {
     HeadersIterator it;
 

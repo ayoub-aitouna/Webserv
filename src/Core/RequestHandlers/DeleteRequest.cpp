@@ -66,7 +66,7 @@ int DeleteRequest::GetRequestedResource()
     {
         if (IndexFileName.empty())
             throw HTTPError(403);
-        return (Request::ExecuteCGI("/usr/bin/php-cgi", "DELETE"), false);
+        return (Execute(ResourceFilePath, "DELETE"), false);
     }
 
     if (this->dataPool.ResourceType == WB_DIRECTORY)

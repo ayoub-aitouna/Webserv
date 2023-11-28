@@ -23,7 +23,7 @@ bool PostRequest::HandleRequest(std::string &data)
                 return (this->UploadBodyState = DONE,
                         dataPool.ResponseStatus = CREATED, true);
             else if (this->UploadBodyState == CGI_INPROGRESS)
-                return (Request::ExecuteCGI(this->dataPool.ServerConf->GetCgi_path(), "POST"),
+                return (Execute(ResourceFilePath, "POST"),
                         this->UploadBodyState = DONE, false);
         }
     }

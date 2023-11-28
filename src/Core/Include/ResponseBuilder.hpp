@@ -7,12 +7,14 @@ class ResponseBuilder
 {
 public:
     ResponseBuilder(DataPool dataPool);
+    ResponseBuilder(DataPool dataPool, HeadersType &ResponseHeaders);
     ~ResponseBuilder();
 
 private:
     std::string Buffer;
     DataPool dataPool;
     std::map<int, std::string> StatusCodes;
+    HeadersType ResponseHeaders;
 
 public:
     void FillBuffer();

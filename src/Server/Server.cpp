@@ -18,7 +18,6 @@ void Server::CreatSocket(const std::string &node, const std::string &serv)
 
     const char *str_node = node == "" ? NULL : node.c_str();
     const char *str_servce = serv == "" ? NULL : serv.c_str();
-    DEBUGOUT(1, str_servce);
 
     if (getaddrinfo(str_node, str_servce, &hint, &addr) < 0)
         throw std::runtime_error("getaddrinfo() failed");

@@ -7,7 +7,7 @@
 #include "../../Include/AutoIndex.hpp"
 #include "../../../Lib/Lstring.hpp"
 #include <sys/wait.h>
-
+#include "../../Include/CGIController.hpp"
 class Request
 {
 public:
@@ -20,6 +20,7 @@ public:
     std::vector<std::string> env;
     std::vector<std::string> av;
     clock_t CgiStart;
+    CGIControlller *cgiController;
 
 public:
     Request(DataPool &dataPool);
@@ -29,9 +30,8 @@ public:
     std::string GetIndex(std::string &path);
     std::string GetFileExtention(std::string &FilePath);
     void SetBodyController(int Type, u_int64_t Remaining);
-    void ExecuteCGI(std::string CGIName, std::string Method);
-    bool ParseCGIOutput();
-    int GetCGIProcessId();
+    CGIControlller *GetCGIController();
+    void Execute(std::string ResourceFilePath, std::string Method);
     virtual ~Request();
 };
 void ServerError(std::string Msg);

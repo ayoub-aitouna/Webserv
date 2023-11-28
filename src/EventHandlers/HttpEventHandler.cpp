@@ -48,9 +48,9 @@ int HttpEventHandler::Read()
     return (read_bytes);
 }
 
-void HttpEventHandler::CreateResponse()
+void HttpEventHandler::CreateResponse(HeadersType &ResponseHeaders)
 {
-    this->response = new ResponseBuilder(this->request.GetDataPool());
+    this->response = new ResponseBuilder(this->request.GetDataPool(), ResponseHeaders);
 }
 
 RequestParser &HttpEventHandler::GetRequestParser()
