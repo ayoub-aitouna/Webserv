@@ -31,36 +31,31 @@ bool BodyController::GetIsCGI()
 void BodyController::CreateFile(std::string ContentType, bool isTemp)
 {
     std::string extention;
-    HeadersIterator it;
-    std::string uploadStore = this->dataPool.ServerConf->GetUpload_stor();
+    std::string uploadStore;
 
+    uploadStore = this->dataPool.ServerConf->GetUpload_stor();
+    extention = ConfigHandler::GetHttp().GetFileExtention(ContentType);
+    extention = extention.empty() ? "" : "." + extention;
     if (ContentType.empty())
         ContentType = GetHeaderAttr(dataPool.Headers, "Content-Type");
     if (!isTemp)
-        this->FileName = Lstring::RTrim(uploadStore, "/") + "/" + Lstring::RandomStr(10) + "." +
-                         ConfigHandler::GetHttp().GetFileExtention(ContentType);
+        this->FileName = Lstring::RTrim(uploadStore, "/") + "/" + Lstring::RandomStr(10) + extention;
     else
         this->FileName = "/tmp/" + Lstring::RandomStr(16);
-    this->FileFd = IO::OpenFile(this->FileName.c_str(), "w+");
-    if (this->FileFd < 0)
-    {
-        DEBUGOUT(1, "Couldn't Open File : " << this->FileName);
-        throw HTTPError(500);
-    }
+    if ((this->FileFd = IO::OpenFile(this->FileName.c_str(), "w+")) < 0)
+        throw std::runtime_error("Couldn't Open File : " + this->FileName);
 }
 
 int BodyController::GetReadFd()
 {
     try
     {
-        DEBUGOUT(1, "TRY OPENNING FILE " << this->FileName);
         int fd = IO::OpenFile(this->FileName.c_str(), "r");
         return (fd);
     }
     catch (const std::exception &e)
     {
-        DEBUGOUT(1, "ERROR OPENNING FILE " << this->FileName);
-        throw HTTPError(500);
+        throw std::runtime_error("OpenFile() failed At BodyController.cpp");
     }
 }
 
@@ -121,11 +116,8 @@ WBSRVFILE BodyController::SaveMultiPartFile(std::string &part)
 
     std::ofstream outputFile(("public/" + FileName).c_str(), std::ios::binary);
 
-    if (!outputFile)
-    {
-        DEBUGOUT(1, "Error While Opening File " << FileName);
-        throw HTTPError(500);
-    }
+    if (!outputFile.is_open())
+        throw std::runtime_error("Error While Opening File " + FileName);
     outputFile << part;
     return (File);
 }
@@ -183,8 +175,7 @@ void BodyController::WriteToFile(std::string &chunk)
         throw HTTPError(413);
     if (write(this->FileFd, chunk.c_str(), chunk.length()) < 0)
     {
-        DEBUGOUT(1, "Write() Failed");
-        throw HTTPError(500);
+        throw std::runtime_error("Write() Failed");
     }
     chunk.clear();
 }

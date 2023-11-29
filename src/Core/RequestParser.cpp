@@ -55,7 +55,6 @@ void RequestParser::RequestHandlersFactory(std::string &Method)
     }
     if ((Method == "delete"))
     {
-        DEBUGOUT(1, COLORED("DELETE -  Is DIR", Red));
         dataPool.Method = DELETE;
         RequestHandler = new DeleteRequest(dataPool);
         return;
@@ -94,7 +93,7 @@ void RequestParser::ParseHeaders(std::string data)
 
     if (!dataPool.ServerConf &&
         !(dataPool.ServerConf = ConfigHandler::GetHttp().GetServersByHost(GetHeaderAttr(dataPool.Headers, "Host"))))
-        throw HTTPError(500);
+        throw std::runtime_error("GetServersByHost() failed at RequestParser.cpp");
 
     dataPool.ServerConf->DisplayValues(0);
     dataPool.ServerConf->SetRequestPath(this->dataPool.Url);

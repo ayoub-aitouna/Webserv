@@ -17,20 +17,16 @@ int HttpEventHandler::Read()
 {
     char buffer[1025];
     int read_bytes;
-    bool Parsed;
 
     read_bytes = read(this->SocketFd, buffer, KB);
     if (read_bytes <= 0)
         return (0);
-    DEBUGOUT(0, "read_bytes " << COLORED(read_bytes, Blue));
-
     this->start = clock();
     try
     {
         if (this->response != NULL)
             return (read_bytes);
-        Parsed = this->request.Parse(CBFTSTR(buffer, read_bytes));
-        if (Parsed)
+        if (this->request.Parse(CBFTSTR(buffer, read_bytes)))
             this->response = new ResponseBuilder(this->request.GetDataPool());
     }
     catch (const HTTPError &e)
@@ -43,7 +39,7 @@ int HttpEventHandler::Read()
     {
         this->request.GetDataPool().ResponseStatus = 500;
         this->response = new ResponseBuilder(this->request.GetDataPool());
-        DEBUGOUT(1, "HTTPError " << COLORED(this->response->GetStatusCodes()[500], Red));
+        DEBUGOUT(1, "HTTPError " << COLORED(this->response->GetStatusCodes()[500] << "\nReason:\n\t" << e.what(), Red));
     }
     return (read_bytes);
 }

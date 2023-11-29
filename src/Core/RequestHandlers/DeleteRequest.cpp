@@ -19,7 +19,7 @@ void DeleteRequest::DeleteDirectory(std::string Dir)
     DIR *dir;
 
     if (stat(Dir.c_str(), &fileInfo) < 0)
-        HTTPError(500);
+        throw std::runtime_error("stat() failed at DeleteRequest.cpp\n" + Dir);
     if (!(fileInfo.st_mode & S_IWUSR))
         HTTPError(403);
 
@@ -32,19 +32,16 @@ void DeleteRequest::DeleteDirectory(std::string Dir)
             continue;
         entrypath = Lstring::RTrim(Dir, "/") + "/" + entry->d_name;
         if (stat(entrypath.c_str(), &fileInfo) < 0)
-            HTTPError(500);
+            throw std::runtime_error("stat() failed at DeleteRequest.cpp\n" + entrypath);
         if (!(fileInfo.st_mode & S_IWUSR))
             HTTPError(403);
         if (S_ISDIR(fileInfo.st_mode))
             DeleteDirectory(entrypath);
         else if (unlink(entrypath.c_str()) < 0)
-            throw HTTPError(500);
+            throw std::runtime_error("unlink() failed at DeleteRequest.cpp\n" + entrypath);
     }
     if (rmdir(Dir.c_str()) < 0)
-    {
-        perror("Error removing directory");
-        throw HTTPError(500);
-    }
+        throw std::runtime_error("rmdir() failed at DeleteRequest.cpp\n" + Dir);
 }
 
 int DeleteRequest::GetRequestedResource()
@@ -76,10 +73,10 @@ int DeleteRequest::GetRequestedResource()
         if (unlink(ResourceFilePath.c_str()) < 0)
         {
             if (stat(ResourceFilePath.c_str(), &fileInfo) < 0)
-                HTTPError(500);
+                throw std::runtime_error("stat() failed at DeleteRequest.cpp\n" + ResourceFilePath);
             if (!(fileInfo.st_mode & S_IWUSR))
                 HTTPError(403);
-            throw HTTPError(500);
+            throw std::runtime_error("unlink() failed at DeleteRequest.cpp\n" + ResourceFilePath);
         }
         throw HTTPError(204);
     }

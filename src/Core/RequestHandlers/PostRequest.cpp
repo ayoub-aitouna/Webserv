@@ -9,8 +9,6 @@ PostRequest::PostRequest(DataPool &dataPool) : Request(dataPool)
 
 bool PostRequest::HandleRequest(std::string &data)
 {
-    DEBUGOUT(1, "PostRequest-HandleRequest");
-
     if (this->UploadBodyState == ZERO && GetRequestedResource())
         return (PrintfFullRequest(), dataPool.ResponseStatus = OK, true);
     if (this->UploadBodyState == UP_INPROGRESS || this->UploadBodyState == CGI_INPROGRESS)
@@ -51,9 +49,7 @@ int PostRequest::GetRequestedResource()
     FileExtention = GetFileExtention(ResourceFilePath);
     if (Containes(this->dataPool.ServerConf->GetCgi(), FileExtention))
     {
-        DEBUGOUT(1, "CreateFile-PostRequest-GetRequestedResource");
         this->BodyReceiver->CreateFile("", true);
-        DEBUGOUT(1, "POST-CreateFile-PostRequest-GetRequestedResource");
         this->BodyReceiver->SetIsCGI(true);
         return (this->UploadBodyState = CGI_INPROGRESS, false);
     }

@@ -16,7 +16,6 @@ int LenghtController::Receiver(std::string &data)
     if (Remaining != 0)
     {
         size_t PartSize = data.size() > (size_t)Remaining ? Remaining : data.size();
-        DEBUGOUT(0, COLORED(data.substr(0, PartSize), Red));
         this->dataPool.body.append(data.substr(0, PartSize));
         SaveBodyAsFile();
         Remaining -= PartSize;

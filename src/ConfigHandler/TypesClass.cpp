@@ -44,20 +44,12 @@ void TypesClass::DisplayValues(bool Show)
 
 std::string TypesClass::GetType(std::string FileExtention)
 {
-    std::map<std::string, std::string>::iterator it;
-    it = this->MimeTypes.find(FileExtention);
-    if (it != this->MimeTypes.end())
-        return (it->second);
-    return ("");
+    return this->MimeTypes[FileExtention];
 }
 
-std::string TypesClass::GetContentExtention(std::string FileExtention)
+std::string TypesClass::GetContentExtention(std::string contentType)
 {
-    std::map<std::string, std::string>::iterator it;
-    it = this->ReverseMimeTypes.find(FileExtention);
-    if (it != this->MimeTypes.end())
-        return (it->second);
-    return ("");
+    return (this->ReverseMimeTypes[contentType]);
 }
 
 TypesClass::~TypesClass()

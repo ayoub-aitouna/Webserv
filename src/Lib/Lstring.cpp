@@ -67,58 +67,15 @@ std::string Lstring::RandomStr(size_t len)
     return (str);
 }
 
-void Lstring::LogAsBinary(std::string &str, bool to_file)
-{
-
-    int fd = to_file ? IO::OpenFile("info_log.log", "a+") : 1;
-    int i = 0;
-    for (std::string::iterator it = str.begin(); it < str.end(); it++)
-    {
-        dprintf(fd, "%.8x ", static_cast<int>(*it));
-        if (i == 8)
-        {
-            dprintf(fd, "\n");
-            i = 0;
-        }
-        else
-            i++;
-    }
-    close(fd);
-    dprintf(fd, "\n");
-}
-
-long Lstring::Stol(const std::string &str,
-                   std::size_t *pos, int base)
-{
-    char *End;
-    size_t index = 0;
-    long num;
-
-    num = strtol(str.c_str(), &End, base);
-
-    for (std::string::const_iterator it = str.begin(); it != str.end(); it++)
-    {
-        if (&(*it) == End)
-            break;
-        index++;
-    }
-    if (pos != NULL)
-        *pos = (index >= str.length()) ? std::string::npos : index;
-    return (num);
-}
-
-std::string Lstring::base64_encode(const std::string &input)
+std::string Lstring::encode_binary_to_text(const std::string &input)
 {
 
     std::string output;
 
     for (std::string::const_iterator it = input.begin(); it != input.end(); it++)
     {
-        // Check if the character is printable
         if (isprint(static_cast<unsigned char>(*it)))
-        {
             output.push_back(*it);
-        }
         else
         {
             if (*it == '\n')
@@ -158,50 +115,6 @@ bool Lstring::IsAlNum(const std::string &input, size_t pos, size_t n)
         index++;
     }
     return (true);
-}
-
-std::string Lstring::SkipLine(std::string &input, std::string endl)
-{
-    size_t index;
-
-    if ((index = input.find(endl)) != std::string::npos)
-        input = input.substr(index + endl.size());
-    return (input);
-}
-
-std::string Lstring::GetLine(std::string input, std::string endl, size_t LineIndex)
-{
-    size_t index;
-    size_t curLineIndex = 0;
-    std::string Line;
-    while (curLineIndex <= LineIndex)
-    {
-        if ((index = input.find(endl)) != std::string::npos)
-        {
-            if (input.substr(0, index + endl.size()) == endl)
-                return (endl);
-            Line = input.substr(0, index);
-            input = input.substr(index + endl.size());
-        }
-        else
-            return "";
-        curLineIndex++;
-    }
-    return (Line);
-}
-
-std::string Lstring::SkipLineIfContains(std::string &input, std::string content, std::string endl)
-{
-    size_t index;
-    std::string Line;
-
-    if ((index = input.find(endl)) != std::string::npos)
-    {
-        Line = input.substr(0, index);
-        if ((index = Line.find(content)) != std::string::npos)
-            SkipLine(input, endl);
-    }
-    return (Line);
 }
 
 void Lstring::Trim(std::string &input, std::string delim)

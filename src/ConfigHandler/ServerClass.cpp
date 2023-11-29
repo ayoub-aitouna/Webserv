@@ -203,6 +203,8 @@ std::string ServerClass::GetErrorPagePath(int ErrorCode)
     it = this->error_page.find(ErrorCode);
     if (it != this->error_page.end())
         return (it->second);
+    if (this->location)
+        return (this->location->GetError_page(ErrorCode));
     return ("");
 }
 
@@ -300,8 +302,6 @@ void ServerClass::SetRequestPath(std::string &path)
     location = GetLocation(path);
     if (location)
         location->DisplayValues(false);
-    else
-        DEBUGOUT(1, "LOCATION NOT FOUND");
 }
 
 LocationClass *ServerClass::GetLocation(std::string &path)

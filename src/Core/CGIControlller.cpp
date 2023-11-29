@@ -23,12 +23,6 @@ char **FromVectorToArray(std::vector<std::string> vec)
     return (Array);
 }
 
-void ServerError(std::string Msg)
-{
-    DEBUGOUT(1, COLORED("SERVER ERROR : " << Msg, Red));
-    throw HTTPError(500);
-}
-
 std::string GetFileRoot(std::string FilePath)
 {
     size_t index;
@@ -106,7 +100,13 @@ HeadersType CGIControlller::ParseCgiHeaders()
     HeadersType Headers;
     std::string line;
 
-    ErrorContent = static_cast<std::ostringstream &>(std::ostringstream() << ErrorFile.rdbuf()).str();
+    DEBUGOUT(0, "--------------------\n"
+                    << COLORED(STREAM_TO_STRING(responseFile.rdbuf()), Green)
+                    << "--------------------");
+    responseFile.close();
+    responseFile.open(OutputFileName.c_str());
+
+    ErrorContent = STREAM_TO_STRING(ErrorFile.rdbuf());
     while (getline(responseFile, line))
     {
         if (line == "\r" || line.empty())
@@ -135,7 +135,7 @@ bool CGIControlller::ParseCGIOutput(HeadersType &ResponseHeaders)
         return false;
 
     if ((wait_pid = waitpid(RunningProcessId, &status_ptr, WNOHANG)) < 0)
-        ServerError("waitpid() Failed");
+        throw std::runtime_error("waitpid() Failed");
     if (wait_pid == 0)
     {
         if (this->CgiStart != -1 && (clock() - this->CgiStart) > 25 * CLOCKS_PER_SEC)

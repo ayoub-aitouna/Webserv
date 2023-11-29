@@ -53,11 +53,10 @@ void Reactor::HandleEvents()
         i++;
     }
 
-    if (poll(fds, i, -1) >= 0)
-        Dispatch(fds);
-    else
+    if (poll(fds, i, -1) < 0)
         throw std::runtime_error("poll() failled");
-    // delete fds;
+    Dispatch(fds);
+    delete fds;
 }
 
 void Reactor::Dispatch(struct pollfd *fds)
@@ -90,8 +89,6 @@ void Reactor::Dispatch(struct pollfd *fds)
         {
             if ((client = dynamic_cast<HttpEventHandler *>(it->second)) != NULL)
             {
-                DEBUGOUT(0, COLORED("Write Avaialable ..", Blue));
-
                 // /* ****CHECK TIMOUT***** */
                 if ((clock() - client->start) > 30 * CLOCKS_PER_SEC)
                     return UnRegisterSocket(it->first);
@@ -114,7 +111,7 @@ void CheckCGIOutput(HttpEventHandler *client)
     if ((RequestHandler = client->GetRequestHandler()))
     {
         if (client->GetResponse() != NULL ||
-            !RequestHandler->GetCGIController()->GetRunningProcessId())
+            !RequestHandler->GetRunningProcessId())
             return;
         try
         {

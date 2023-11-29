@@ -19,7 +19,7 @@ int Request::GetRequestedResource()
         throw HTTPError(404);
 
     if (stat(ResourceFilePath.c_str(), &ResourceState) < 0)
-        throw HTTPError(500);
+        throw std::runtime_error("state() failes at Request.cpp");
 
     if (S_ISREG(ResourceState.st_mode))
         this->dataPool.ResourceType = WB_FILE;
@@ -101,6 +101,13 @@ void Request::Execute(std::string ResourceFilePath, std::string Method)
 CGIControlller *Request::GetCGIController()
 {
     return this->cgiController;
+}
+
+pid_t Request::GetRunningProcessId()
+{
+    if (this->cgiController)
+        return this->cgiController->GetRunningProcessId();
+    return (0);
 }
 
 Request::~Request()

@@ -43,7 +43,8 @@ typedef enum Colors
     if (active)             \
     std::cout << x << std::endl
 #else
-#define DEBUGOUT(active, x)
+#define DEBUGOUT(active, x) \
+    std::ostringstream() << x << active;
 #endif
 
 class Lstring
@@ -56,21 +57,13 @@ public:
     static std::vector<std::string> Split(std::string line, std::string delimiter);
     static std::string ExtractFromString(std::string data, std::string start, std::string end, std::string defaultReturn = "");
     static std::string &tolower(std::string &str);
-    static void LogAsBinary(std::string &str, bool to_file);
     static std::string RandomStr(size_t len);
-    static long Stol(const std::string &str,
-                     std::size_t *pos = NULL, int base = 10);
-    static std::string base64_encode(const std::string &input);
+    static std::string encode_binary_to_text(const std::string &input);
     static bool IsAlNum(const std::string &input, size_t pos, size_t n = std::string::npos);
     static bool Contains(const std::string &input, std::string &checklist, size_t pos);
-    static std::string SkipLine(std::string &input, std::string endl = "\r\n");
-    static std::string SkipLineIfContains(std::string &input, std::string content = "", std::string endl = "\r\n");
-    static std::string GetLine(std::string input, std::string endl = "\r\n", size_t LineIndex = 0);
-
     static void Trim(std::string &input, std::string delim = " ");
     static std::string &LTrim(std::string &input, std::string delim = " ");
     static std::string &RTrim(std::string &input, std::string delim = " ");
-
     static std::string &Replace(std::string &input, std::string target, std::string _new);
 };
 

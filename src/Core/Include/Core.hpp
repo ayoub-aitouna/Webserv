@@ -26,6 +26,8 @@
 #define DBLCRLF "\r\n\r\n"
 #define CRLF "\r\n"
 #define SSTR(x) static_cast<std::ostringstream &>(std::ostringstream() << std::dec << x).str()
+#define STREAM_TO_STRING(x) static_cast<std::ostringstream &>(std::ostringstream() << x).str()
+
 typedef std::map<std::string, std::string> HeadersType;
 
 enum

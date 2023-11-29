@@ -1,6 +1,6 @@
 #include "Include/ResponseBuilder.hpp"
 
-#define SHOWBUFFER 0
+#define SHOWBUFFER 1
 
 void ResponseBuilder::InitStatusCode()
 {
@@ -51,10 +51,8 @@ ResponseBuilder::ResponseBuilder(DataPool dataPool)
 {
     this->dataPool = dataPool;
     InitStatusCode();
-    if (dataPool.File.Fd != -2)
-    {
+    if (dataPool.File.Fd != ERROR)
         FillHeaders(dataPool.ResponseStatus);
-    }
 }
 
 ResponseBuilder::ResponseBuilder(DataPool dataPool, HeadersType &ResponseHeaders)
@@ -63,9 +61,7 @@ ResponseBuilder::ResponseBuilder(DataPool dataPool, HeadersType &ResponseHeaders
     this->ResponseHeaders = ResponseHeaders;
     InitStatusCode();
     if (dataPool.File.Fd != -2)
-    {
         FillHeaders(dataPool.ResponseStatus);
-    }
 }
 
 std::string ResponseBuilder::GetDefaultErrorPagePath()
@@ -82,7 +78,7 @@ std::string ResponseBuilder::GetDefaultErrorPagePath()
               << "<center>"
               << " <h1>" << title << "</h1>"
               << "<hr>"
-              << "<p>WebServ</p>"
+              << "<p>Default WebServ Page</p>"
               << " </center>"
               << "</body>"
               << "</html>";
@@ -112,9 +108,6 @@ void ResponseBuilder::FillHeaders(int StatusCode)
     if (dataPool.File.Fd == NOBODY)
         CreateStatusFile();
     Buffer += this->dataPool.Location.empty() ? "" : "Location: " + this->dataPool.Location + "\r\n";
-
-    // Added Response Headers
-
     for (HeadersIterator it = ResponseHeaders.begin(); it != ResponseHeaders.end(); it++)
     {
         if (it->first == "Status")
@@ -140,11 +133,7 @@ int ResponseBuilder::FlushBuffer(int SocketFd)
     DEBUGOUT(SHOWBUFFER, COLORED(this->Buffer.c_str(), Yellow));
     int i = 0;
     if ((i = write(SocketFd, this->Buffer.c_str(), this->Buffer.size())) < 0 || this->Buffer == "0\r\n\r\n")
-    {
-
         return (0);
-    }
-
     this->Buffer.clear();
     this->FillBuffer();
     return (1);

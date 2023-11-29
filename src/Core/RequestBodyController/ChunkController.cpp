@@ -32,6 +32,7 @@ int ChunkController::Receiver(std::string &data)
         case Data:
             if (Remaining != 0)
             {
+
                 Part = ((size_t)Remaining) > data.size() ? data.size() : Remaining;
                 RawData = data.substr(0, Part);
                 dataPool.body.append(RawData);
@@ -60,10 +61,7 @@ int ChunkController::Receiver(std::string &data)
             break;
         }
         if (this->ChunkState == Error)
-        {
-            DEBUGOUT(1, COLORED("ERROR !!!", Red));
-            exit(0);
-        }
+            throw std::runtime_error("ERROR - While Recieving Data As Chunks");
     }
 
     return (false);

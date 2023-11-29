@@ -31,9 +31,9 @@ public:
     std::string GetFileExtention(std::string &FilePath);
     void SetBodyController(int Type, u_int64_t Remaining);
     CGIControlller *GetCGIController();
+    pid_t GetRunningProcessId();
     void Execute(std::string ResourceFilePath, std::string Method);
     virtual ~Request();
 };
-void ServerError(std::string Msg);
 std::string GetFileRoot(std::string FilePath);
 #endif
