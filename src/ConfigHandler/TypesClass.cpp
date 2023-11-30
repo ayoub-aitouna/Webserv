@@ -22,7 +22,7 @@ void TypesClass::Parse()
 
     while (getline(ss, Line))
     {
-        tokens = Lstring::Split(std::string(Line), " ");
+        tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
         if (tokens.size() == 0 || tokens.at(0) == "}" || tokens.at(0) == "types")
             continue;
         ExactSize(tokens.size() < 2, "Types");

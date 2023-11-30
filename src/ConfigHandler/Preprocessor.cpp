@@ -52,7 +52,7 @@ std::string Preprocessor::Processor()
             throw std::runtime_error("invalide end of line:\n\t>> " + Line);
         if (*(Line.end() - 1) == ';')
             Line.erase((Line.end() - 1));
-        LineParts = Lstring::Split(Line, " ");
+        LineParts = Lstring::SplitByOneOf(Line, " \t");
         if (LineParts.size() >= 2)
         {
             if (LineParts.at(0) == "include")

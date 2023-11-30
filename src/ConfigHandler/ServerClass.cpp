@@ -178,6 +178,20 @@ void ServerClass::DisplayValues(bool Show)
 
 void ServerClass::Validate_Values()
 {
+    if (this->host.empty() || this->port.empty())
+        throw std::runtime_error("Error: Missing ( Host | Port ) ");
+    if (this->root.empty())
+    {
+        if (this->locations.empty())
+            throw std::runtime_error("Error: Missing `root` at Server: " + this->host + ":" + this->port);
+
+        for (size_t i = 0; i < this->locations.size(); i++)
+        {
+            if (this->locations.at(i).GetRoot().empty())
+                throw std::runtime_error("Error: If No `root` Is Specified on Server.\n       All Locations Should Provide their Own `root` At Server: " + this->host + ":" + this->port);
+        }
+    }
+
     try
     {
         if (IS_ON_OR_OFF(this->upload))

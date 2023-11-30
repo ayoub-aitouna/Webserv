@@ -55,13 +55,14 @@ private:
 
 public:
     static std::vector<std::string> Split(std::string line, std::string delimiter);
+    static std::vector<std::string> SplitByOneOf(std::string line, std::string delimiter);
     static std::string ExtractFromString(std::string data, std::string start, std::string end, std::string defaultReturn = "");
     static std::string &tolower(std::string &str);
     static std::string RandomStr(size_t len);
     static std::string encode_binary_to_text(const std::string &input);
     static bool IsAlNum(const std::string &input, size_t pos, size_t n = std::string::npos);
     static bool Contains(const std::string &input, std::string &checklist, size_t pos);
-    static void Trim(std::string &input, std::string delim = " ");
+    static std::string &Trim(std::string &input, std::string delim = " ");
     static std::string &LTrim(std::string &input, std::string delim = " ");
     static std::string &RTrim(std::string &input, std::string delim = " ");
     static std::string &Replace(std::string &input, std::string target, std::string _new);

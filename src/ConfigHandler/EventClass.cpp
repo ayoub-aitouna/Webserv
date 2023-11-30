@@ -17,7 +17,7 @@ void EventClass::Parse()
 
      while (getline(ss, Line))
      {
-          tokens = Lstring::Split(std::string(Line), " ");
+          tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
           if (tokens.size() == 0 || tokens.at(0) == "}" || tokens.at(0) == "events")
                continue;
           if (tokens.at(0) == "worker_connections")

@@ -4,25 +4,49 @@ std::vector<std::string> Lstring::Split(std::string line, std::string delimiter)
 {
     std::vector<std::string> list;
     std::string item;
-    while (true)
+    size_t pos;
+    for (;;)
     {
-        size_t pos = line.find(delimiter);
-        if (pos == std::string::npos)
-        {
-            if (line.size() != 0)
-            {
-                Lstring::Trim(line, delimiter);
-                if (!line.empty())
-                    list.push_back(line);
-            }
+        if ((pos = line.find(delimiter)) == std::string::npos)
             break;
-        }
         item = line.substr(0, pos);
-        Lstring::Trim(item, delimiter);
-        if (!item.empty())
+        if (!Lstring::Trim(item, delimiter).empty())
             list.push_back(item);
         line = line.substr(pos + delimiter.size());
     }
+    if (!Lstring::Trim(line, delimiter).empty())
+        list.push_back(line);
+    return (list);
+}
+
+size_t GetFirstApearenceOf(std::string line, std::string delimiter)
+{
+    size_t min_index, index;
+
+    min_index = std::string::npos;
+    for (size_t j = 0; j < delimiter.size(); j++)
+    {
+        if ((index = line.find_first_of(delimiter.at(j))) < min_index)
+            min_index = index;
+    }
+    return (min_index);
+}
+
+std::vector<std::string> Lstring::SplitByOneOf(std::string line, std::string delimiter)
+{
+    std::vector<std::string> list;
+    std::stringstream Sline(line);
+    std::string Item;
+    size_t pos;
+    while ((pos = GetFirstApearenceOf(line, delimiter)) != std::string::npos)
+    {
+        Item = line.substr(0, pos);
+        line.erase(0, pos + 1);
+        if (!Item.empty())
+            list.push_back(Item);
+    }
+    if (!line.empty())
+        list.push_back(line);
     return (list);
 }
 
@@ -117,10 +141,11 @@ bool Lstring::IsAlNum(const std::string &input, size_t pos, size_t n)
     return (true);
 }
 
-void Lstring::Trim(std::string &input, std::string delim)
+std::string &Lstring::Trim(std::string &input, std::string delim)
 {
     input.erase(0, input.find_first_not_of(delim));
     input.erase(input.find_last_not_of(delim) + 1);
+    return (input);
 }
 
 std::string &Lstring::LTrim(std::string &input, std::string delim)

@@ -36,30 +36,30 @@ void LocationClass::Parse()
     std::vector<std::string> tokens;
     while (getline(ss, Line))
     {
-        tokens = Lstring::Split(std::string(Line), " ");
+        tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
 
         if (tokens.size() == 0)
             continue;
 
         if (tokens.at(0) == "location")
         {
-            ExactSize(tokens.size() != 3, "location");
+            ExactSize(tokens.size() != 3, "location: " + Line);
             this->path = tokens.at(1);
         }
         else if (tokens.at(0) == "root")
         {
-            ExactSize(tokens.size() != 2, "location");
+            ExactSize(tokens.size() != 2, "location: " + Line);
             this->root = tokens.at(1);
         }
         else if (tokens.at(0) == "index")
         {
-            ExactSize(tokens.size() < 2, "location");
+            ExactSize(tokens.size() < 2, "location: " + Line);
             for (size_t i = 1; i < tokens.size(); i++)
                 index.push_back(tokens.at(i));
         }
         else if (tokens.at(0) == "return")
         {
-            ExactSize(tokens.size() < 2, "location");
+            ExactSize(tokens.size() < 2 || tokens.size() > 3, "location: " + Line);
             if (tokens.size() > 2)
             {
                 this->redirection.first = atoi(tokens.at(1).c_str());
@@ -75,7 +75,7 @@ void LocationClass::Parse()
         }
         else if (tokens.at(0) == "autoindex")
         {
-            ExactSize(tokens.size() < 2, "location");
+            ExactSize(tokens.size() < 2, "location: " + Line);
             this->autoindex = tokens.at(1);
             Lstring::tolower(this->autoindex);
             if (this->autoindex != "on" && this->autoindex != "off")
@@ -83,7 +83,7 @@ void LocationClass::Parse()
         }
         else if (tokens.at(0) == "allow")
         {
-            ExactSize(tokens.size() < 2, "location");
+            ExactSize(tokens.size() < 2, "location: " + Line);
             for (size_t i = 1; i < tokens.size(); i++)
             {
                 tokens.at(i) = Lstring::tolower(tokens.at(i));
@@ -94,7 +94,7 @@ void LocationClass::Parse()
         }
         else if (tokens.at(0) == "upload")
         {
-            ExactSize(tokens.size() < 2, "location");
+            ExactSize(tokens.size() < 2, "location: " + Line);
             this->upload = tokens.at(1);
             Lstring::tolower(this->upload);
             if (this->upload != "on" && this->upload != "off")
@@ -102,24 +102,24 @@ void LocationClass::Parse()
         }
         else if (tokens.at(0) == "upload_stor")
         {
-            ExactSize(tokens.size() < 2, "location");
+            ExactSize(tokens.size() < 2, "location: " + Line);
             this->upload_stor = tokens.at(1);
         }
         else if (tokens.at(0) == "error_page")
         {
-            ExactSize(tokens.size() < 3, "location");
+            ExactSize(tokens.size() < 3, "location: " + Line);
             this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
         }
 
         else if (tokens.at(0) == "cgi_accept")
         {
-            ExactSize(tokens.size() < 2, "location");
+            ExactSize(tokens.size() < 2, "location: " + Line);
             for (size_t i = 1; i < tokens.size(); i++)
                 cgi.push_back(tokens.at(i));
         }
         else if (tokens.at(0) == "cgi_path")
         {
-            ExactSize(tokens.size() != 2, "location");
+            ExactSize(tokens.size() != 2, "location: " + Line);
             this->cgi_path = tokens.at(1);
         }
         else if (tokens.at(0) != "}")

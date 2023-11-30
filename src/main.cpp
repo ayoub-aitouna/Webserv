@@ -10,10 +10,9 @@ void HandleSigPip(int signal)
     write(1, msg.c_str(), msg.size());
 }
 
-
 /**
  TODO example-dir didnt ditect index.html when there is 2 servers
-    post on cgi error find out why  
+    post on cgi error find out why
 */
 int main(int ac, char **av)
 {

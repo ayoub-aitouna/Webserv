@@ -49,7 +49,6 @@ void HttpClass::Parse()
     Blocks = ExtractBlock(this->RawData, "types");
     if (Blocks.size() >= 1)
         this->types.SetRawData(Blocks.at(0));
-    // throw std::runtime_error("more or less then 1 `types` Block");
     Blocks = ExtractBlock(this->RawData, "server");
     if (!Blocks.size())
         throw std::runtime_error("It Should be at least one `server` Block");
@@ -59,7 +58,7 @@ void HttpClass::Parse()
     ss.str(this->RawData);
     while (getline(ss, Line))
     {
-        tokens = Lstring::Split(std::string(Line), " ");
+        tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
 
         if (tokens.size() == 0)
             continue;
