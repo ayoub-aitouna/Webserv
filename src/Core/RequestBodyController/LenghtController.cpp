@@ -7,8 +7,11 @@ LenghtController::LenghtController(DataPool &dataPool) : BodyController(dataPool
 LenghtController::LenghtController(DataPool &dataPool, u_int64_t Remaining) : BodyController(dataPool)
 {
     this->Remaining = Remaining;
+    DEBUGOUT(1, COLORED(this->Remaining, Green));
+    DEBUGOUT(1, COLORED(ConfigHandler::GetHttp().GetMaxBodySize(), Blue));
+    
     if (Remaining > ConfigHandler::GetHttp().GetMaxBodySize())
-        throw std::runtime_error("413");
+        throw HTTPError(413);
 }
 
 int LenghtController::Receiver(std::string &data)

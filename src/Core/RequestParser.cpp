@@ -85,18 +85,18 @@ void RequestParser::ParseHeaders(std::string data)
     TransferEncoding = GetHeaderAttr(dataPool.Headers, "Transfer-Encoding");
     ContentLength = GetHeaderAttr(dataPool.Headers, "Content-Length");
 
-    if (ContentLength.empty() && TransferEncoding.empty() && dataPool.Method == POST)
-        throw HTTPError(501);
-
-    if (!TransferEncoding.empty() && TransferEncoding != "chunked")
-        throw HTTPError(501);
-
     if (!dataPool.ServerConf &&
         !(dataPool.ServerConf = ConfigHandler::GetHttp().GetServersByHost(GetHeaderAttr(dataPool.Headers, "Host"))))
         throw std::runtime_error("GetServersByHost() failed at RequestParser.cpp");
 
     dataPool.ServerConf->DisplayValues(0);
     dataPool.ServerConf->SetRequestPath(this->dataPool.Url);
+
+    if (ContentLength.empty() && TransferEncoding.empty() && dataPool.Method == POST)
+        throw HTTPError(501);
+
+    if (!TransferEncoding.empty() && TransferEncoding != "chunked")
+        throw HTTPError(501);
 
     if (!dataPool.ServerConf->GetAllowed().empty() && !Containes(dataPool.ServerConf->GetAllowed(), MethodName))
         throw HTTPError(405);

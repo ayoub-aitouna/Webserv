@@ -10,13 +10,9 @@ void HandleSigPip(int signal)
     write(1, msg.c_str(), msg.size());
 }
 
-/**
- TODO example-dir didnt ditect index.html when there is 2 servers
-    post on cgi error find out why
-*/
 int main(int ac, char **av)
-{
-    std::vector<std::string> taken_ports;
+{	
+	std::vector<std::string> taken_ports;
     if (ac != 2)
     {
         std::cout << "Please Provide a Conf file" << std::endl;

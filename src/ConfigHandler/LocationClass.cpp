@@ -219,11 +219,7 @@ std::string LocationClass::GetUpload_stor()
 
 std::string LocationClass::GetError_page(int ErrorCode)
 {
-    std::map<int, std::string>::iterator it;
-    it = this->error_page.find(ErrorCode);
-    if (it != this->error_page.end())
-        return (it->second);
-    return ("");
+    return (this->error_page[ErrorCode]);
 }
 
 std::vector<std::string> &LocationClass::GetCgi()

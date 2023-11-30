@@ -63,7 +63,7 @@ void ServerClass::Parse()
 
     while (getline(ss, Line))
     {
-        tokens = Lstring::Split(std::string(Line), " ");
+        tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
 
         if (tokens.size() == 0)
             continue;
@@ -151,7 +151,7 @@ void ServerClass::Parse()
         }
 
         else if (tokens.at(0) != "}" && tokens.at(0) != "server")
-            throw std::runtime_error("Invalide token " + tokens.at(0));
+            throw std::runtime_error("Invalide token `" + tokens.at(0)+"`");
     }
     DisplayValues(0);
     Validate_Values();
@@ -213,11 +213,11 @@ void ServerClass::Validate_Values()
 // ? ********** GETTERS *************
 std::string ServerClass::GetErrorPagePath(int ErrorCode)
 {
-    std::map<int, std::string>::iterator it;
-    it = this->error_page.find(ErrorCode);
-    if (it != this->error_page.end())
-        return (it->second);
-    if (this->location)
+    std::string Path = this->error_page[ErrorCode];
+
+    if (!Path.empty())
+        return (Path);
+    if (this->location != NULL)
         return (this->location->GetError_page(ErrorCode));
     return ("");
 }

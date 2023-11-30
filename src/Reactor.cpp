@@ -56,7 +56,7 @@ void Reactor::HandleEvents()
     if (poll(fds, i, -1) < 0)
         throw std::runtime_error("poll() failled");
     Dispatch(fds);
-    delete fds;
+    delete[] fds;
 }
 
 void Reactor::Dispatch(struct pollfd *fds)
