@@ -24,6 +24,8 @@ void EventClass::Parse()
           {
                ExactSize(tokens.size() != 2, "events");
                this->worker_connections = atoi(tokens.at(1).c_str());
+               if (this->worker_connections <= 0)
+                    throw std::runtime_error("Invalide Value of `worker_connections` Should Be Greater Then 0");
           }
           else
                throw std::runtime_error("Invalide token " + tokens.at(0));
@@ -36,6 +38,11 @@ void EventClass::DisplayValues(bool show)
      DEBUGOUT(show, COLORED("\n\n------- EventClass -------\n\n", Magenta));
      DEBUGOUT(show, COLORED("worker_connections : ", Magenta) << COLORED(this->worker_connections, Green));
      DEBUGOUT(show, COLORED("\n\n------- END EventClass -------\n\n", Magenta));
+}
+
+size_t EventClass::GetWorkerConnections()
+{
+     return (this->worker_connections);
 }
 
 EventClass::~EventClass()

@@ -6,7 +6,7 @@ OBJ				:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SRC))
 
 NAME = WebServ
 
-CC = g++-11
+CC = g++
 
 CPPFLAGS = -Wall -Wextra -Werror -std=c++98 
 Sanitize		:= -g -fsanitize=address

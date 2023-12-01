@@ -1,0 +1,34 @@
+
+poll():
+** SIEGE 4.0.4
+** Preparing 105 concurrent users for battle.
+The server is now under siege...
+Transactions:                  21000 hits
+Availability:                 100.00 %
+Elapsed time:                 184.70 secs
+Data transferred:              15.97 MB
+Response time:                  0.65 secs
+Transaction rate:             113.70 trans/sec
+Throughput:                     0.09 MB/sec
+Concurrency:                   74.43
+Successful transactions:       21000
+Failed transactions:               0
+Longest transaction:            7.09
+
+
+epol():
+** SIEGE 4.0.4
+** Preparing 105 concurrent users for battle.
+The server is now under siege...
+Transactions:                  21000 hits
+Availability:                 100.00 %
+Elapsed time:                 116.89 secs
+Data transferred:              15.93 MB
+Response time:                  0.32 secs
+Transaction rate:             179.66 trans/sec
+Throughput:                     0.14 MB/sec
+Concurrency:                   57.26
+Successful transactions:       21000
+Failed transactions:               0
+Longest transaction:            2.51
+Shortest transaction:           0.00

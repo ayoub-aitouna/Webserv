@@ -11,22 +11,28 @@
 #include <exception>
 #include <stdexcept>
 #include "Lib/Lstring.hpp"
+#include <sys/epoll.h>
 
 class Reactor
 {
 public:
     Reactor();
+    ~Reactor();
 
 private:
-    std::vector<std::pair<int, EventHandler *> > clients;
+    std::map<int, EventHandler *> clients;
+    struct epoll_event *events;
+    int epoll_fd;
+    size_t MAX_EVENTS;
+    int event_count;
 
 public:
     void RegisterSocket(int SocketFd, EventHandler *);
     void UnRegisterSocket(int SocketFd);
     void HandleEvents();
-    void Dispatch(struct pollfd *fds);
+    void Dispatch();
     void EventLoop();
 };
-typedef std::vector<std::pair<int, EventHandler *> >::iterator iterator;
+typedef std::map<int, EventHandler *>::iterator iterator;
 void CheckCGIOutput(HttpEventHandler *client);
 #endif

@@ -18,6 +18,7 @@ public:
     void SetRawData(std::string &RawData);
     void Parse();
     void DisplayValues(bool Show);
+    size_t GetWorkerConnections();
     ~EventClass();
 };
 #endif

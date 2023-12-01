@@ -11,8 +11,8 @@ void HandleSigPip(int signal)
 }
 
 int main(int ac, char **av)
-{	
-	std::vector<std::string> taken_ports;
+{
+    std::vector<std::string> taken_ports;
     if (ac != 2)
     {
         std::cout << "Please Provide a Conf file" << std::endl;
@@ -36,5 +36,7 @@ int main(int ac, char **av)
     catch (const std::exception &e)
     {
         std::cerr << e.what() << '\n';
+        return (1);
     }
+    return (0);
 }

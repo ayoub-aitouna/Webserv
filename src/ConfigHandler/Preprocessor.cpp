@@ -1,6 +1,6 @@
 
 #include "Headers/Preprocessor.hpp"
-#define PREPROCESSDEBUG 1
+#define PREPROCESSDEBUG 0
 
 Preprocessor::Preprocessor(std::ifstream &inputFile) : inputFile(inputFile)
 {
