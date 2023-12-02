@@ -33,7 +33,7 @@ int HttpEventHandler::Read()
     {
         this->request.GetDataPool().ResponseStatus = e.statusCode;
         this->response = new ResponseBuilder(this->request.GetDataPool());
-        DEBUGOUT(1, "HTTPError " << COLORED(this->response->GetStatusCodes()[e.statusCode], Red));
+        DEBUGOUT(0, "HTTPError " << COLORED(this->response->GetStatusCodes()[e.statusCode], Red));
     }
     catch (const std::exception &e)
     {

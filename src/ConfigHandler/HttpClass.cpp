@@ -116,14 +116,21 @@ std::vector<ServerClass> &HttpClass::GetServers()
     return (this->servers);
 }
 
+/*
+TODO this method of matching request with it's ServerConfig 
+        is Wrong and need to be reconsidered
+    Host: 127.0.0.1:8080
+    Host: 127.0.1.1:8080
+    Host: localhost:3000
+    Host: www.example.com
+*/
 ServerClass *HttpClass::GetServersByHost(std::string host)
 {
 
-    std::string hostname;
+    std::string Port = Lstring::Split(host, ":").at(1); 
     for (size_t i = 0; i < this->servers.size(); i++)
     {
-        hostname = this->servers.at(i).GetHostName() + ":" + this->servers.at(i).GetPort();
-        if (host == hostname || Containes(this->servers.at(i).GetServerNames(), host))
+        if (this->servers.at(i).GetPort() == Port || Containes(this->servers.at(i).GetServerNames(), host))
             return (new ServerClass(this->servers.at(i)));
     }
     if (!this->servers.empty())

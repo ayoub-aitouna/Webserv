@@ -85,12 +85,13 @@ void RequestParser::ParseHeaders(std::string data)
     TransferEncoding = GetHeaderAttr(dataPool.Headers, "Transfer-Encoding");
     ContentLength = GetHeaderAttr(dataPool.Headers, "Content-Length");
 
-    if (!dataPool.ServerConf &&
-        !(dataPool.ServerConf = ConfigHandler::GetHttp().GetServersByHost(GetHeaderAttr(dataPool.Headers, "Host"))))
-        throw std::runtime_error("GetServersByHost() failed at RequestParser.cpp");
-
-    dataPool.ServerConf->DisplayValues(0);
-    dataPool.ServerConf->SetRequestPath(this->dataPool.Url);
+    if (!dataPool.ServerConf)
+    {
+        if (!(dataPool.ServerConf = ConfigHandler::GetHttp().GetServersByHost(GetHeaderAttr(dataPool.Headers, "Host"))))
+            throw std::runtime_error("GetServersByHost() failed at RequestParser.cpp");
+        dataPool.ServerConf->DisplayValues(0);
+        dataPool.ServerConf->SetRequestPath(this->dataPool.Url);
+    }
 
     if (ContentLength.empty() && TransferEncoding.empty() && dataPool.Method == POST)
         throw HTTPError(501);

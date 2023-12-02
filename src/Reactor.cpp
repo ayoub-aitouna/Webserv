@@ -14,7 +14,7 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
     struct epoll_event event;
     if (eventHandler == NULL)
         return;
-    DEBUGOUT(verbose, COLORED(std::string("Regester New ")
+    DEBUGOUT(verbose, COLORED("Regester New "
                                   << (dynamic_cast<AcceptEventHandler *>(eventHandler) != NULL ? "Server " : "Client ")
                                   << "Socket " << SSTR(socketFd) << "\n",
                               Blue));
@@ -28,17 +28,18 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
 
 void Reactor::UnRegisterSocket(int SocketFd)
 {
-    if (this->clients[SocketFd] == NULL)
-        throw std::runtime_error("Tried To Unregister An Unregistered Event-Handler");
     std::string Type = dynamic_cast<AcceptEventHandler *>(this->clients[SocketFd]) != NULL ? "Server " : "Client ";
+    DEBUGOUT(verbose, COLORED("UnRegister " << Type << "Socket "
+                                            << SSTR(SocketFd) << "\n",
+                              Red));
     if (epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, SocketFd, NULL) < 0)
         throw std::runtime_error("epoll_ctl() `EPOLL_CTL_DEL` failed");
-    DEBUGOUT(verbose, COLORED(std::string("UnRegister ")
-                                  << Type << "Socket "
-                                  << SSTR(SocketFd) << "\n",
-                              Red));
-    delete clients[SocketFd];
-    this->clients.erase(SocketFd);
+
+    if (this->clients[SocketFd] != NULL)
+    {
+        delete clients[SocketFd];
+        this->clients.erase(SocketFd);
+    }
     close(SocketFd);
 }
 

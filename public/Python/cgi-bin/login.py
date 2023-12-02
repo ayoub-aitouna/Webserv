@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import cgi
 import json
 import jwt
@@ -31,7 +30,7 @@ def main():
             jwt_token = generate_jwt_token(username)
 
             # Return JSON response with the token
-            response = {'success': True, 'token': jwt_token.decode('utf-8')}
+            response = {'success': True, 'token': jwt_token}
             print('Content-type: application/json')
             print('Status: 302')
             print('Location: /Python/Home.html')
