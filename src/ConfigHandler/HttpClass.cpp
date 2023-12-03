@@ -16,13 +16,20 @@ unsigned long long ConvertToBytes(std::string &value)
 {
     char MUnit;
     unsigned long long DecimalValue;
-    if (!Lstring::IsAlNum(value, 0, value.length() - 1))
-        throw std::runtime_error("Invalide body_size");
+
+    for (size_t i = 0; i < value.size() - 1; i++)
+    {
+        if (!isdigit(value[i]))
+            throw std::runtime_error("Invalide Value of `client_max_body_size` Incorrect");
+    }
     DecimalValue = atol(value.c_str());
     MUnit = *(value.end() - 1);
     MUnit = tolower(MUnit);
     switch (MUnit)
     {
+    case 'b':
+        // do nothing its already in bytes
+        break;
     case 'k':
         DecimalValue *= 1024;
         break;
@@ -33,7 +40,7 @@ unsigned long long ConvertToBytes(std::string &value)
         DecimalValue *= GB;
         break;
     default:
-        throw std::runtime_error("Invalide measure unit" + MUnit);
+        throw std::runtime_error("Invalide measure unit " + std::string(1, MUnit));
         break;
     }
     return (DecimalValue);
@@ -56,6 +63,7 @@ void HttpClass::Parse()
         servers.push_back(ServerClass(Blocks.at(i)));
 
     ss.str(this->RawData);
+    getline(ss, Line);
     while (getline(ss, Line))
     {
         tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
@@ -70,14 +78,21 @@ void HttpClass::Parse()
         else if (tokens.at(0) == "client_max_body_size")
         {
             ExactSize(tokens.size() != 2, "HTTP");
+            if (tokens.at(1).length() < 2)
+                throw std::runtime_error("Invalide `client_max_body_size` Value `" + tokens.at(1) + "`");
             this->client_max_body_size = ConvertToBytes(tokens.at(1));
         }
         else if (tokens.at(0) == "error_page")
         {
             ExactSize(tokens.size() < 3, "HTTP");
+            for (size_t i = 0; i < tokens.at(1).size(); i++)
+            {
+                if (!isdigit(tokens[1][i]))
+                    throw std::runtime_error("Invalide Value of `error_page` Incorrect");
+            }
             this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
         }
-        else if (tokens.at(0) != "}" && tokens.at(0) != "http")
+        else if (tokens.at(0) != "}")
             throw std::runtime_error("Invalide token " + tokens.at(0));
     }
     DisplayValues(false);
@@ -117,7 +132,7 @@ std::vector<ServerClass> &HttpClass::GetServers()
 }
 
 /*
-TODO this method of matching request with it's ServerConfig 
+TODO this method of matching request with it's ServerConfig
         is Wrong and need to be reconsidered
     Host: 127.0.0.1:8080
     Host: 127.0.1.1:8080
@@ -127,7 +142,7 @@ TODO this method of matching request with it's ServerConfig
 ServerClass *HttpClass::GetServersByHost(std::string host)
 {
 
-    std::string Port = Lstring::Split(host, ":").at(1); 
+    std::string Port = Lstring::Split(host, ":").at(1);
     for (size_t i = 0; i < this->servers.size(); i++)
     {
         if (this->servers.at(i).GetPort() == Port || Containes(this->servers.at(i).GetServerNames(), host))

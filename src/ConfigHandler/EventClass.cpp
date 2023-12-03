@@ -23,6 +23,11 @@ void EventClass::Parse()
           if (tokens.at(0) == "worker_connections")
           {
                ExactSize(tokens.size() != 2, "events");
+               for (size_t i = 0; i < tokens.at(1).size(); i++)
+               {
+                    if (!isdigit(tokens[1][i]))
+                         throw std::runtime_error("Invalide Value of `worker_connections` Incorrect");
+               }
                this->worker_connections = atoi(tokens.at(1).c_str());
                if (this->worker_connections <= 0)
                     throw std::runtime_error("Invalide Value of `worker_connections` Should Be Greater Then 0");

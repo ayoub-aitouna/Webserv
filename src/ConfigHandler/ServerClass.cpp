@@ -51,16 +51,18 @@ ServerClass &ServerClass::operator=(const ServerClass &lhs)
 // ? SERVER CLLASS PARSER FUNCTIONS
 void ServerClass::Parse()
 {
+    std::vector<std::string> tokens;
     std::vector<std::string> Blocks;
+    std::string Line;
+    int port;
 
     Blocks = ExtractBlock(this->RawData, "location");
     for (size_t i = 0; i < Blocks.size(); i++)
         locations.push_back(LocationClass(Blocks.at(i)));
 
     std::stringstream ss(this->RawData);
-    std::string Line;
-    std::vector<std::string> tokens;
 
+    getline(ss, Line);
     while (getline(ss, Line))
     {
         tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
@@ -70,7 +72,15 @@ void ServerClass::Parse()
         if (tokens.at(0) == "listen")
         {
             ExactSize(tokens.size() != 2, "Server");
+            for (size_t i = 0; i < tokens.at(1).size(); i++)
+            {
+                if (!isdigit(tokens[1][i]))
+                    throw std::runtime_error("Invalide Value of `listen` Incorrect");
+            }
             this->port = tokens.at(1);
+            port = atoi(this->port.c_str());
+            if (port < 0 || port > 65535)
+                throw std::runtime_error("Invalide Value of `listen` OutOfBounds");
         }
         else if (tokens.at(0) == "host")
         {
@@ -83,7 +93,6 @@ void ServerClass::Parse()
             for (size_t i = 1; i < tokens.size(); i++)
                 server_name.push_back(tokens.at(i));
         }
-
         else if (tokens.at(0) == "index")
         {
             ExactSize(tokens.size() < 2, "Server");
@@ -100,6 +109,11 @@ void ServerClass::Parse()
             ExactSize(tokens.size() < 2, "Server");
             if (tokens.size() > 2)
             {
+                for (size_t i = 0; i < tokens.at(1).size(); i++)
+                {
+                    if (!isdigit(tokens[1][i]))
+                        throw std::runtime_error("Invalide Value of `return` Incorrect");
+                }
                 this->redirection.first = atoi(tokens.at(1).c_str());
                 if (this->redirection.first < 100 || this->redirection.first > 599)
                     throw std::runtime_error("Invalide return Status");
@@ -114,6 +128,11 @@ void ServerClass::Parse()
         else if (tokens.at(0) == "error_page")
         {
             ExactSize(tokens.size() < 3, "Server");
+            for (size_t i = 0; i < tokens.at(1).size(); i++)
+            {
+                if (!isdigit(tokens[1][i]))
+                    throw std::runtime_error("Invalide Value of `error_page` Incorrect");
+            }
             this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
         }
         else if (tokens.at(0) == "autoindex")
@@ -150,8 +169,8 @@ void ServerClass::Parse()
             this->cgi_path = tokens.at(1);
         }
 
-        else if (tokens.at(0) != "}" && tokens.at(0) != "server")
-            throw std::runtime_error("Invalide token `" + tokens.at(0)+"`");
+        else if (tokens.at(0) != "}")
+            throw std::runtime_error("Invalide token `" + tokens.at(0) + "`");
     }
     DisplayValues(0);
     Validate_Values();

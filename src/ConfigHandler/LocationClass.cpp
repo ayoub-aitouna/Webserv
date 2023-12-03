@@ -34,6 +34,8 @@ void LocationClass::Parse()
     std::stringstream ss(this->RawData);
     std::string Line;
     std::vector<std::string> tokens;
+    bool FirstLine = true;
+
     while (getline(ss, Line))
     {
         tokens = Lstring::SplitByOneOf(std::string(Line), " \t");
@@ -44,7 +46,11 @@ void LocationClass::Parse()
         if (tokens.at(0) == "location")
         {
             ExactSize(tokens.size() != 3, "location: " + Line);
-            this->path = tokens.at(1);
+            if (FirstLine)
+                this->path = tokens.at(1);
+            else
+                throw std::runtime_error("Syntax Error At : \n\t" + Line);
+            FirstLine = false;
         }
         else if (tokens.at(0) == "root")
         {
@@ -62,6 +68,11 @@ void LocationClass::Parse()
             ExactSize(tokens.size() < 2 || tokens.size() > 3, "location: " + Line);
             if (tokens.size() > 2)
             {
+                for (size_t i = 0; i < tokens.at(1).size(); i++)
+                {
+                    if (!isdigit(tokens[1][i]))
+                        throw std::runtime_error("Invalide Value of `return` Incorrect");
+                }
                 this->redirection.first = atoi(tokens.at(1).c_str());
                 if (this->redirection.first < 100 || this->redirection.first > 599)
                     throw std::runtime_error("Invalide return Status");
@@ -108,6 +119,11 @@ void LocationClass::Parse()
         else if (tokens.at(0) == "error_page")
         {
             ExactSize(tokens.size() < 3, "location: " + Line);
+            for (size_t i = 0; i < tokens.at(1).size(); i++)
+            {
+                if (!isdigit(tokens[1][i]))
+                    throw std::runtime_error("Invalide Value of `error_page` Incorrect");
+            }
             this->error_page[atoi(tokens.at(1).c_str())] = tokens.at(2);
         }
 
