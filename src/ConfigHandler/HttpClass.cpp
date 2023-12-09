@@ -141,12 +141,19 @@ TODO this method of matching request with it's ServerConfig
 */
 ServerClass *HttpClass::GetServersByHost(std::string host)
 {
+    std::vector<std::string> HostElemets;
 
-    std::string Port = Lstring::Split(host, ":").at(1);
+    HostElemets = Lstring::Split(host, ":");
+
     for (size_t i = 0; i < this->servers.size(); i++)
     {
-        if (this->servers.at(i).GetPort() == Port || Containes(this->servers.at(i).GetServerNames(), host))
-            return (new ServerClass(this->servers.at(i)));
+        if (Containes(this->servers.at(i).GetServerNames(), HostElemets.at(0)) || this->servers.at(i).GetHostName() == HostElemets.at(0))
+        {
+            if (HostElemets.size() == 1)
+                return (new ServerClass(this->servers.at(i)));
+            else if (this->servers.at(i).GetPort() == HostElemets.at(1))
+                return (new ServerClass(this->servers.at(i)));
+        }
     }
     if (!this->servers.empty())
         return (new ServerClass(this->servers.at(0)));

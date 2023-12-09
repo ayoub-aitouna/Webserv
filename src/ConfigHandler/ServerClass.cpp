@@ -32,7 +32,7 @@ ServerClass &ServerClass::operator=(const ServerClass &lhs)
         this->port = lhs.port;
         this->host = lhs.host;
         this->root = lhs.root;
-        this->server_name = lhs.server_name;
+        this->server_names = lhs.server_names;
         this->redirection = lhs.redirection;
         this->error_page = lhs.error_page;
         this->index = lhs.index;
@@ -87,11 +87,11 @@ void ServerClass::Parse()
             ExactSize(tokens.size() != 2, "Server");
             this->host = tokens.at(1);
         }
-        else if (tokens.at(0) == "server_name")
+        else if (tokens.at(0) == "server_names")
         {
             ExactSize(tokens.size() < 2, "Server");
             for (size_t i = 1; i < tokens.size(); i++)
-                server_name.push_back(tokens.at(i));
+                server_names.push_back(tokens.at(i));
         }
         else if (tokens.at(0) == "index")
         {
@@ -181,8 +181,8 @@ void ServerClass::DisplayValues(bool Show)
     DEBUGOUT(Show, COLORED("\n\n------- ServerClass -------\n\n", Magenta));
     DEBUGOUT(Show, COLORED("port " << this->port, Magenta));
     DEBUGOUT(Show, COLORED("host " << host, Magenta));
-    for (size_t i = 0; i < server_name.size(); i++)
-        DEBUGOUT(Show, COLORED("server_name " << server_name.at(i), Magenta));
+    for (size_t i = 0; i < server_names.size(); i++)
+        DEBUGOUT(Show, COLORED("server_names " << server_names.at(i), Magenta));
     DEBUGOUT(Show, COLORED("root " << root, Magenta));
     DEBUGOUT(Show, COLORED("redirection " << redirection.first << " : " << redirection.second, Magenta));
     for (std::map<int, std::string>::iterator i = this->error_page.begin(); i != this->error_page.end(); i++)
@@ -260,7 +260,7 @@ std::string ServerClass::GetRoot(std::string Url)
 
 std::vector<std::string> &ServerClass::GetServerNames()
 {
-    return (this->server_name);
+    return (this->server_names);
 }
 
 std::vector<std::string> ServerClass::GetIndex()

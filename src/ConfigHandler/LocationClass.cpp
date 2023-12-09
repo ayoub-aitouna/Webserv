@@ -46,10 +46,9 @@ void LocationClass::Parse()
         if (tokens.at(0) == "location")
         {
             ExactSize(tokens.size() != 3, "location: " + Line);
-            if (FirstLine)
-                this->path = tokens.at(1);
-            else
+            if (!FirstLine)
                 throw std::runtime_error("Syntax Error At : \n\t" + Line);
+            this->path = tokens.at(1);
             FirstLine = false;
         }
         else if (tokens.at(0) == "root")

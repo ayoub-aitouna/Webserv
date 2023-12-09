@@ -47,7 +47,7 @@ public:
 private:
     std::string RawData;
     std::string port, host, root;
-    std::vector<std::string> server_name;
+    std::vector<std::string> server_names;
     std::vector<LocationClass> locations;
     LocationClass *location;
 
