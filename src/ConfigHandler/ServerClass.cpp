@@ -4,17 +4,21 @@
 ServerClass::ServerClass()
 {
     this->location = NULL;
+    this->SSlOn = false;
 }
 
 ServerClass::ServerClass(std::string &RawData) : RawData(RawData)
 {
     this->location = NULL;
+    this->SSlOn = false;
+
     Parse();
 }
 
 ServerClass::ServerClass(const ServerClass &lhs)
 {
     this->location = NULL;
+    this->SSlOn = false;
     *this = lhs;
 }
 
@@ -71,7 +75,7 @@ void ServerClass::Parse()
             continue;
         if (tokens.at(0) == "listen")
         {
-            ExactSize(tokens.size() != 2, "Server");
+            ExactSize(tokens.size() < 2 || tokens.size() > 3, "Server");
             for (size_t i = 0; i < tokens.at(1).size(); i++)
             {
                 if (!isdigit(tokens[1][i]))
@@ -81,6 +85,12 @@ void ServerClass::Parse()
             port = atoi(this->port.c_str());
             if (port < 0 || port > 65535)
                 throw std::runtime_error("Invalide Value of `listen` OutOfBounds");
+            if (tokens.size() == 3)
+            {
+                if (tokens.at(2) != "ssl")
+                    throw std::runtime_error("Invalide Mode :  " + tokens.at(2));
+                this->SSlOn = true;
+            }
         }
         else if (tokens.at(0) == "host")
         {
@@ -92,6 +102,16 @@ void ServerClass::Parse()
             ExactSize(tokens.size() < 2, "Server");
             for (size_t i = 1; i < tokens.size(); i++)
                 server_names.push_back(tokens.at(i));
+        }
+        else if (tokens.at(0) == "ssl_certificate")
+        {
+            ExactSize(tokens.size() != 2, "Server");
+            this->SSlCertificate = tokens.at(1);
+        }
+        else if (tokens.at(0) == "ssl_certificate_key")
+        {
+            ExactSize(tokens.size() != 2, "Server");
+            this->SSlcertificatekey = tokens.at(1);
         }
         else if (tokens.at(0) == "index")
         {
@@ -210,9 +230,16 @@ void ServerClass::Validate_Values()
                 throw std::runtime_error("Error: If No `root` Is Specified on Server.\n       All Locations Should Provide their Own `root` At Server: " + this->host + ":" + this->port);
         }
     }
+    if (this->SSlOn && (this->SSlCertificate.empty() || this->SSlcertificatekey.empty()))
+        throw std::runtime_error("Error: Missing `ssl_certificate Or ssl_certificate_key` at Server: " + this->host + ":" + this->port);
 
     try
     {
+        if (this->SSlOn)
+        {
+            CheckIfValidePath(this->SSlCertificate, false);
+            CheckIfValidePath(this->SSlcertificatekey, false);
+        }
         if (IS_ON_OR_OFF(this->upload))
             CheckIfValidePath(this->upload_stor);
         if (!this->cgi.empty())

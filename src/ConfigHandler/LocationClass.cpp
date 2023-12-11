@@ -2,6 +2,9 @@
 
 LocationClass::LocationClass(std::string &RawData) : RawData(RawData)
 {
+    AcceptedValues.push_back("get");
+    AcceptedValues.push_back("post");
+    AcceptedValues.push_back("delete");
     Parse();
 }
 
@@ -94,10 +97,17 @@ void LocationClass::Parse()
         else if (tokens.at(0) == "allow")
         {
             ExactSize(tokens.size() < 2, "location: " + Line);
+            if (Lstring::tolower(tokens.at(1)) == "all")
+            {
+                if (tokens.size() > 2)
+                    throw std::runtime_error("Invalide values");
+                allowed = AcceptedValues;
+                break;
+            }
             for (size_t i = 1; i < tokens.size(); i++)
             {
                 tokens.at(i) = Lstring::tolower(tokens.at(i));
-                if (tokens.at(i) != "get" && tokens.at(i) != "post" && tokens.at(i) != "delete")
+                if (!Containes(AcceptedValues, tokens.at(i)))
                     throw std::runtime_error("Invalide method");
                 allowed.push_back(tokens.at(i));
             }
@@ -147,12 +157,13 @@ void LocationClass::Parse()
 void CheckIfValidePath(std::string path, bool IsDir)
 {
     struct stat FileStat;
+    std::string Type = (IsDir ? "directory" : "file");
     if (path.empty() || access(path.c_str(), F_OK) < 0)
-        throw std::runtime_error(path + " set to non-existent directory");
+        throw std::runtime_error(path + " set to non-existent " + Type);
     if (stat(path.c_str(), &FileStat) < 0)
         throw std::runtime_error("Sys Error");
     if ((IsDir && !S_ISDIR(FileStat.st_mode)) || !(FileStat.st_mode & S_IWUSR))
-        throw std::runtime_error(path + " set to non-directory or inaccessible directory");
+        throw std::runtime_error(path + " set to non-" + Type + " or inaccessible " + Type);
 }
 
 void LocationClass::Validate_Values()
@@ -249,4 +260,9 @@ std::string LocationClass::GetCgi_path()
 
 LocationClass::~LocationClass()
 {
+}
+
+std::vector<std::string> initValues(char *stringArray[], int size)
+{
+    return std::vector<std::string>(stringArray, stringArray + size);
 }

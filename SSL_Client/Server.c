@@ -12,22 +12,6 @@
 
 #define READSIZE 4096
 
-char *ConcatStrings(char *str1, char *str2)
-{
-    if (!str1)
-        return (strdup(str2));
-    size_t len1 = 0, len2 = 0;
-    while (str1[len1] != '\0')
-        len1++;
-    while (str2 && str2[len2] != '\0')
-        len2++;
-    char *output = malloc(len1 + len2);
-    sprintf((char *)output, "%s%s", str1, str2);
-    return output;
-}
-
-void multiplexing(int socket, SSL *ssl);
-
 int InitSocket(char *host, char *port)
 {
     struct addrinfo hint;

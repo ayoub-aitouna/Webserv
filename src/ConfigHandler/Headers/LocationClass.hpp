@@ -46,7 +46,9 @@ private:
     std::map<int, std::string> error_page;
     std::vector<std::string> cgi;
     std::string cgi_path;
+    std::vector<std::string> AcceptedValues;
 };
 void ExactSize(bool cond, std::string Block);
+std::vector<std::string> initValues(char *stringArray[], int size);
 void CheckIfValidePath(std::string path, bool IsDir = true);
 #endif

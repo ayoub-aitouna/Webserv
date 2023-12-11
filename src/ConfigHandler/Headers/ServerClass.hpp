@@ -50,6 +50,9 @@ private:
     std::vector<std::string> server_names;
     std::vector<LocationClass> locations;
     LocationClass *location;
+    bool SSlOn;
+    std::string SSlCertificate;
+    std::string SSlcertificatekey;
 
     // Shared attr (Server | Location)
 private:

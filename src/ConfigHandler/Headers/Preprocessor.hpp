@@ -20,4 +20,16 @@ public:
     ~Preprocessor();
 };
 std::vector<std::string> ExtractBlock(std::string &data, std::string BlockName);
+
+template <typename T>
+bool Containes(std::vector<T> Vec, T item)
+{
+    for (typename std::vector<T>::iterator i = Vec.begin(); i != Vec.end(); i++)
+    {
+        if (*i == item)
+            return (true);
+    }
+    return (false);
+}
+
 #endif
