@@ -41,6 +41,9 @@ ServerClass &ServerClass::operator=(const ServerClass &lhs)
         this->error_page = lhs.error_page;
         this->index = lhs.index;
         this->locations = lhs.locations;
+        this->SSlOn = lhs.SSlOn;
+        this->SSlCertificate = lhs.SSlCertificate;
+        this->SSlcertificatekey = lhs.SSlcertificatekey;
 
         this->autoindex = lhs.autoindex;
         this->upload = lhs.upload;
@@ -355,6 +358,21 @@ std::string ServerClass::GetCgi_path()
     if (location && !location->GetCgi_path().empty())
         return (this->location->GetCgi_path());
     return (this->cgi_path);
+}
+
+bool ServerClass::IsSSlOn()
+{
+    return (this->SSlOn);
+}
+
+std::string ServerClass::GetSSlCertificate()
+{
+    return (this->SSlCertificate);
+}
+
+std::string ServerClass::GetSSlcertificatekey()
+{
+    return (this->SSlcertificatekey);
 }
 
 void ServerClass::SetRequestPath(std::string &path)

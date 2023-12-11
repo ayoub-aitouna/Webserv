@@ -1,4 +1,5 @@
 #include "Server/Server.hpp"
+#include "SSL/OpenSSLLoader.hpp"
 #include <vector>
 #include <signal.h>
 #include "ConfigHandler/Headers/ConfigHandler.hpp"
@@ -10,25 +11,37 @@ void HandleSigPip(int signal)
     write(1, msg.c_str(), msg.size());
 }
 
+void InitLibSSL(std::vector<ServerClass> ServersConf)
+{
+    for (size_t i = 0; i < ServersConf.size(); i++)
+    {
+        if (!ServersConf.at(i).IsSSlOn())
+            continue;
+        OpenSSLLoader::LoadOpenSSL();
+        DEBUGOUT(1, COLORED(OpenSSLLoader::my_OpenSSL_version(SSLEAY_VERSION), Blue));
+        return;
+    }
+}
+
 int main(int ac, char **av)
 {
     std::vector<std::string> taken_ports;
-    if (ac != 2)
-    {
-        std::cout << "Please Provide a Conf file" << std::endl;
-        exit(1);
-    }
-    ConfigHandler::SetFile(av[1]);
-    signal(SIGPIPE, HandleSigPip);
-    std::vector<ServerClass> ServersConf = ConfigHandler::GetHttp().GetServers();
+    std::vector<ServerClass> ServersConf;
     Server server;
+
     try
     {
+        if (ac != 2)
+            throw std::runtime_error("Please Provide a Conf file");
+        ConfigHandler::SetFile(av[1]);
+        signal(SIGPIPE, HandleSigPip);
+        ServersConf = ConfigHandler::GetHttp().GetServers();
+        InitLibSSL(ServersConf);
         for (size_t i = 0; i < ServersConf.size(); i++)
         {
             if (Containes(taken_ports, ServersConf.at(i).GetPort()))
                 continue;
-            server.CreatSocket(ServersConf.at(i).GetHostName(), ServersConf.at(i).GetPort());
+            server.CreatSocket(ServersConf.at(i));
             taken_ports.push_back(ServersConf.at(i).GetPort());
         }
         server.Run();

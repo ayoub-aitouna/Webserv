@@ -2,6 +2,13 @@
 
 #define SHOWBUFFER 0
 
+ssize_t WB_write(int __fd, SSL *__ssl, const void *__buf, size_t __nbytes)
+{
+    if (__ssl)
+        return OpenSSLLoader::my_SSL_write(__ssl, __buf, __nbytes);
+    return write(__fd, __buf, __nbytes);
+}
+
 void ResponseBuilder::InitStatusCode()
 {
     StatusCodes[100] = "Continue";
@@ -125,14 +132,14 @@ std::map<int, std::string> &ResponseBuilder::GetStatusCodes()
     return this->StatusCodes;
 }
 
-int ResponseBuilder::FlushBuffer(int SocketFd)
+int ResponseBuilder::FlushBuffer(int SocketFd, SSL *ssl)
 {
 
     if (this->Buffer.empty())
         return (0);
     DEBUGOUT(SHOWBUFFER, COLORED(this->Buffer.c_str(), Yellow));
     int i = 0;
-    if ((i = write(SocketFd, this->Buffer.c_str(), this->Buffer.size())) < 0 || this->Buffer == "0\r\n\r\n")
+    if ((i = WB_write(SocketFd, ssl, this->Buffer.c_str(), this->Buffer.size())) < 0 || this->Buffer == "0\r\n\r\n")
         return (0);
     this->Buffer.clear();
     this->FillBuffer();

@@ -3,6 +3,8 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <openssl/ssl.h>
+
 
 class EventHandler
 {
@@ -19,6 +21,7 @@ private:
 
 protected:
     int SocketFd;
+    SSL *ssl;
 };
 
 #endif

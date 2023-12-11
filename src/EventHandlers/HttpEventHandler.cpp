@@ -1,9 +1,24 @@
 #include "HttpEventHandler.hpp"
 
-HttpEventHandler::HttpEventHandler(int SocketFd, struct sockaddr_storage address, socklen_t address_len) : EventHandler(SocketFd)
+ssize_t WB_read(int __fd, SSL *__ssl, void *__buf, size_t __nbytes)
+{
+    if (__ssl)
+        return OpenSSLLoader::my_SSL_read(__ssl, __buf, __nbytes);
+    return read(__fd, __buf, __nbytes);
+}
+
+ssize_t WB_write(int __fd, SSL *__ssl, char *__buf, size_t __nbytes)
+{
+    if (__ssl)
+        return OpenSSLLoader::my_SSL_read(__ssl, __buf, __nbytes);
+    return read(__fd, __buf, __nbytes);
+}
+
+HttpEventHandler::HttpEventHandler(int SocketFd, SSL *ssl, struct sockaddr_storage address, socklen_t address_len) : EventHandler(SocketFd)
 {
     this->client.address = address;
     this->client.address_len = address_len;
+    this->ssl = ssl;
     this->response = NULL;
     this->start = clock();
 }
@@ -18,7 +33,7 @@ int HttpEventHandler::Read()
     char buffer[1025];
     int read_bytes;
 
-    read_bytes = read(this->SocketFd, buffer, KB);
+    read_bytes = WB_read(this->SocketFd, this->ssl, buffer, KB);
     if (read_bytes <= 0)
         return (0);
     this->start = clock();
@@ -66,7 +81,7 @@ int HttpEventHandler::Write()
         if (this->response != NULL)
         {
             this->start = clock();
-            if (this->response->FlushBuffer(this->SocketFd) == 0)
+            if (this->response->FlushBuffer(this->SocketFd, this->ssl) == 0)
                 return (0);
         }
     }
@@ -92,6 +107,10 @@ const int &HttpEventHandler::GetSocketFd() const
 Request *HttpEventHandler::GetRequestHandler()
 {
     return this->request.GetRequestHandler();
+}
+SSL *HttpEventHandler::GetSSL()
+{
+    return (this->ssl);
 }
 
 HttpEventHandler::~HttpEventHandler()

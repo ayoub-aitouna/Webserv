@@ -1,5 +1,4 @@
 #include "Reactor.hpp"
-#define verbose 0
 
 Reactor::Reactor()
 {
@@ -21,14 +20,17 @@ void Reactor::RegisterSocket(int socketFd, EventHandler *eventHandler)
     event.events = EPOLLRDNORM | EPOLLWRNORM;
     event.data.fd = eventHandler->GetSocketFd();
     if (epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, eventHandler->GetSocketFd(), &event) < 0)
-        throw std::runtime_error("epoll_ctl() `EPOLL_CTL_ADD` failed");
+        throw std::runtime_error("epoll_ctl() `EPOLL_CTL_ADD` failed" + SSTR(eventHandler->GetSocketFd()));
 
     this->clients[socketFd] = eventHandler;
 }
 
 void Reactor::UnRegisterSocket(int SocketFd)
 {
-    std::string Type = dynamic_cast<AcceptEventHandler *>(this->clients[SocketFd]) != NULL ? "Server " : "Client ";
+    HttpEventHandler *http_client;
+    std::string Type;
+
+    Type = dynamic_cast<AcceptEventHandler *>(this->clients[SocketFd]) != NULL ? "Server " : "Client ";
     DEBUGOUT(verbose, COLORED("UnRegister " << Type << "Socket "
                                             << SSTR(SocketFd) << "\n",
                               Red));
@@ -41,6 +43,12 @@ void Reactor::UnRegisterSocket(int SocketFd)
         this->clients.erase(SocketFd);
     }
     close(SocketFd);
+    http_client = dynamic_cast<HttpEventHandler *>(this->clients[SocketFd]);
+    if (http_client && http_client->GetSSL())
+    {
+        OpenSSLLoader::my_SSL_shutdown(http_client->GetSSL());
+        OpenSSLLoader::my_SSL_free(http_client->GetSSL());
+    }
 }
 
 void Reactor::HandleEvents()
@@ -55,7 +63,8 @@ void Reactor::Dispatch()
     AcceptEventHandler *server;
     HttpEventHandler *client;
     int current_fd;
-    DEBUGOUT(0, "Dispatch called event_count: " << this->event_count);
+
+    client = NULL;
     for (int i = 0; i < this->event_count; i++)
     {
         current_fd = this->events[i].data.fd;
@@ -65,16 +74,24 @@ void Reactor::Dispatch()
 
             if ((server = dynamic_cast<AcceptEventHandler *>(this->clients[current_fd])) != NULL)
             {
-                client = dynamic_cast<HttpEventHandler *>(server->Accept());
-                if (client != NULL)
-                    return RegisterSocket(client->GetSocketFd(), client);
+                try
+                {
+                    client = dynamic_cast<HttpEventHandler *>(server->Accept());
+                    if (client != NULL)
+                        return RegisterSocket(client->GetSocketFd(), client);
+                }
+                catch (std::exception &e)
+                {
+                    DEBUGOUT(1, "Accept() failed\n"
+                                    << e.what() << "\n");
+                }
             }
             else if ((client = dynamic_cast<HttpEventHandler *>(this->clients[current_fd])) != NULL)
             {
 
                 client->start = clock();
                 if (client->Read() == 0)
-                    return UnRegisterSocket(i);
+                    return UnRegisterSocket(current_fd);
             }
         }
         else if (this->events[i].events & EPOLLWRNORM)

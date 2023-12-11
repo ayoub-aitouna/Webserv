@@ -4,7 +4,12 @@ Server::Server()
 {
 }
 
-void Server::CreatSocket(const std::string &node, const std::string &serv)
+const char *get_cstr(std::string str)
+{
+    return (str == "" ? NULL : str.c_str());
+}
+
+void Server::CreatSocket(ServerClass conf)
 {
     struct addrinfo hint;
     struct addrinfo *addr;
@@ -16,10 +21,7 @@ void Server::CreatSocket(const std::string &node, const std::string &serv)
     hint.ai_socktype = SOCK_STREAM;
     hint.ai_flags = AI_PASSIVE;
 
-    const char *str_node = node == "" ? NULL : node.c_str();
-    const char *str_servce = serv == "" ? NULL : serv.c_str();
-
-    if (getaddrinfo(str_node, str_servce, &hint, &addr) < 0)
+    if (getaddrinfo(get_cstr(conf.GetHostName()), get_cstr(conf.GetPort()), &hint, &addr) < 0)
         throw std::runtime_error("getaddrinfo() failed");
 
     socket_fd = socket(addr->ai_family, addr->ai_socktype, 0);
@@ -40,18 +42,19 @@ void Server::CreatSocket(const std::string &node, const std::string &serv)
         throw std::runtime_error("bind() failed");
     }
     freeaddrinfo(addr);
-    VirtualServersFd.push_back(socket_fd);
+    VirtualServers.push_back(VirtualServer(socket_fd, conf.IsSSlOn(),
+                                           conf.GetSSlCertificate(), conf.GetSSlcertificatekey()));
 }
 
 void Server::Run()
 {
     Reactor reactor;
     DEBUGOUT(1, COLORED("WebServer Starting...", Green));
-    for (std::vector<int>::iterator it = VirtualServersFd.begin(); it != VirtualServersFd.end(); it++)
+    for (std::vector<VirtualServer>::iterator it = VirtualServers.begin(); it != VirtualServers.end(); it++)
     {
-        if (listen(*it, 100) < 0)
+        if (listen(it->GetSocketFd(), 100) < 0)
             throw std::runtime_error("listen() failed");
-        reactor.RegisterSocket(*it, new AcceptEventHandler(*it));
+        reactor.RegisterSocket(it->GetSocketFd(), new AcceptEventHandler(it->GetSocketFd(), it->getSLL_CTX()));
     }
     DEBUGOUT(1, COLORED("Ready....", Green));
     reactor.EventLoop();

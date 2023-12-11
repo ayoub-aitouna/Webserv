@@ -21,6 +21,7 @@
 #include <dirent.h>
 #include "../../HTTPError/HTTPError.hpp"
 #include "../../ConfigHandler/Headers/ConfigHandler.hpp"
+#include "../../SSL/OpenSSLLoader.hpp"
 
 #define KB 1024
 #define DBLCRLF "\r\n\r\n"

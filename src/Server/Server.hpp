@@ -15,6 +15,8 @@
 #include "../Lib/Lstring.hpp"
 #include <cstring>
 #include <stdio.h>
+#include "VirtualServer.hpp"
+
 
 class Server
 {
@@ -22,11 +24,11 @@ public:
     Server();
 
 public:
-    void CreatSocket(const std::string &node, const std::string &serv);
+    void CreatSocket(ServerClass conf);
     void Run();
 
 private:
-    std::vector<int> VirtualServersFd;
+    std::vector<VirtualServer> VirtualServers;
 };
 
 #endif

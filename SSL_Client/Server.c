@@ -9,7 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
+#include <netdb.h>
+#include <errno.h>
+
+#include <stdio.h>
 #define READSIZE 4096
 
 int InitSocket(char *host, char *port)

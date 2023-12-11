@@ -10,12 +10,15 @@ class AcceptEventHandler : public EventHandler
 {
 
 public:
-    AcceptEventHandler(int SocketFd);
+    AcceptEventHandler(int SocketFd, SSL_CTX *ctx);
 
 public:
     int Read();
     int Write();
     EventHandler *Accept();
+
+private:
+    SSL_CTX *ctx;
 };
 
 #endif

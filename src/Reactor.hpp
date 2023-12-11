@@ -6,6 +6,7 @@
 #include "EventHandlers/EventHandler.hpp"
 #include "EventHandlers/HttpEventHandler.hpp"
 #include "EventHandlers/AcceptEventHandler.hpp"
+#include "Core/Include/Core.hpp"
 #include <unistd.h>
 #include <poll.h>
 #include <exception>
@@ -13,6 +14,7 @@
 #include "Lib/Lstring.hpp"
 #include <sys/epoll.h>
 
+#define verbose 1
 class Reactor
 {
 public:

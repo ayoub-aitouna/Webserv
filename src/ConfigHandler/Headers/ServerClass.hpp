@@ -27,6 +27,9 @@ public:
     std::string GetPort();
     LocationClass *GetLocation(std::string &path);
     std::vector<std::string> &GetServerNames();
+    bool IsSSlOn();
+    std::string GetSSlCertificate();
+    std::string GetSSlcertificatekey();
 
     // Shared  (Server | Location)
 public:

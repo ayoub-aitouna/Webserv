@@ -32,7 +32,7 @@ public:
 class HttpEventHandler : public EventHandler
 {
 public:
-    HttpEventHandler(int SocketFd, struct sockaddr_storage address, socklen_t address_len);
+    HttpEventHandler(int SocketFd, SSL *ssl, struct sockaddr_storage address, socklen_t address_len);
     HttpEventHandler();
     virtual ~HttpEventHandler();
 
@@ -46,6 +46,7 @@ public:
     RequestParser &GetRequestParser();
     Request *GetRequestHandler();
     ResponseBuilder *GetResponse();
+    SSL *GetSSL();
 
 public:
     clock_t start;
@@ -54,6 +55,7 @@ private:
     Client client;
     RequestParser request;
     ResponseBuilder *response;
+    SSL *ssl;
 };
 
 #endif
