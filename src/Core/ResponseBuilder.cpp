@@ -2,7 +2,7 @@
 
 #define SHOWBUFFER 0
 
-ssize_t WB_write(int __fd, SSL *__ssl, const void *__buf, size_t __nbytes)
+ssize_t WB_write(int __fd, void *__ssl, const void *__buf, size_t __nbytes)
 {
     if (__ssl)
         return OpenSSLLoader::my_SSL_write(__ssl, __buf, __nbytes);
@@ -132,7 +132,7 @@ std::map<int, std::string> &ResponseBuilder::GetStatusCodes()
     return this->StatusCodes;
 }
 
-int ResponseBuilder::FlushBuffer(int SocketFd, SSL *ssl)
+int ResponseBuilder::FlushBuffer(int SocketFd, void *ssl)
 {
 
     if (this->Buffer.empty())

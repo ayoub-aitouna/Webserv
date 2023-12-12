@@ -4,13 +4,14 @@
 
 #include "../Reactor.hpp"
 #include "string"
+#include <openssl/ssl.h>
 
 class VirtualServer
 {
 
 public:
     VirtualServer(int SocketFd, bool SSlOn, std::string cert = "", std::string Key = "");
-    SSL_CTX *getSLL_CTX();
+    void *getSLL_CTX();
     bool IsSSlOn();
     int GetSocketFd();
     ~VirtualServer();
@@ -18,7 +19,7 @@ public:
 private:
     int socketFd;
     bool SSlOn;
-    SSL_CTX *ctx;
+    void *ctx;
 };
 
 #endif

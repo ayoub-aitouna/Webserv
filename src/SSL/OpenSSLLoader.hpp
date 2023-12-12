@@ -1,30 +1,31 @@
 #ifndef OPENSSLLOADER_HPP
 #define OPENSSLLOADER_HPP
 
-#include <openssl/ssl.h>
+// #include <openssl/ssl.h>
 #include <string>
 #include <dlfcn.h>
 #include <stdexcept>
 #include <iostream>
 #include <unistd.h>
+#include <stdint.h>
 
 // OpenSSL function pointers
-typedef int (*OPENSSL_init_ssl_ptr)(uint64_t, const OPENSSL_INIT_SETTINGS*);
+typedef int (*OPENSSL_init_ssl_ptr)(uint64_t, const void *);
 
-typedef SSL *(*SSL_new_ptr)(void *);
+typedef void *(*SSL_new_ptr)(void *);
 typedef int (*SSL_accept_ptr)(void *);
 typedef int (*SSL_read_ptr)(void *, void *, int);
 typedef int (*SSL_write_ptr)(void *, const void *, int);
 typedef int (*SSL_shutdown_ptr)(void *);
 typedef char (*OpenSSL_version_ptr)(int);
-typedef void (*SSL_free_ptr)(SSL *);
-typedef int (*SSL_set_fd_ptr)(SSL *, int);
+typedef void (*SSL_free_ptr)(void *);
+typedef int (*SSL_set_fd_ptr)(void *, int);
 
-typedef SSL_CTX *(*SSL_CTX_new_ptr)(const SSL_METHOD *);
+typedef void *(*SSL_CTX_new_ptr)(const void *);
 typedef int (*SSL_CTX_use_certificate_file_ptr)(void *, const char *, int);
 typedef int (*SSL_CTX_use_PrivateKey_file_ptr)(void *, const char *, int);
 
-typedef SSL_METHOD *(*TLS_server_method_ptr)(void);
+typedef void *(*TLS_server_method_ptr)(void);
 
 class OpenSSLLoader
 {
@@ -40,7 +41,6 @@ private:
     // Function pointers
 public:
     static OPENSSL_init_ssl_ptr my_OPENSSL_init_ssl;
-
 
     static SSL_new_ptr my_SSL_new;
     static SSL_accept_ptr my_SSL_accept;
@@ -63,9 +63,8 @@ T get_symbol(void *handler, const char *symbol_name)
     T symbol_ptr = (T)dlsym(handler, symbol_name);
     if (!symbol_ptr)
     {
-        std::cerr << "Error get_symbol OpenSSL: " << dlerror() << std::endl;
         dlclose(handler);
-        exit(1);
+        throw std::runtime_error("dlsym() failed loading " + std::string(dlerror()));
     }
     return (symbol_ptr);
 }

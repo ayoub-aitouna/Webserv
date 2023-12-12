@@ -1,4 +1,5 @@
 #include "OpenSSLLoader.hpp"
+#include <openssl/ssl.h>
 
 void *OpenSSLLoader::opensslLibrary = NULL;
 
@@ -23,7 +24,7 @@ OpenSSLLoader::OpenSSLLoader()
 
 void *OpenSSLLoader::LoadOpenSSL()
 {
-    (opensslLibrary = dlopen("libssl.so.3", RTLD_LAZY));
+    (opensslLibrary = dlopen("libssl.so", RTLD_NOW | RTLD_GLOBAL));
     if (!opensslLibrary)
         throw std::runtime_error("Error dlopen OpenSSL: " + std::string(dlerror()));
 
@@ -45,7 +46,6 @@ void *OpenSSLLoader::LoadOpenSSL()
     my_SSL_set_fd = get_symbol<SSL_set_fd_ptr>(opensslLibrary, "SSL_set_fd");
     // Initialize OpenSSL
     my_OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-
     return (opensslLibrary);
 }
 

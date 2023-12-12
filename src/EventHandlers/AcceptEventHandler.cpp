@@ -1,9 +1,10 @@
 #include "AcceptEventHandler.hpp"
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
-AcceptEventHandler::AcceptEventHandler(int SocketFd, SSL_CTX *ctx) : EventHandler(SocketFd)
+AcceptEventHandler::AcceptEventHandler(int SocketFd, void *ctx) : EventHandler(SocketFd)
 {
     this->ctx = ctx;
-    printf("ctx addr %p\n", ctx);
 }
 
 int AcceptEventHandler::Read()
@@ -21,7 +22,7 @@ EventHandler *AcceptEventHandler::Accept(void)
     struct sockaddr_storage addr;
     socklen_t addrlen;
     int socket;
-    SSL *ssl;
+    void *ssl;
 
     ssl = NULL;
     addrlen = sizeof(addrlen);
@@ -34,15 +35,14 @@ EventHandler *AcceptEventHandler::Accept(void)
         if (!ssl)
             throw std::runtime_error("SSL_new() failed");
         OpenSSLLoader::my_SSL_set_fd(ssl, socket);
-        if (OpenSSLLoader::my_SSL_accept(ssl) < 0)
+        if (OpenSSLLoader::my_SSL_accept(ssl) <= 0)
         {
-            perror("SSL_Accept() : ");
+            perror("SSL_accept");
             OpenSSLLoader::my_SSL_shutdown(ssl);
             close(socket);
             OpenSSLLoader::my_SSL_free(ssl);
             throw std::runtime_error("SSL_accept() failed");
         }
-        // printf("SSL connection using %s\n", SSL_get_cipher(ssl));
     }
     fcntl(socket, F_SETFL, O_NONBLOCK);
     return (new HttpEventHandler(socket, ssl, addr, addrlen));

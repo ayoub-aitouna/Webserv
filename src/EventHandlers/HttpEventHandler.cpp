@@ -1,20 +1,20 @@
 #include "HttpEventHandler.hpp"
 
-ssize_t WB_read(int __fd, SSL *__ssl, void *__buf, size_t __nbytes)
+ssize_t WB_read(int __fd, void *__ssl, void *__buf, size_t __nbytes)
 {
     if (__ssl)
         return OpenSSLLoader::my_SSL_read(__ssl, __buf, __nbytes);
     return read(__fd, __buf, __nbytes);
 }
 
-ssize_t WB_write(int __fd, SSL *__ssl, char *__buf, size_t __nbytes)
+ssize_t WB_write(int __fd, void *__ssl, char *__buf, size_t __nbytes)
 {
     if (__ssl)
         return OpenSSLLoader::my_SSL_read(__ssl, __buf, __nbytes);
     return read(__fd, __buf, __nbytes);
 }
 
-HttpEventHandler::HttpEventHandler(int SocketFd, SSL *ssl, struct sockaddr_storage address, socklen_t address_len) : EventHandler(SocketFd)
+HttpEventHandler::HttpEventHandler(int SocketFd, void *ssl, struct sockaddr_storage address, socklen_t address_len) : EventHandler(SocketFd)
 {
     this->client.address = address;
     this->client.address_len = address_len;
@@ -108,7 +108,7 @@ Request *HttpEventHandler::GetRequestHandler()
 {
     return this->request.GetRequestHandler();
 }
-SSL *HttpEventHandler::GetSSL()
+void *HttpEventHandler::GetSSL()
 {
     return (this->ssl);
 }

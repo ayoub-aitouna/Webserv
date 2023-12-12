@@ -14,7 +14,7 @@ VirtualServer::VirtualServer(int SocketFd, bool SSlOn, std::string cert, std::st
     }
 }
 
-SSL_CTX *VirtualServer::getSLL_CTX()
+void *VirtualServer::getSLL_CTX()
 {
     return (this->ctx);
 }

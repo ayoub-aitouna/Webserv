@@ -18,7 +18,6 @@ void InitLibSSL(std::vector<ServerClass> ServersConf)
         if (!ServersConf.at(i).IsSSlOn())
             continue;
         OpenSSLLoader::LoadOpenSSL();
-        DEBUGOUT(1, COLORED(OpenSSLLoader::my_OpenSSL_version(SSLEAY_VERSION), Blue));
         return;
     }
 }

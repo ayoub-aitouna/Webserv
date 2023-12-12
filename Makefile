@@ -8,7 +8,7 @@ NAME = WebServ
 
 CC = g++
 
-CPPFLAGS = -Wall -Wextra -Werror -std=c++98  #-lcrypto -lssl
+CPPFLAGS = -Wall -Wextra -Werror -ldl -std=c++98  #-lcrypto -lssl
 Sanitize		:= -g -fsanitize=address
 
 all : Start

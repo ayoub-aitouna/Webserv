@@ -19,7 +19,7 @@ private:
 public:
     void FillBuffer();
     void FillHeaders(int StatusCode);
-    int FlushBuffer(int SocketFd, SSL *ssl);
+    int FlushBuffer(int SocketFd, void *ssl);
     void CreateStatusFile();
     void InitStatusCode();
     std::string GetDefaultErrorPagePath();
